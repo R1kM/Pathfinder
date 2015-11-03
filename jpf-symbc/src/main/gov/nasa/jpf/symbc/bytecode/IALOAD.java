@@ -41,14 +41,22 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
 	 @Override
 	  public Instruction execute (ThreadInfo ti) {
 		
-		  if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression))
-			  return super.execute(ti);
+		  if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
+              // In this case, the index isn't symbolic.
+              StackFrame frame = ti.getModifiableTopFrame();
+              index = frame.peek();
+              // TODO Replace 3 by a variable
+              System.out.println("assert (= (select a1 "+index+") 3)"); 
+			  return super.execute(ti); }
 		  StackFrame frame = ti.getModifiableTopFrame();
 		  arrayRef = frame.peek(1); // ..,arrayRef,idx
-		    if (arrayRef == MJIEnv.NULL) {
-		      return ti.createAndThrowException("java.lang.NullPointerException");
-		    }
-		    throw new RuntimeException("Arrays: symbolic index not handled");
+          IntegerExpression indexAttr =(IntegerExpression)peekIndexAttr(ti);
+		  if (arrayRef == MJIEnv.NULL) {
+		    return ti.createAndThrowException("java.lang.NullPointerException");
+		  }
+          // TODO Replace 3 by a variable
+          System.out.println("assert (= (select a1 "+indexAttr+") 3)"); 
+		  throw new RuntimeException("Arrays: symbolic index not handled");
 		    
 	  }
 	 
