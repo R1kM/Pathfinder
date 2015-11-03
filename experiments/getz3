@@ -1,0 +1,10 @@
+get in z3
+
+int i = a1[1];
+
+(declare-const i Int)
+(declare-const a1 (Array Int Int))
+(assert (= (select a1 1) i))
+(check-sat)
+// If the expression is sat :
+(get-model)

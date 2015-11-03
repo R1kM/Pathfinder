@@ -1,0 +1,9 @@
+
+set in z3
+a1[2] = 4;
+
+(declare-const a1 (Array Int Int))
+(assert (= (store a1 2 4) a1))
+(check-sat)
+// If it is sat:
+(check-model)
