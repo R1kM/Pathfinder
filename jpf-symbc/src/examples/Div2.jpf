@@ -1,0 +1,6 @@
+target=Div2
+
+symbolic.method=Div2.diva(sym)
+classpath=${jpf-symbc}/build/examples
+listener = gov.nasa.jpf.symbc.SymbolicListener
+search.class = .search.heuristic.RandomHeuristic
