@@ -443,6 +443,73 @@ public class SymbolicInstructionFactory extends gov.nasa.jpf.jvm.bytecode.Instru
 		  return (filter.isPassing(ci) ?  new GETSTATIC(fieldName, clsName, fieldDescriptor): super.getstatic(fieldName, clsName, fieldDescriptor));
 		  }
 
+	// array ops
+      public Instruction aaload() {
+                return (filter.isPassing(ci) ? new AALOAD() : super.aaload());
+              }
+
+      public Instruction aastore() {
+                    return (filter.isPassing(ci) ? new AASTORE() : super.aastore());
+              }
+              
+      public Instruction baload() {
+                return (filter.isPassing(ci) ? new BALOAD() : super.baload());
+              }
+
+      public Instruction bastore() {
+                    return (filter.isPassing(ci) ? new BASTORE() : super.bastore());
+              }
+      
+      public Instruction caload() {
+                return (filter.isPassing(ci) ? new CALOAD() : super.caload());
+              }
+
+      public Instruction castore() {
+                    return (filter.isPassing(ci) ? new CASTORE() : super.castore());
+              }
+      
+      public Instruction daload() {
+                return (filter.isPassing(ci) ? new DALOAD() : super.daload());
+              }
+
+      public Instruction dastore() {
+                    return (filter.isPassing(ci) ? new DASTORE() : super.dastore());
+              }
+      
+      public Instruction faload() {
+                return (filter.isPassing(ci) ? new FALOAD() : super.faload());
+              }
+
+      public Instruction fastore() {
+                    return (filter.isPassing(ci) ? new FASTORE() : super.fastore());
+              }
+      
+      public Instruction iaload() {
+                return (filter.isPassing(ci) ? new IALOAD() : super.iaload());
+              }
+
+      public Instruction iastore() {
+          return (filter.isPassing(ci) ? new IASTORE() : super.iastore());
+      }
+
+      public Instruction laload() {
+    	  return (filter.isPassing(ci) ? new LALOAD() : super.laload());
+      }
+
+      public Instruction lastore() {
+          return (filter.isPassing(ci) ? new LASTORE() : super.lastore());
+      }
+
+      public Instruction saload() {
+    	  return (filter.isPassing(ci) ? new SALOAD() : super.saload());
+      }
+
+      public Instruction sastore() {
+    	  return (filter.isPassing(ci) ? new SASTORE() : super.sastore());
+      }
+
+	  
+	  
 		//TODO: to review
         //From Fujitsu:
 
