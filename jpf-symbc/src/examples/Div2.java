@@ -21,6 +21,6 @@ public class Div2 {
     }
 
     public static void main(String[] args) {
-      int i =  test(true);
+      int i =  diva(3);
     }
 }

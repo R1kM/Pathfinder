@@ -5,15 +5,15 @@ public class Arrays {
         return i;
     }
 
-    public static int counter_bis(int[] arr, int i) {
+    public static int counter_bis(int i, int[] arr) {
         int j = arr.length;
         int a = arr[i];
+        int b = 10/i;
         return j;
     }
 
     public static void main(String[] args) {
         int[] test = {1,2,3};
-        int i = counter(test);
-        int j = counter_bis(test, 3);
+        int j = counter_bis(1, test);
     }
 }
