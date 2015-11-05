@@ -12,13 +12,13 @@ public class IntegerSymbolicArray extends ArrayExpression {
 
     public IntegerSymbolicArray(int size) {
         super();
-        length = size;
+        this.length = size;
     }
 
     public IntegerSymbolicArray(int n, String name) {
         super();
-        name = name;
-        length = n;
+        this.name = name;
+        this.length = n;
     }
 
     public int __length() {

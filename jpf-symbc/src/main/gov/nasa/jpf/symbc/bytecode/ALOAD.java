@@ -19,6 +19,7 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 import gov.nasa.jpf.Config;
+import gov.nasa.jpf.symbc.arrays.ArrayExpression;
 import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
 import gov.nasa.jpf.symbc.heap.HeapChoiceGenerator;
 import gov.nasa.jpf.symbc.heap.HeapNode;
@@ -75,7 +76,7 @@ public class ALOAD extends gov.nasa.jpf.jvm.bytecode.ALOAD {
 		String typeOfLocalVar = super.getLocalVariableType();
 
 
-		if(attr == null || typeOfLocalVar.equals("?") || attr instanceof SymbolicStringBuilder || attr instanceof StringExpression) {
+		if(attr == null || typeOfLocalVar.equals("?") || attr instanceof SymbolicStringBuilder || attr instanceof StringExpression || attr instanceof ArrayExpression) {
 			return super.execute(th);
 		}
 		

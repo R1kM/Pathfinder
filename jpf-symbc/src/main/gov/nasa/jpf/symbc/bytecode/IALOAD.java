@@ -21,6 +21,8 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
+import gov.nasa.jpf.symbc.arrays.ArrayExpression;
+import gov.nasa.jpf.symbc.arrays.IntegerSymbolicArray;
 import gov.nasa.jpf.symbc.numeric.Comparator;
 import gov.nasa.jpf.symbc.numeric.IntegerExpression;
 import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
@@ -41,6 +43,12 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
 	 @Override
 	  public Instruction execute (ThreadInfo ti) {
 		
+          if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression) {
+              // In this case, the array isn't symbolic
+              return super.execute(ti);
+          }
+
+
 		  if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
               // In this case, the index isn't symbolic.
               StackFrame frame = ti.getModifiableTopFrame();
@@ -51,11 +59,12 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
 		  StackFrame frame = ti.getModifiableTopFrame();
 		  arrayRef = frame.peek(1); // ..,arrayRef,idx
           IntegerExpression indexAttr =(IntegerExpression)peekIndexAttr(ti);
+          IntegerSymbolicArray arrayAttr = (IntegerSymbolicArray)peekArrayAttr(ti);
 		  if (arrayRef == MJIEnv.NULL) {
 		    return ti.createAndThrowException("java.lang.NullPointerException");
 		  }
           // TODO Replace 3 by a variable
-          System.out.println("assert (= (select a1 "+indexAttr+") 3)"); 
+          System.out.println("assert (= (select "+arrayAttr+ " "+indexAttr+") 3)"); 
 		  throw new RuntimeException("Arrays: symbolic index not handled");
 		    
 	  }

@@ -23,6 +23,7 @@ package gov.nasa.jpf.symbc.bytecode;
 import gov.nasa.jpf.Config;
 
 import gov.nasa.jpf.jvm.bytecode.JVMInvokeInstruction;
+import gov.nasa.jpf.symbc.arrays.IntegerSymbolicArray;
 import gov.nasa.jpf.symbc.heap.Helper;
 import gov.nasa.jpf.symbc.numeric.Expression;
 import gov.nasa.jpf.symbc.numeric.IntegerExpression;
@@ -306,18 +307,32 @@ public class BytecodeUtils {
 						sf.setOperandAttr(stackIdx, sym_v);
 						outputString = outputString.concat(" " + sym_v + ",");
 					} else if(argTypes[j].equalsIgnoreCase("int[]") || argTypes[j].equalsIgnoreCase("long[]")){
-						Object[] argValues = invInst.getArgumentValues(th);
-						ElementInfo eiArray = (ElementInfo)argValues[j];
+                        Object[] argValues = invInst.getArgumentValues(th);
+                        ElementInfo eiArray = (ElementInfo)argValues[j];
 
-						if(eiArray!=null)
-							for(int i =0; i< eiArray.arrayLength(); i++) {
-								IntegerExpression sym_v = new SymbolicInteger(varName(name+i, VarType.INT));
-								expressionMap.put(name+i, sym_v);
-								eiArray.addElementAttr(i, sym_v);
-								outputString = outputString.concat(" " + sym_v + ",");
-							}
-						else
-							System.out.println("Warning: input array empty! "+name);
+                        if (eiArray!= null) {
+                            IntegerSymbolicArray sym_v = new IntegerSymbolicArray(eiArray.arrayLength(), varName(name, VarType.ARRAY));
+                        expressionMap.put(name, sym_v);
+                        sf.setOperandAttr(stackIdx, sym_v);
+                        outputString = outputString.concat(" " + sym_v + ",");
+                        }
+
+                        else {
+                            System.out.println("Warning : input array empty "+name);
+                        }
+
+// CHANGE				Object[] argValues = invInst.getArgumentValues(th);
+// 						ElementInfo eiArray = (ElementInfo)argValues[j];
+// 
+// 						if(eiArray!=null)
+// 							for(int i =0; i< eiArray.arrayLength(); i++) {
+// 								IntegerExpression sym_v = new SymbolicInteger(varName(name+i, VarType.INT));
+// 								expressionMap.put(name+i, sym_v);
+// 								eiArray.addElementAttr(i, sym_v);
+// 								outputString = outputString.concat(" " + sym_v + ",");
+// 							}
+// 						else
+// 							System.out.println("Warning: input array empty! "+name);
 					} else if(argTypes[j].equalsIgnoreCase("float[]") || argTypes[j].equalsIgnoreCase("double[]")){
 						Object[] argValues = invInst.getArgumentValues(th);
 						ElementInfo eiArray = (ElementInfo)argValues[j];
@@ -538,7 +553,7 @@ public class BytecodeUtils {
   }
 
 	public enum VarType {
-		INT, REAL, REF, STRING
+		INT, REAL, REF, STRING, ARRAY
 	};
 
 
@@ -557,6 +572,9 @@ public class BytecodeUtils {
 		case STRING:
 			suffix = "_SYMSTRING";
 			break;
+        case ARRAY:
+            suffix = "_SYMARRAY";
+            break;
 		default:
 			throw new RuntimeException("Unhandled SymVarType: " + type);
 		}
