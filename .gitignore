@@ -13,6 +13,7 @@ hs_err_pid*
 
 #mercurial files
 jpf-symbc/.hg/
+jpf-core/.hg/
 
 #vim files
 *.swp

@@ -290,6 +290,7 @@ public class BytecodeUtils {
 						expressionMap.put(name, sym_v);
 						sf.setOperandAttr(stackIdx, sym_v);
 						outputString = outputString.concat(" " + sym_v + ",");
+                        System.out.println("(declare-const "+sym_v+ " Int)");
 					} else if (argTypes[j].equalsIgnoreCase("float") || argTypes[j].equalsIgnoreCase("double")) {
 						RealExpression sym_v = new SymbolicReal(varName(name, VarType.REAL));
 						expressionMap.put(name, sym_v);
@@ -312,9 +313,11 @@ public class BytecodeUtils {
 
                         if (eiArray!= null) {
                             IntegerSymbolicArray sym_v = new IntegerSymbolicArray(eiArray.arrayLength(), varName(name, VarType.ARRAY));
-                        expressionMap.put(name, sym_v);
-                        sf.setOperandAttr(stackIdx, sym_v);
-                        outputString = outputString.concat(" " + sym_v + ",");
+                            expressionMap.put(name, sym_v);
+                            sf.setOperandAttr(stackIdx, sym_v);
+                            outputString = outputString.concat(" " + sym_v + ",");
+                            System.out.println("(declare-const " + sym_v.getName() + " (Array Int Int))");
+
                         }
 
                         else {

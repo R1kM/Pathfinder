@@ -42,29 +42,31 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
 	 
 	 @Override
 	  public Instruction execute (ThreadInfo ti) {
+
+          // We may need to add the case where we have a symbolic index and a concrete array
 		
-          if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression) {
+          if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
               // In this case, the array isn't symbolic
               return super.execute(ti);
           }
 
+          IntegerSymbolicArray arrayAttr = (IntegerSymbolicArray)peekArrayAttr(ti);
 
 		  if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
               // In this case, the index isn't symbolic.
               StackFrame frame = ti.getModifiableTopFrame();
               index = frame.peek();
               // TODO Replace 3 by a variable
-              System.out.println("assert (= (select a1 "+index+") 3)"); 
+              System.out.println("assert (= (select " +arrayAttr.getName()+ " "+index+") 3)"); 
 			  return super.execute(ti); }
 		  StackFrame frame = ti.getModifiableTopFrame();
 		  arrayRef = frame.peek(1); // ..,arrayRef,idx
           IntegerExpression indexAttr =(IntegerExpression)peekIndexAttr(ti);
-          IntegerSymbolicArray arrayAttr = (IntegerSymbolicArray)peekArrayAttr(ti);
 		  if (arrayRef == MJIEnv.NULL) {
 		    return ti.createAndThrowException("java.lang.NullPointerException");
 		  }
           // TODO Replace 3 by a variable
-          System.out.println("assert (= (select "+arrayAttr+ " "+indexAttr+") 3)"); 
+          System.out.println("assert (= (select "+arrayAttr.getName()+ " "+indexAttr+") 3)"); 
 		  throw new RuntimeException("Arrays: symbolic index not handled");
 		    
 	  }
