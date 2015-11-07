@@ -18,7 +18,7 @@ public abstract class ArrayExpression extends Expression {
         return 0;
     }
 
-    public IntegerExpression getVal(IntegerExpression index) {
+    public SymbolicIntegerValueAtIndex getVal(IntegerExpression index) {
         if (valAt == null) {
             valAt = new HashMap<String, SymbolicIntegerValueAtIndex>();
         }

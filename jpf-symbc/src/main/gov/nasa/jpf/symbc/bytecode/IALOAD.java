@@ -23,6 +23,7 @@ package gov.nasa.jpf.symbc.bytecode;
 import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
 import gov.nasa.jpf.symbc.arrays.ArrayExpression;
 import gov.nasa.jpf.symbc.arrays.IntegerSymbolicArray;
+import gov.nasa.jpf.symbc.arrays.SymbolicIntegerValueAtIndex;
 import gov.nasa.jpf.symbc.numeric.Comparator;
 import gov.nasa.jpf.symbc.numeric.IntegerExpression;
 import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
@@ -65,7 +66,7 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
 		  if (arrayRef == MJIEnv.NULL) {
 		    return ti.createAndThrowException("java.lang.NullPointerException");
 		  }
-          IntegerExpression result = arrayAttr.getVal(indexAttr);
+          SymbolicIntegerValueAtIndex result = arrayAttr.getVal(indexAttr);
           frame.setLocalAttr(arrayAttr.getSlot(), arrayAttr);
           frame.pop(2); // We pop the array and the index
           frame.push(0, false);         // For symbolic expressions, the concrete value does not matter
