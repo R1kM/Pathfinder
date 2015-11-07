@@ -8,7 +8,7 @@ public class Arrays {
     public static int counter_bis(int i, int[] arr) {
         int j = arr.length;
         int a = arr[i];
-        int b = 10/i;
+        int b = arr[i];
         return j;
     }
 

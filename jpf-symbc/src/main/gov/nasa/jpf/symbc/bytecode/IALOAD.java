@@ -66,9 +66,15 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
 		    return ti.createAndThrowException("java.lang.NullPointerException");
 		  }
           // TODO Replace 3 by a variable
+          ArrayExpression arrayAtt = (ArrayExpression)peekArrayAttr(ti); 
+          arrayAtt.printValAt();
+          IntegerExpression result = arrayAtt.getVal(indexAttr);
+          frame.pop(2); // We pop the array and the index
+          frame.push(0, false);         // For symbolic expressions, the concrete value does not matter
+          frame.setOperandAttr(result);
+
           System.out.println("assert (= (select "+arrayAttr.getName()+ " "+indexAttr+") 3)"); 
-		  throw new RuntimeException("Arrays: symbolic index not handled");
-		    
+		  return getNext(ti); 
 	  }
 	 
 }
