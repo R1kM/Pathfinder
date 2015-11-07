@@ -8,21 +8,28 @@ public class IntegerSymbolicArray extends ArrayExpression {
     private int length;
     private String name;
     public String solution = "UNDEFINED";
+    public int slot;
 
 
-    public IntegerSymbolicArray(int size) {
+    public IntegerSymbolicArray(int size, int slot) {
         super();
         this.length = size;
+        this.slot = slot;
     }
 
-    public IntegerSymbolicArray(int n, String name) {
+    public IntegerSymbolicArray(int n, String name, int slot) {
         super();
         this.name = name;
         this.length = n;
+        this.slot = slot;
     }
 
     public int __length() {
         return length;
+    }
+    
+    public int getSlot() {
+        return slot;
     }
 
     public String getName() {

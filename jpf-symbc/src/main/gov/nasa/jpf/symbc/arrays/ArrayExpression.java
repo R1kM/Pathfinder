@@ -31,6 +31,10 @@ public abstract class ArrayExpression extends Expression {
     }
 
     public void printValAt() {
+        if (valAt == null) {
+            System.out.println("valAt is null");
+            return;
+        }
         for (Map.Entry<String, SymbolicIntegerValueAtIndex> entry : valAt.entrySet()) {
             String key = entry.getKey();
             SymbolicIntegerValueAtIndex val = entry.getValue();
