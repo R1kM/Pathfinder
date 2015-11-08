@@ -24,7 +24,9 @@ package gov.nasa.jpf.symbc.bytecode;
 import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
 import gov.nasa.jpf.symbc.arrays.ArrayExpression;
 import gov.nasa.jpf.symbc.arrays.IntegerSymbolicArray;
+import gov.nasa.jpf.symbc.arrays.SymbolicIntegerValueAtIndex;
 import gov.nasa.jpf.symbc.numeric.Comparator;
+import gov.nasa.jpf.symbc.numeric.IntegerConstant;
 import gov.nasa.jpf.symbc.numeric.IntegerExpression;
 import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
 import gov.nasa.jpf.symbc.numeric.PathCondition;
@@ -65,7 +67,23 @@ public class IASTORE extends gov.nasa.jpf.jvm.bytecode.IASTORE {
 		  } 
           // We have to check if the value is symbolic or not, create a symbolicIntegerValueatIndex out of it, and 
           // call the setVal function, before storing the attr 
-		  
-		  throw new RuntimeException("Arrays: symbolic index not handled");
+          IntegerExpression sym_value = null;
+		  if (frame.getOperandAttr(0) == null || !(frame.getOperandAttr(0) instanceof IntegerExpression)) {
+              // The value isn't symbolic. We store a new IntegerConstant in the valAt map, at index indexAttr
+              int value = frame.pop();
+              sym_value = new IntegerConstant(value);
+          }
+          else {
+              // The value is symbolic.
+              sym_value = (IntegerExpression)frame.getOperandAttr(0);
+              frame.pop();
+          }
+          SymbolicIntegerValueAtIndex valueAttr = new SymbolicIntegerValueAtIndex(arrayAttr, indexAttr, sym_value);
+          // We set the value in the arrayAttr, and set the arrayAttr in its slot
+          arrayAttr.setVal(indexAttr, valueAttr);
+          frame.setLocalAttr(arrayAttr.getSlot(), arrayAttr);
+          frame.pop(2); // We pop the array and the index
+
+          return getNext(ti);
 	 }
 }

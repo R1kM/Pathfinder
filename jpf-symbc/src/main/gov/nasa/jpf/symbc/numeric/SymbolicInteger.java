@@ -94,6 +94,7 @@ public class SymbolicInteger extends LinearIntegerExpression
 
 	}
 
+
 	public String getName() {
 		return (name != null) ? name : "INT_" + hashCode();
 	}

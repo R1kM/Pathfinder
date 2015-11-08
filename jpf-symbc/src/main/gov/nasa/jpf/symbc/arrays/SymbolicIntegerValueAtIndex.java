@@ -4,15 +4,21 @@ import gov.nasa.jpf.symbc.arrays.ArrayExpression;
 import gov.nasa.jpf.symbc.numeric.IntegerExpression;
 import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
 
-public class SymbolicIntegerValueAtIndex extends SymbolicInteger {
+public class SymbolicIntegerValueAtIndex  {
     ArrayExpression ae;
     IntegerExpression index;
-    boolean constant;
+    IntegerExpression value;
 
-    public SymbolicIntegerValueAtIndex(String name, ArrayExpression ae, IntegerExpression index) {
-        super(name);
+    public SymbolicIntegerValueAtIndex(ArrayExpression ae, IntegerExpression index) {
+        IntegerExpression value = new SymbolicInteger("ValueAt("+index.toString()+")");
+        this.value = value;
         this.ae = ae;
         this.index = index;
-        constant = false;
+    }
+
+    public SymbolicIntegerValueAtIndex(ArrayExpression ae, IntegerExpression index, IntegerExpression value) {
+        this.ae = ae;
+        this.index = index;
+        this.value = value;
     }
 }

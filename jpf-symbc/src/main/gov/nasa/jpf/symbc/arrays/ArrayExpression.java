@@ -25,7 +25,7 @@ public abstract class ArrayExpression extends Expression {
         }
         SymbolicIntegerValueAtIndex result = valAt.get(index.toString());
         if (result == null) {
-            result = new SymbolicIntegerValueAtIndex("ValueAt("+index.toString() + ")", this, index); 
+            result = new SymbolicIntegerValueAtIndex(this, index); 
             valAt.put(index.toString(), result);
         }
         return result;
