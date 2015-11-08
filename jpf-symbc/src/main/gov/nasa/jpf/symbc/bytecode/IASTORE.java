@@ -22,6 +22,8 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
+import gov.nasa.jpf.symbc.arrays.ArrayExpression;
+import gov.nasa.jpf.symbc.arrays.IntegerSymbolicArray;
 import gov.nasa.jpf.symbc.numeric.Comparator;
 import gov.nasa.jpf.symbc.numeric.IntegerExpression;
 import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
@@ -43,13 +45,26 @@ public class IASTORE extends gov.nasa.jpf.jvm.bytecode.IASTORE {
 
 	 @Override
 	  public Instruction execute (ThreadInfo ti) {
+         // We may need to add the case where we have a smybolic index and a concrete array
+
+         if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
+             //In this case, the array isn't symbolic
+             return super.execute(ti);
+         }
+
+         IntegerSymbolicArray arrayAttr = (IntegerSymbolicArray)peekArrayAttr(ti);
+
 		 if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression))
+             // In this case, the index isn't symbolic
 			  return super.execute(ti);
 		  int arrayref = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
-		      
+		  StackFrame frame = ti.getModifiableTopFrame();
+          IntegerExpression indexAttr = (IntegerExpression)peekIndexAttr(ti);
 		  if (arrayref == MJIEnv.NULL) {
 		        return ti.createAndThrowException("java.lang.NullPointerException");
 		  } 
+          // We have to check if the value is symbolic or not, create a symbolicIntegerValueatIndex out of it, and 
+          // call the setVal function, before storing the attr 
 		  
 		  throw new RuntimeException("Arrays: symbolic index not handled");
 	 }

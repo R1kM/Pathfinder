@@ -66,6 +66,7 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
 		  if (arrayRef == MJIEnv.NULL) {
 		    return ti.createAndThrowException("java.lang.NullPointerException");
 		  }
+          // We update the Symbolic Array with the get information
           SymbolicIntegerValueAtIndex result = arrayAttr.getVal(indexAttr);
           frame.setLocalAttr(arrayAttr.getSlot(), arrayAttr);
           frame.pop(2); // We pop the array and the index
