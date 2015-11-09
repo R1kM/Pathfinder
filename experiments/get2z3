@@ -1,0 +1,18 @@
+The following is a valid Z3 program, that is sat, and gives some results with the get-model command
+We have an array a1, whose length is 2, and a1[x] = 2, a1[y]=3. 
+We have to add the two constraints on the indices x and y to have a bounded array
+
+
+(declare-const x Int)
+(declare-const y Int)
+(declare-const length Int)
+(declare-const a1 (Array Int Int))
+(assert (= (select a1 y) 3))
+(assert (= (select a1 x) 2))
+(assert (< x length))
+(assert (< y length))
+(assert (>= x 0))
+(assert (>= y 0))
+(assert (= length 2))
+(check-sat)
+(get-model)
