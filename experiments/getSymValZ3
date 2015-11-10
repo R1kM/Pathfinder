@@ -1,0 +1,22 @@
+Valid input for Z3:
+Integer Array a1 of length 8, a1[x] = x!value, a1[y] = 3, a1[x!value] = 2, x!value + 3 = 10
+Z3 can solve this, and produce an array wrt all the constraints
+
+
+(declare-const x Int)
+(declare-const y Int)
+(declare-const x!value Int)
+(declare-const length Int)
+(declare-const a1 (Array Int Int))
+(assert (= (select a1 y) 3))
+(assert (= (select a1 x) x!value))
+(assert (< x length))
+(assert (< y length))
+(assert (>= x 0))
+(assert (>= y 0))
+(assert (>= x!value 0))
+(assert (= length 8))
+(assert (= (select a1 x!value) 2))
+(assert (= (+ 3 x!value) 10))
+(check-sat)
+(get-model)
