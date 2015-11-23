@@ -1,6 +1,6 @@
 target = Arrays
 
-symbolic.method=Arrays.counter(sym)
+symbolic.method=Arrays.counter(sym#sym)
 symbolic.lazy=on
 classpath=${jpf-symbc}/build/examples
 search.multiple_errors=true
