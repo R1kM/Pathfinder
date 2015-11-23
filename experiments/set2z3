@@ -1,0 +1,10 @@
+Assume that the first element is 1, and that we set 2 in the array at the same place
+It is sat, and gives a correct result
+
+(declare-const a1 (Array Int Int))
+(declare-const a2 (Array Int Int))
+(assert (= (select a1 1) 1))
+(assert (= (store a1 1 2) a2))
+(check-sat)
+(get-model)
+

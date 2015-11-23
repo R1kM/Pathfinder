@@ -1,0 +1,9 @@
+First element of the array is 1, and we set 2 in the second element.
+It is sat and gives a correct result
+
+(declare-const a1 (Array Int Int))
+(declare-const a2 (Array Int Int))
+(assert (= (select a1 1) 1))
+(assert (= (store a1 2 2) a2))
+(check-sat)
+(get-model)
