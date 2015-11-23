@@ -9,6 +9,7 @@ public class Arrays {
         int j = arr.length;
         int a = arr[i];
         int b = arr[i];
+        int c = 1/a;
         return j;
     }
 

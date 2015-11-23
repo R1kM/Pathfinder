@@ -71,7 +71,7 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
           frame.setLocalAttr(arrayAttr.getSlot(), arrayAttr);
           frame.pop(2); // We pop the array and the index
           frame.push(0, false);         // For symbolic expressions, the concrete value does not matter
-          frame.setOperandAttr(result);
+          frame.setOperandAttr(result.value);
 
           // TODO Replace 3 by a variable
           System.out.println("assert (= (select "+arrayAttr.getName()+ " "+indexAttr+") 3)"); 
