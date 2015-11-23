@@ -25,6 +25,7 @@ import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
 import gov.nasa.jpf.symbc.arrays.ArrayExpression;
 import gov.nasa.jpf.symbc.arrays.IntegerSymbolicArray;
 import gov.nasa.jpf.symbc.arrays.SymbolicIntegerValueAtIndex;
+import gov.nasa.jpf.symbc.arrays.PreviousIntegerArray;
 import gov.nasa.jpf.symbc.numeric.Comparator;
 import gov.nasa.jpf.symbc.numeric.IntegerConstant;
 import gov.nasa.jpf.symbc.numeric.IntegerExpression;
@@ -78,10 +79,10 @@ public class IASTORE extends gov.nasa.jpf.jvm.bytecode.IASTORE {
               sym_value = (IntegerExpression)frame.getOperandAttr(0);
               frame.pop();
           }
-          SymbolicIntegerValueAtIndex valueAttr = new SymbolicIntegerValueAtIndex(arrayAttr, indexAttr, sym_value);
-          // We set the value in the arrayAttr, and set the arrayAttr in its slot
-          arrayAttr.setVal(indexAttr, valueAttr);
-          frame.setLocalAttr(arrayAttr.getSlot(), arrayAttr);
+          PreviousIntegerArray previous = new PreviousIntegerArray(arrayAttr, indexAttr, sym_value);
+          // We create a new arrayAttr, and inherits information from the previous attribute
+          IntegerSymbolicArray newArrayAttr = new IntegerSymbolicArray(previous);
+          frame.setLocalAttr(newArrayAttr.getSlot(), newArrayAttr);
           frame.pop(2); // We pop the array and the index
 
           return getNext(ti);
