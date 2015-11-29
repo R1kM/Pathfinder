@@ -83,7 +83,6 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
           } else { // this is what really returns results
             cg = ti.getVM().getChoiceGenerator();
             assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
-            condition = (Integer)cg.getNextChoice()==0 ? false: true;
           }
 
 

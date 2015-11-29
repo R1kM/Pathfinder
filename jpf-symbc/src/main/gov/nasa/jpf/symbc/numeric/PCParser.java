@@ -42,8 +42,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import gov.nasa.jpf.symbc.arrays.ArrayConstraint;
 import gov.nasa.jpf.symbc.numeric.solvers.ProblemCoral;
 import gov.nasa.jpf.symbc.numeric.solvers.ProblemGeneral;
+import gov.nasa.jpf.symbc.numeric.solvers.ProblemZ3;
 
 
 // parses PCs
@@ -903,7 +905,14 @@ public class PCParser {
 				constraintResult= createDPLinearOrIntegerConstraint((LogicalORLinearIntegerConstraints)cRef);
 
 			}
-			else {
+			else if (cRef instanceof ArrayConstraint) {
+                System.out.println("## Warning : ArrayConstraint (only Z3 can handle it)" + cRef);   
+                if (pb instanceof ProblemZ3)
+                    System.out.println("ProblemZ3");
+                else
+                    throw new RuntimeException("## Error: Array Constraint not handled "+cRef); 
+            }
+            else {
 				System.out.println("## Warning: Non Linear Integer Constraint (only coral can handle it)" + cRef);
 				if(pb instanceof ProblemCoral)
 					constraintResult= createDPNonLinearIntegerConstraint((NonLinearIntegerConstraint)cRef);

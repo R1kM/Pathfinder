@@ -26,12 +26,14 @@ import gov.nasa.jpf.symbc.arrays.ArrayExpression;
 import gov.nasa.jpf.symbc.arrays.IntegerSymbolicArray;
 import gov.nasa.jpf.symbc.arrays.SymbolicIntegerValueAtIndex;
 import gov.nasa.jpf.symbc.arrays.PreviousIntegerArray;
+import gov.nasa.jpf.symbc.arrays.StoreExpression;
 import gov.nasa.jpf.symbc.numeric.Comparator;
 import gov.nasa.jpf.symbc.numeric.IntegerConstant;
 import gov.nasa.jpf.symbc.numeric.IntegerExpression;
 import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
 import gov.nasa.jpf.symbc.numeric.PathCondition;
 import gov.nasa.jpf.vm.ArrayIndexOutOfBoundsExecutiveException;
+import gov.nasa.jpf.vm.ChoiceGenerator;
 import gov.nasa.jpf.vm.ElementInfo;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.MJIEnv;
@@ -59,6 +61,8 @@ public class IASTORE extends gov.nasa.jpf.jvm.bytecode.IASTORE {
 
 		 if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression))
              // In this case, the index isn't symbolic
+             //TODO Check bounds of array
+             // TODO Add Store in PathCondition
 			  return super.execute(ti);
 		  int arrayref = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
 		  StackFrame frame = ti.getModifiableTopFrame();
@@ -66,25 +70,87 @@ public class IASTORE extends gov.nasa.jpf.jvm.bytecode.IASTORE {
 		  if (arrayref == MJIEnv.NULL) {
 		        return ti.createAndThrowException("java.lang.NullPointerException");
 		  } 
-          // We have to check if the value is symbolic or not, create a symbolicIntegerValueatIndex out of it, and 
-          // call the setVal function, before storing the attr 
-          IntegerExpression sym_value = null;
-		  if (frame.getOperandAttr(0) == null || !(frame.getOperandAttr(0) instanceof IntegerExpression)) {
-              // The value isn't symbolic. We store a new IntegerConstant in the valAt map, at index indexAttr
-              int value = frame.pop();
-              sym_value = new IntegerConstant(value);
+
+          ChoiceGenerator<?> cg;
+          boolean condition;
+
+          if (!ti.isFirstStepInsn()) { // first time around
+              cg = new PCChoiceGenerator(3);
+              ((PCChoiceGenerator) cg).setOffset(this.position);
+              ((PCChoiceGenerator) cg).setMethodName(this.getMethodInfo().getFullName());
+              ti.getVM().setNextChoiceGenerator(cg);
+              return this;
+          } else { // this is what really returns results
+            cg = ti.getVM().getChoiceGenerator();
+            assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
+          }
+          
+          PathCondition pc;
+          ChoiceGenerator<?> prev_cg = cg.getPreviousChoiceGeneratorOfType(PCChoiceGenerator.class);
+          
+          if (prev_cg == null)
+              pc = new PathCondition();
+          else
+              pc = ((PCChoiceGenerator)prev_cg).getCurrentPC();
+          
+          assert pc != null;
+          
+          if ((Integer)cg.getNextChoice() == 1) { // check bounds of the index
+              pc._addDet(Comparator.GE, indexAttr, arrayAttr.length);
+              if (pc.simplify()) { // satisfiable
+                  ((PCChoiceGenerator) cg).setCurrentPC(pc);
+                  return ti.createAndThrowException("java.lang.ArrayOutOfBoundsException", "index greater than array bounds");
+              }
+              else {
+                  ti.getVM().getSystemState().setIgnored(true);
+                  return getNext(ti);
+              }
+          }
+          else if ((Integer)cg.getNextChoice() == 2) {
+              pc._addDet(Comparator.LT, indexAttr, new IntegerConstant(0));
+              if (pc.simplify()) { // satisfiable
+                  ((PCChoiceGenerator) cg).setCurrentPC(pc);
+                  return ti.createAndThrowException("java.lang.ArrayOutOfBoundsException", "index smaller than array bounds");
+              }
+              else {
+                  ti.getVM().getSystemState().setIgnored(true);
+                  return getNext(ti);
+              }
           }
           else {
-              // The value is symbolic.
-              sym_value = (IntegerExpression)frame.getOperandAttr(0);
-              frame.pop();
-          }
-          PreviousIntegerArray previous = new PreviousIntegerArray(arrayAttr, indexAttr, sym_value);
-          // We create a new arrayAttr, and inherits information from the previous attribute
-          IntegerSymbolicArray newArrayAttr = new IntegerSymbolicArray(previous);
-          frame.setLocalAttr(newArrayAttr.getSlot(), newArrayAttr);
-          frame.pop(2); // We pop the array and the index
+              pc._addDet(Comparator.LT, indexAttr, arrayAttr.length);
+              pc._addDet(Comparator.GE, indexAttr, new IntegerConstant(0));
+              if (pc.simplify()) { // satisfiable
+                  ((PCChoiceGenerator) cg).setCurrentPC(pc);
+                  
+                  // set the result                 
 
-          return getNext(ti);
-	 }
+                  // We have to check if the value is symbolic or not, create a symbolicIntegerValueatIndex out of it, and 
+                  // call the setVal function, before storing the attr 
+                  IntegerExpression sym_value = null;
+		          if (frame.getOperandAttr(0) == null || !(frame.getOperandAttr(0) instanceof IntegerExpression)) {
+                      // The value isn't symbolic. We store a new IntegerConstant in the valAt map, at index indexAttr
+                      int value = frame.pop();
+                      sym_value = new IntegerConstant(value);
+                  }
+                  else {
+                      // The value is symbolic.
+                      sym_value = (IntegerExpression)frame.getOperandAttr(0);
+                      frame.pop();
+                  }
+                  PreviousIntegerArray previous = new PreviousIntegerArray(arrayAttr, indexAttr, sym_value);
+                  // We create a new arrayAttr, and inherits information from the previous attribute
+                  IntegerSymbolicArray newArrayAttr = new IntegerSymbolicArray(previous);
+                  frame.setLocalAttr(newArrayAttr.getSlot(), newArrayAttr);
+                  frame.pop(2); // We pop the array and the index
+
+                  return getNext(ti);
+             }
+             else {
+                 ti.getVM().getSystemState().setIgnored(true);
+                 return getNext(ti);
+             }
+          }
+      }
+	 
 }
