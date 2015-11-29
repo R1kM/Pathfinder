@@ -8,9 +8,9 @@ import gov.nasa.jpf.symbc.numeric.IntegerConstant;
 import java.util.Map;
 
 public class StoreExpression extends Expression {
-    ArrayExpression ae;
-    IntegerExpression index;
-    IntegerExpression value;
+    public ArrayExpression ae;
+    public IntegerExpression index;
+    public IntegerExpression value;
 
     public StoreExpression(ArrayExpression ae, IntegerExpression ie, IntegerExpression value) {
         this.ae = ae;

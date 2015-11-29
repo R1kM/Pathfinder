@@ -8,8 +8,8 @@ import gov.nasa.jpf.symbc.numeric.IntegerConstant;
 import java.util.Map;
 
 public class SelectExpression extends Expression {
-    ArrayExpression ae;
-    IntegerExpression index;
+    public ArrayExpression ae;
+    public IntegerExpression index;
 
     public SelectExpression(ArrayExpression ae, IntegerExpression ie) {
         this.ae = ae;

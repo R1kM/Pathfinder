@@ -40,6 +40,10 @@ package gov.nasa.jpf.symbc.numeric;
 //import za.ac.sun.cs.green.Instance;
 import za.ac.sun.cs.green.Instance;
 import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
+import gov.nasa.jpf.symbc.arrays.ArrayExpression;
+import gov.nasa.jpf.symbc.arrays.ArrayConstraint;
+import gov.nasa.jpf.symbc.arrays.SelectExpression;
+import gov.nasa.jpf.symbc.arrays.StoreExpression;
 import gov.nasa.jpf.symbc.concolic.PCAnalyzer;
 import gov.nasa.jpf.symbc.numeric.solvers.SolverTranslator;
 import gov.nasa.jpf.symbc.numeric.visitors.CollectVariableVisitor;
@@ -94,6 +98,31 @@ public class PathCondition implements Comparable<PathCondition> {
 	    pc_new.solverCalls = this.solverCalls;
 		return pc_new;
 	}
+
+    // Added for array execution
+    public void _addDet(Comparator c, SelectExpression se, ArrayExpression ae) {
+        // Forcing the index of the get instruction to be in array range
+        _addDet(Comparator.LT, se.index, se.ae.length);
+        _addDet(Comparator.GE, se.index, new IntegerConstant(0));
+        // Adding the SelectExpression to the PathCondition
+        Constraint t = new ArrayConstraint(se, c, ae);
+        t.and = header;
+        header = t;
+        count++;
+    }
+
+    public void _addDet(Comparator c, StoreExpression se, ArrayExpression ae) {
+        // Forcing the index of the store instruction to be in array range
+        _addDet(Comparator.LT, se.index, se.ae.length);
+        _addDet(Comparator.GE, se.index, new IntegerConstant(0));
+        // Adding the StoreExpression to the PathCondition
+        Constraint t = new ArrayConstraint(se, c, ae);
+        t.and = header;
+        header = t;
+        count++;
+    }
+
+    // End array
 
 	//Added by Gideon
 	public void _addDet (LogicalORLinearIntegerConstraints loic) {
