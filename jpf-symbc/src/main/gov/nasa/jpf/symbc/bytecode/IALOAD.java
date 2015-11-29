@@ -22,13 +22,16 @@ package gov.nasa.jpf.symbc.bytecode;
 
 import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
 import gov.nasa.jpf.symbc.arrays.ArrayExpression;
+import gov.nasa.jpf.symbc.arrays.SelectExpression;
 import gov.nasa.jpf.symbc.arrays.IntegerSymbolicArray;
 import gov.nasa.jpf.symbc.arrays.SymbolicIntegerValueAtIndex;
 import gov.nasa.jpf.symbc.numeric.Comparator;
+import gov.nasa.jpf.symbc.numeric.IntegerConstant;
 import gov.nasa.jpf.symbc.numeric.IntegerExpression;
 import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
 import gov.nasa.jpf.symbc.numeric.PathCondition;
 import gov.nasa.jpf.vm.ArrayIndexOutOfBoundsExecutiveException;
+import gov.nasa.jpf.vm.ChoiceGenerator;
 import gov.nasa.jpf.vm.ElementInfo;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.MJIEnv;
@@ -57,8 +60,9 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
               // In this case, the index isn't symbolic.
               StackFrame frame = ti.getModifiableTopFrame();
               index = frame.peek();
-              // TODO Replace 3 by a variable
-              System.out.println("assert (= (select " +arrayAttr.getName()+ " "+index+") 3)"); 
+              SelectExpression se = new SelectExpression(arrayAttr, index);
+              // TODO : Check for bounds on index
+              // TODO : add the expression in the PC
 			  return super.execute(ti); }
 		  StackFrame frame = ti.getModifiableTopFrame();
 		  arrayRef = frame.peek(1); // ..,arrayRef,idx
@@ -66,16 +70,79 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
 		  if (arrayRef == MJIEnv.NULL) {
 		    return ti.createAndThrowException("java.lang.NullPointerException");
 		  }
-          // We update the Symbolic Array with the get information
-          SymbolicIntegerValueAtIndex result = arrayAttr.getVal(indexAttr);
-          frame.setLocalAttr(arrayAttr.getSlot(), arrayAttr);
-          frame.pop(2); // We pop the array and the index
-          frame.push(0, false);         // For symbolic expressions, the concrete value does not matter
-          frame.setOperandAttr(result.value);
 
-          // TODO Replace 3 by a variable
-          System.out.println("assert (= (select "+arrayAttr.getName()+ " "+indexAttr+") 3)"); 
-		  return getNext(ti); 
-	  }
-	 
+          ChoiceGenerator<?> cg;
+          boolean condition;
+
+          if (!ti.isFirstStepInsn()) { // first time around
+              cg = new PCChoiceGenerator(3);
+              ((PCChoiceGenerator)cg).setOffset(this.position);
+              ((PCChoiceGenerator)cg).setMethodName(this.getMethodInfo().getFullName());
+              ti.getVM().setNextChoiceGenerator(cg);
+              return this;
+          } else { // this is what really returns results
+            cg = ti.getVM().getChoiceGenerator();
+            assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
+            condition = (Integer)cg.getNextChoice()==0 ? false: true;
+          }
+
+
+       
+          SelectExpression se = new SelectExpression(arrayAttr, indexAttr);
+
+          PathCondition pc;
+          ChoiceGenerator<?> prev_cg = cg.getPreviousChoiceGeneratorOfType(PCChoiceGenerator.class);
+
+          if (prev_cg == null)
+              pc = new PathCondition();
+          else
+              pc = ((PCChoiceGenerator)prev_cg).getCurrentPC();
+
+          assert pc != null;
+
+          if ((Integer)cg.getNextChoice()==1) { // check bounds of the index
+              pc._addDet(Comparator.GE, se.index, se.ae.length);
+              if (pc.simplify()) { // satisfiable
+                  ((PCChoiceGenerator) cg).setCurrentPC(pc);
+
+                  return ti.createAndThrowException("java.lang.ArrayOutOfBoundsException", "index greater than array bounds");
+              }
+              else {
+                  ti.getVM().getSystemState().setIgnored(true);
+                  return getNext(ti);
+              }
+          }
+          else if ((Integer)cg.getNextChoice()==2) {
+              pc._addDet(Comparator.LT, se.index, new IntegerConstant(0));
+              if (pc.simplify()) { // satisfiable
+                  ((PCChoiceGenerator) cg).setCurrentPC(pc);
+                  return ti.createAndThrowException("java.lang.ArrayOutOfBoundsException", "index smaller than array bounds");
+              } else {
+                  ti.getVM().getSystemState().setIgnored(true);
+                  return getNext(ti);
+              }
+          }
+          else {
+              pc._addDet(Comparator.LT, se.index, se.ae.length);
+              pc._addDet(Comparator.GE, se.index, new IntegerConstant(0));
+              if (pc.simplify()) { //satisfiable
+                  ((PCChoiceGenerator) cg).setCurrentPC(pc);
+
+                  // set the result
+                  // We update the Symbolic Array with the get information
+                  SymbolicIntegerValueAtIndex result = arrayAttr.getVal(indexAttr);
+                  frame.setLocalAttr(arrayAttr.getSlot(), arrayAttr);
+                  frame.pop(2); // We pop the array and the index
+                  frame.push(0, false);         // For symbolic expressions, the concrete value does not matter
+                  frame.setOperandAttr(result.value);
+                  // We add the select instruction in the PathCondition
+                  pc._addDet(Comparator.EQ, se, arrayAttr);
+		          return getNext(ti); 
+              }
+              else {
+                  ti.getVM().getSystemState().setIgnored(true);
+                  return getNext(ti);
+              }
+          }	 
+      }
 }

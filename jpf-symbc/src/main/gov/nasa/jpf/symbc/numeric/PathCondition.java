@@ -101,9 +101,6 @@ public class PathCondition implements Comparable<PathCondition> {
 
     // Added for array execution
     public void _addDet(Comparator c, SelectExpression se, ArrayExpression ae) {
-        // Forcing the index of the get instruction to be in array range
-        _addDet(Comparator.LT, se.index, se.ae.length);
-        _addDet(Comparator.GE, se.index, new IntegerConstant(0));
         // Adding the SelectExpression to the PathCondition
         Constraint t = new ArrayConstraint(se, c, ae);
         t.and = header;
