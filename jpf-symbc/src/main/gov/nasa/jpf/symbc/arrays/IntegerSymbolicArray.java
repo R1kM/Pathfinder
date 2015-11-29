@@ -3,10 +3,12 @@ package gov.nasa.jpf.symbc.arrays;
 import java.util.Map;
 
 import gov.nasa.jpf.symbc.numeric.ConstraintExpressionVisitor;
+import gov.nasa.jpf.symbc.numeric.IntegerConstant;
 import gov.nasa.jpf.symbc.arrays.PreviousIntegerArray;
+import gov.nasa.jpf.symbc.numeric.IntegerExpression;
+
 
 public class IntegerSymbolicArray extends ArrayExpression {
-    private int length;
     private String name;
     public String solution = "UNDEFINED";
     public int slot;
@@ -17,14 +19,14 @@ public class IntegerSymbolicArray extends ArrayExpression {
 
     public IntegerSymbolicArray(int size, int slot) {
         super();
-        this.length = size;
+        this.length = new IntegerConstant(size);
         this.slot = slot;
     }
 
     public IntegerSymbolicArray(int n, String name, int slot) {
         super();
         this.name = name;
-        this.length = n;
+        this.length = new IntegerConstant(n);
         this.slot = slot;
     }
 
@@ -36,7 +38,7 @@ public class IntegerSymbolicArray extends ArrayExpression {
         this.previous = previous;
     }
 
-    public int __length() {
+    public IntegerExpression __length() {
         return length;
     }
     

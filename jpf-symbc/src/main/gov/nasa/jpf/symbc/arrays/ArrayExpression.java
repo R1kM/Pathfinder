@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 public abstract class ArrayExpression extends Expression {
-    public int length;
+    public IntegerExpression length;
     public Map<String, SymbolicIntegerValueAtIndex> valAt = null;
     // used for the store operation. We create a new array expression each time we have a store
 
