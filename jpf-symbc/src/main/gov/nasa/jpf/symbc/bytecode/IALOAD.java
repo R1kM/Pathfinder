@@ -135,7 +135,8 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
                   frame.push(0, false);         // For symbolic expressions, the concrete value does not matter
                   frame.setOperandAttr(result.value);
                   // We add the select instruction in the PathCondition
-                  pc._addDet(Comparator.EQ, se, arrayAttr);
+                  System.out.println(result.value.getClass().getName());
+                  pc._addDet(Comparator.EQ, se, result.value);
 		          return getNext(ti); 
               }
               else {

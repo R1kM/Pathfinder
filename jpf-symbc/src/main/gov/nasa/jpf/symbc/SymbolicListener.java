@@ -496,7 +496,8 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 								  testCase = testCase + "true" + ",";
 						  }
 						  else
-							  throw new RuntimeException("## Error: listener does not support type other than int, long, float, double and boolean");
+                              System.out.println("TODO print arrays");
+						//	  throw new RuntimeException("## Error: listener does not support type other than int, long, float, double and boolean");
 						  // TODO: to extend with arrays
 					  }else{
 						  //need to check if value is concrete
@@ -573,7 +574,8 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 								  testCase = testCase + "<td>true</td>";
 						  }
 						  else
-							  throw new RuntimeException("## Error: listener does not support type other than int, long, float, double and boolean");
+                            System.out.println("TODO : print arrays");
+							//  throw new RuntimeException("## Error: listener does not support type other than int, long, float, double and boolean");
 
 					  }else{
 						  //need to check if value is concrete

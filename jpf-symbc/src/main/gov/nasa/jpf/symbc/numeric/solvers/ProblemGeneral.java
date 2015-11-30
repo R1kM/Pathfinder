@@ -122,6 +122,15 @@ public abstract class ProblemGeneral{
 		throw new RuntimeException("## Error: constant not supported");
 	}
 	
+    // Added for arrays in Z3
+    public Object select(Object exp1, Object exp2) {
+        throw new RuntimeException("## Error: Get in Array not supported");
+    }
+
+    public Object makeArrayVar(String name) {
+        throw new RuntimeException("## Error: Array declaration not supported");
+    }
+
 	/* Added for dReal by Nima 
 	 * Note: I had to add a default implementation in order to not break the current solvers.
 	 *       Furthermore, the default implementation must no throw an exception, since current solvers do not override it.

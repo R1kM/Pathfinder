@@ -45,12 +45,14 @@ import java.util.HashMap;
 import java.util.List;
 
 import com.microsoft.z3.ArithExpr;
+import com.microsoft.z3.ArrayExpr;
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.IntExpr;
 import com.microsoft.z3.Model;
 import com.microsoft.z3.RealExpr;
+import com.microsoft.z3.Sort;
 import com.microsoft.z3.Solver;
 import com.microsoft.z3.Status;
 
@@ -608,8 +610,24 @@ public class ProblemZ3 extends ProblemGeneral {
 //		}
 //	}
 
+    public Object select(Object exp1, Object exp2) {
+        try {
+            return ctx.MkSelect((ArrayExpr)exp1, (IntExpr)exp2);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
+        }
+    }
 
-
+    public Object makeArrayVar(String name) {
+        try {
+            Sort int_type = ctx.IntSort();
+            return ctx.MkArrayConst(name, int_type, int_type);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: " + e);
+        }
+    }
 	
 	
 
@@ -627,7 +645,7 @@ public class ProblemZ3 extends ProblemGeneral {
 	         }
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new RuntimeException("## Error Z3: Exception caught in CVC3 JNI: \n" + e);
+			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 		}
 	}
 

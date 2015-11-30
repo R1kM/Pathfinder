@@ -43,6 +43,10 @@ import java.util.List;
 import java.util.Map;
 
 import gov.nasa.jpf.symbc.arrays.ArrayConstraint;
+import gov.nasa.jpf.symbc.arrays.ArrayExpression;
+import gov.nasa.jpf.symbc.arrays.IntegerSymbolicArray;
+import gov.nasa.jpf.symbc.arrays.SelectExpression;
+import gov.nasa.jpf.symbc.arrays.StoreExpression;
 import gov.nasa.jpf.symbc.numeric.solvers.ProblemCoral;
 import gov.nasa.jpf.symbc.numeric.solvers.ProblemGeneral;
 import gov.nasa.jpf.symbc.numeric.solvers.ProblemZ3;
@@ -876,7 +880,40 @@ public class PCParser {
 	//static Map<String,Boolean> dpMap = new HashMap<String,Boolean>();
 
     public static boolean createDPArrayConstraint(final ArrayConstraint cRef) {
+        final Comparator c_compRef = cRef.getComparator();
+
+
+        SelectExpression selex = null;
+        StoreExpression stoex = null;
+        IntegerExpression sel_right = null;
+        ArrayExpression sto_right = null;
+        try {
+             selex = (SelectExpression)cRef.getLeft();
+             sel_right = (IntegerExpression)cRef.getRight();
+        } catch (Exception e) {
+           try {
+               stoex = (StoreExpression)cRef.getLeft(); 
+               sto_right = (ArrayExpression)cRef.getRight();
+           }  catch (Exception r) {
+                   throw new RuntimeException("ArrayConstraint is not select or store");
+               }
+           
+        }
         
+        switch(c_compRef) {
+        case EQ:
+
+            if (selex != null && sel_right != null) {
+                // The array constraint is a select
+                IntegerSymbolicArray ae = (IntegerSymbolicArray) selex.ae;
+                pb.post(pb.eq(pb.select(pb.makeArrayVar(ae.getName()), getExpression(selex.index)), getExpression(sel_right)));
+            }
+            break;
+        case NE:
+            break;
+        default:
+            throw new RuntimeException("ArrayConstraint is not select or store");
+        }
         return true;
     }
 
@@ -912,7 +949,7 @@ public class PCParser {
 			}
 			else if (cRef instanceof ArrayConstraint) {
                 if (pb instanceof ProblemZ3)
-                    constraintResult = createDPArrayConstraint(cRef);
+                    constraintResult = createDPArrayConstraint((ArrayConstraint)cRef);
                 else
                     throw new RuntimeException("## Error: Array Constraint not handled (only Z3 can handle it)"+cRef); 
             }

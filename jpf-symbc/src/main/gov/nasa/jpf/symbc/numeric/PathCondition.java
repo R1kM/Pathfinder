@@ -100,7 +100,7 @@ public class PathCondition implements Comparable<PathCondition> {
 	}
 
     // Added for array execution
-    public void _addDet(Comparator c, SelectExpression se, ArrayExpression ae) {
+    public void _addDet(Comparator c, SelectExpression se, IntegerExpression ae) {
         // Adding the SelectExpression to the PathCondition
         Constraint t = new ArrayConstraint(se, c, ae);
         t.and = header;
