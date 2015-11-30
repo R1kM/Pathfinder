@@ -875,6 +875,11 @@ public class PCParser {
 	}
 	//static Map<String,Boolean> dpMap = new HashMap<String,Boolean>();
 
+    public static boolean createDPArrayConstraint(final ArrayConstraint cRef) {
+        
+        return true;
+    }
+
 	// result is in pb
 	public static ProblemGeneral parse(final PathCondition pc, final ProblemGeneral pbtosolve) {
 		pb=pbtosolve;
@@ -906,11 +911,10 @@ public class PCParser {
 
 			}
 			else if (cRef instanceof ArrayConstraint) {
-                System.out.println("## Warning : ArrayConstraint (only Z3 can handle it)" + cRef);   
                 if (pb instanceof ProblemZ3)
-                    System.out.println("ProblemZ3");
+                    constraintResult = createDPArrayConstraint(cRef);
                 else
-                    throw new RuntimeException("## Error: Array Constraint not handled "+cRef); 
+                    throw new RuntimeException("## Error: Array Constraint not handled (only Z3 can handle it)"+cRef); 
             }
             else {
 				System.out.println("## Warning: Non Linear Integer Constraint (only coral can handle it)" + cRef);
