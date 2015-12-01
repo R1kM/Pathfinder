@@ -58,15 +58,18 @@ public class IASTORE extends gov.nasa.jpf.jvm.bytecode.IASTORE {
          }
 
          IntegerSymbolicArray arrayAttr = (IntegerSymbolicArray)peekArrayAttr(ti);
+         IntegerExpression indexAttr =null;
 
-		 if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression))
-             // In this case, the index isn't symbolic
-             //TODO Check bounds of array
-             // TODO Add Store in PathCondition
-			  return super.execute(ti);
-		  int arrayref = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
+
+		 if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
+              int index = ti.getTopFrame().peek(1);
+              indexAttr =  new IntegerConstant(index); 
+		  } else {
+              indexAttr = (IntegerExpression)peekIndexAttr(ti);
+          }
+          assert (indexAttr != null) : "indexAttr shouldn't be null in IASTORE instruction";
+          int arrayref = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
 		  StackFrame frame = ti.getModifiableTopFrame();
-          IntegerExpression indexAttr = (IntegerExpression)peekIndexAttr(ti);
 		  if (arrayref == MJIEnv.NULL) {
 		        return ti.createAndThrowException("java.lang.NullPointerException");
 		  } 
