@@ -144,6 +144,9 @@ public class IASTORE extends gov.nasa.jpf.jvm.bytecode.IASTORE {
                   frame.setLocalAttr(newArrayAttr.getSlot(), newArrayAttr);
                   frame.pop(2); // We pop the array and the index
 
+                  StoreExpression se = new StoreExpression(arrayAttr, indexAttr, sym_value);
+                  pc._addDet(Comparator.EQ, se, newArrayAttr);
+
                   return getNext(ti);
              }
              else {
