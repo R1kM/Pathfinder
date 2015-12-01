@@ -51,7 +51,12 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
 		
           if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
               // In this case, the array isn't symbolic
-              return super.execute(ti);
+              if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) { 
+                  // In this case, the index isn't symbolic either
+                  return super.execute(ti);
+              }
+              // In this case, the array is concrete, but the index is symbolic
+              throw new RuntimeException("concrete array with symbolic index in get not implemented");
           }
 
           IntegerSymbolicArray arrayAttr = (IntegerSymbolicArray)peekArrayAttr(ti);
