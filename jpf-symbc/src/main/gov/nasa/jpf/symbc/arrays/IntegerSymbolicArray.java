@@ -33,7 +33,7 @@ public class IntegerSymbolicArray extends ArrayExpression {
     public IntegerSymbolicArray(PreviousIntegerArray previous) {
         super();
         this.length = previous.ae.length;
-        this.name = previous.ae.name;
+        this.name = previous.ae.name+ "!1";
         this.slot = previous.ae.slot;
         this.previous = previous;
     }

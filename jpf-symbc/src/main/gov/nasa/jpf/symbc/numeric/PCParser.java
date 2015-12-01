@@ -918,7 +918,20 @@ public class PCParser {
             }
             throw new RuntimeException("ArrayConstraint is not correct select or store");
         case NE:
-            break;
+            if (selex != null && sel_right != null) {
+                // The array constraint is a select
+                IntegerSymbolicArray ae = (IntegerSymbolicArray) selex.ae;
+                pb.post(pb.neq(pb.select(pb.makeArrayVar(ae.getName()), getExpression(selex.index)), getExpression(sel_right)));
+                break;
+            }
+            if (stoex != null && sto_right != null) {
+                // The array constraint is a store
+                IntegerSymbolicArray ae = (IntegerSymbolicArray)stoex.ae;
+                IntegerSymbolicArray newae = (IntegerSymbolicArray) sto_right;
+                pb.post(pb.neq(pb.store(pb.makeArrayVar(ae.getName()), getExpression(stoex.index), getExpression(stoex.value)), newae));
+                break;
+            }
+            throw new RuntimeException("ArrayConstraint is not correct select or store");
         default:
             throw new RuntimeException("ArrayConstraint is not select or store");
         }
