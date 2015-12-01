@@ -127,6 +127,10 @@ public abstract class ProblemGeneral{
         throw new RuntimeException("## Error: Get in Array not supported");
     }
 
+    public Object store(Object exp1, Object exp2, Object exp3) {
+        throw new RuntimeException("## Error : Store in Array not supported");
+    }
+
     public Object makeArrayVar(String name) {
         throw new RuntimeException("## Error: Array declaration not supported");
     }

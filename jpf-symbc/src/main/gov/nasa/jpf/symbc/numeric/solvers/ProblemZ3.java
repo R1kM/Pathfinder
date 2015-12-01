@@ -618,6 +618,15 @@ public class ProblemZ3 extends ProblemGeneral {
             throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
         }
     }
+    
+    public Object store(Object exp1, Object exp2, Object exp3) {
+        try {
+            return ctx.MkStore((ArrayExpr)exp1, (IntExpr)exp2, (IntExpr)exp3);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
+        }
+    }
 
     public Object makeArrayVar(String name) {
         try {
