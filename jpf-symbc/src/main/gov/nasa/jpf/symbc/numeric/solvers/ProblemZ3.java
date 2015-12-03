@@ -637,6 +637,16 @@ public class ProblemZ3 extends ProblemGeneral {
             throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: " + e);
         }
     }
+
+    public Object makeIntConst(int value) {
+        try {
+            return ctx.MkInt(value);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("## Error Z3 : Exception caught in Z3 JNI: " + e);
+        }
+    }
+
 	
 	
 

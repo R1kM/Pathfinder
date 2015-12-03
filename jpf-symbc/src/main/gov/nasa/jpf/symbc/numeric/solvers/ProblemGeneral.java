@@ -135,6 +135,10 @@ public abstract class ProblemGeneral{
         throw new RuntimeException("## Error: Array declaration not supported");
     }
 
+    public Object makeIntConst(int value) {
+        throw new RuntimeException("## Error : makeIntConst not supported");
+    }
+
 	/* Added for dReal by Nima 
 	 * Note: I had to add a default implementation in order to not break the current solvers.
 	 *       Furthermore, the default implementation must no throw an exception, since current solvers do not override it.

@@ -913,7 +913,7 @@ public class PCParser {
                 // The array constraint is a store
                 IntegerSymbolicArray ae = (IntegerSymbolicArray) stoex.ae;
                 IntegerSymbolicArray newae = (IntegerSymbolicArray) sto_right;
-                pb.post(pb.eq(pb.store(pb.makeArrayVar(ae.getName()), getExpression(stoex.index), getExpression(stoex.value)), newae));
+                pb.post(pb.eq(pb.store(pb.makeArrayVar(ae.getName()), (stoex.index instanceof IntegerConstant) ? pb.makeIntConst(((IntegerConstant)stoex.index).value) : getExpression(stoex.index), getExpression(stoex.value)), pb.makeArrayVar(newae.getName())));
                 break;
             }
             throw new RuntimeException("ArrayConstraint is not correct select or store");
