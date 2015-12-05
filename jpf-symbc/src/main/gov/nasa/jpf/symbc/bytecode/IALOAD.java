@@ -60,81 +60,25 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
           }
 
           IntegerSymbolicArray arrayAttr = (IntegerSymbolicArray)peekArrayAttr(ti);
+          IntegerExpression indexAttr = null;
+          SelectExpression se = null;
+          StackFrame frame = ti.getModifiableTopFrame();
+		  arrayRef = frame.peek(1); // ..,arrayRef,idx
 
 		  if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
               // In this case, the index isn't symbolic.
-              StackFrame frame = ti.getModifiableTopFrame();
               index = frame.peek();
-              SelectExpression se = new SelectExpression(arrayAttr, index);
-              IntegerExpression indexAttr = new IntegerConstant(index);
+              se = new SelectExpression(arrayAttr, index);
+              indexAttr = new IntegerConstant(index);
 
-              ChoiceGenerator<?> cg;
-              boolean condition;
+          } else {          
+              indexAttr = (IntegerExpression)peekIndexAttr(ti);
+              se = new SelectExpression(arrayAttr, indexAttr);
+          }
 
-              if (!ti.isFirstStepInsn()) { // first time around
-                  cg = new PCChoiceGenerator(3);
-                  ((PCChoiceGenerator)cg).setOffset(this.position);
-                  ((PCChoiceGenerator)cg).setMethodName(this.getMethodInfo().getFullName());
-                  ti.getVM().setNextChoiceGenerator(cg);
-                  return this;
-              } else { // this is what really returns results
-                cg = ti.getVM().getChoiceGenerator();
-                assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got:" + cg;
-              }
+          assert indexAttr != null;
+          assert se != null;
 
-              PathCondition pc;
-              ChoiceGenerator<?> prev_cg = cg.getPreviousChoiceGeneratorOfType(PCChoiceGenerator.class);
-
-              if (prev_cg == null)
-                  pc = new PathCondition();
-              else
-                  pc = ((PCChoiceGenerator)prev_cg).getCurrentPC();
-
-              assert pc != null;
-
-              if ((Integer)cg.getNextChoice() == 1) { // check bounds of the index
-                pc._addDet(Comparator.GE, se.index, se.ae.length);
-                if (pc.simplify()) { // satisfiable
-                    ((PCChoiceGenerator) cg).setCurrentPC(pc);
-                    return ti.createAndThrowException("java.lang.ArrayOutOfBoundsException", "index greater than array bounds");
-                }
-                else {
-                    ti.getVM().getSystemState().setIgnored(true);
-                    return getNext(ti);
-                }
-              }
-              else if ((Integer)cg.getNextChoice() == 2) {
-                  pc._addDet(Comparator.LT, se.index, new IntegerConstant(0));
-                  if (pc.simplify()) { // satisfiable
-                      ((PCChoiceGenerator) cg).setCurrentPC(pc);
-                      return ti.createAndThrowException("java.lang.ArrayOutOfBoundsException", "index smaller than array bounds");
-                  } else {
-                      ti.getVM().getSystemState().setIgnored(true);
-                      return getNext(ti);
-                  }
-              } else {
-                 pc._addDet(Comparator.LT, se.index, se.ae.length);
-                 pc._addDet(Comparator.GE, se.index, new IntegerConstant(0));
-                 if (pc.simplify()) { // satisfiable
-                    
-                    SymbolicIntegerValueAtIndex result = arrayAttr.getVal(indexAttr); 
-                    frame.setLocalAttr(arrayAttr.getSlot(), arrayAttr);
-                    frame.pop(2); // We pop the array and the index
-                    frame.push(0, false);         // For symbolic expressions, the concrete value does not matter
-                    frame.setOperandAttr(result.value);
-                    // We add the select instruction in the PathCondition
-                    pc._addDet(Comparator.EQ, se, result.value);
-		            return getNext(ti); 
-                }
-                else {
-                    ti.getVM().getSystemState().setIgnored(true);
-                    return getNext(ti);
-                }
-             }	 
-          } 
-		  StackFrame frame = ti.getModifiableTopFrame();
-		  arrayRef = frame.peek(1); // ..,arrayRef,idx
-          IntegerExpression indexAttr =(IntegerExpression)peekIndexAttr(ti);
 		  if (arrayRef == MJIEnv.NULL) {
 		    return ti.createAndThrowException("java.lang.NullPointerException");
 		  }
@@ -152,10 +96,6 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
             cg = ti.getVM().getChoiceGenerator();
             assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
           }
-
-
-       
-          SelectExpression se = new SelectExpression(arrayAttr, indexAttr);
 
           PathCondition pc;
           ChoiceGenerator<?> prev_cg = cg.getPreviousChoiceGeneratorOfType(PCChoiceGenerator.class);

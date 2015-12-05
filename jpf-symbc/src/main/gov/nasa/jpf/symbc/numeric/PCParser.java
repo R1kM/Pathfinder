@@ -906,14 +906,19 @@ public class PCParser {
             if (selex != null && sel_right != null) {
                 // The array constraint is a select
                 IntegerSymbolicArray ae = (IntegerSymbolicArray) selex.ae;
-                pb.post(pb.eq(pb.select(pb.makeArrayVar(ae.getName()), getExpression(selex.index)), getExpression(sel_right)));
+                pb.post(pb.eq(pb.select(pb.makeArrayVar(ae.getName()), 
+                  (selex.index instanceof IntegerConstant) ? pb.makeIntConst(((IntegerConstant)selex.index).value) : getExpression(selex.index)),
+                  (sel_right instanceof IntegerConstant) ? pb.makeIntConst(((IntegerConstant)sel_right).value) : getExpression(sel_right)));
                 break;
             }
             if (stoex != null && sto_right != null) {
                 // The array constraint is a store
                 IntegerSymbolicArray ae = (IntegerSymbolicArray) stoex.ae;
                 IntegerSymbolicArray newae = (IntegerSymbolicArray) sto_right;
-                pb.post(pb.eq(pb.store(pb.makeArrayVar(ae.getName()), (stoex.index instanceof IntegerConstant) ? pb.makeIntConst(((IntegerConstant)stoex.index).value) : getExpression(stoex.index), getExpression(stoex.value)), pb.makeArrayVar(newae.getName())));
+                pb.post(pb.eq(pb.store(pb.makeArrayVar(ae.getName()), 
+                  (stoex.index instanceof IntegerConstant) ? pb.makeIntConst(((IntegerConstant)stoex.index).value) : getExpression(stoex.index), 
+                  (stoex.value instanceof IntegerConstant) ? pb.makeIntConst(((IntegerConstant)stoex.value).value) :  getExpression(stoex.value)),
+                   pb.makeArrayVar(newae.getName())));
                 break;
             }
             throw new RuntimeException("ArrayConstraint is not correct select or store");
