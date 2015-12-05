@@ -30,6 +30,13 @@ public class IntegerSymbolicArray extends ArrayExpression {
         this.slot = slot;
     }
 
+    public IntegerSymbolicArray(IntegerExpression n, String name, int slot) {
+        super();
+        this.name = name;
+        this.length = n;
+        this.slot = slot;
+    }
+
     public IntegerSymbolicArray(PreviousIntegerArray previous) {
         super();
         this.length = previous.ae.length;

@@ -102,7 +102,7 @@ public class IASTORE extends gov.nasa.jpf.jvm.bytecode.IASTORE {
               pc._addDet(Comparator.GE, indexAttr, arrayAttr.length);
               if (pc.simplify()) { // satisfiable
                   ((PCChoiceGenerator) cg).setCurrentPC(pc);
-                  return ti.createAndThrowException("java.lang.ArrayOutOfBoundsException", "index greater than array bounds");
+                  return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException", "index greater than array bounds");
               }
               else {
                   ti.getVM().getSystemState().setIgnored(true);
@@ -113,7 +113,7 @@ public class IASTORE extends gov.nasa.jpf.jvm.bytecode.IASTORE {
               pc._addDet(Comparator.LT, indexAttr, new IntegerConstant(0));
               if (pc.simplify()) { // satisfiable
                   ((PCChoiceGenerator) cg).setCurrentPC(pc);
-                  return ti.createAndThrowException("java.lang.ArrayOutOfBoundsException", "index smaller than array bounds");
+                  return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException", "index smaller than array bounds");
               }
               else {
                   ti.getVM().getSystemState().setIgnored(true);

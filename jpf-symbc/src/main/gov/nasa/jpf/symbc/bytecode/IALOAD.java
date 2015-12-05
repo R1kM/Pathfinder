@@ -112,7 +112,7 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
               if (pc.simplify()) { // satisfiable
                   ((PCChoiceGenerator) cg).setCurrentPC(pc);
 
-                  return ti.createAndThrowException("java.lang.ArrayOutOfBoundsException", "index greater than array bounds");
+                  return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException", "index greater than array bounds");
               }
               else {
                   ti.getVM().getSystemState().setIgnored(true);
@@ -123,7 +123,7 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
               pc._addDet(Comparator.LT, se.index, new IntegerConstant(0));
               if (pc.simplify()) { // satisfiable
                   ((PCChoiceGenerator) cg).setCurrentPC(pc);
-                  return ti.createAndThrowException("java.lang.ArrayOutOfBoundsException", "index smaller than array bounds");
+                  return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException", "index smaller than array bounds");
               } else {
                   ti.getVM().getSystemState().setIgnored(true);
                   return getNext(ti);
