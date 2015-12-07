@@ -311,7 +311,7 @@ public class BytecodeUtils {
                         ElementInfo eiArray = (ElementInfo)argValues[j];
 
                         if (eiArray!= null) {
-                            IntegerSymbolicArray sym_v = new IntegerSymbolicArray(new SymbolicInteger(name + "_length"), varName(name, VarType.ARRAY), j);
+                            IntegerSymbolicArray sym_v = new IntegerSymbolicArray(new SymbolicInteger(name + "!length"), varName(name, VarType.ARRAY), j);
                             expressionMap.put(name, sym_v);
                             sf.setOperandAttr(stackIdx, sym_v);
                             outputString = outputString.concat(" " + sym_v + ",");

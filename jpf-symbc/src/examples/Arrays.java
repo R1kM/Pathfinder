@@ -1,6 +1,7 @@
 public class Arrays {
     public static int counter(int i, int[] arr) {
         arr[1] = i;
+        arr[2] = i;
         int a = arr[1];
         int b = 1/a;
         return a;

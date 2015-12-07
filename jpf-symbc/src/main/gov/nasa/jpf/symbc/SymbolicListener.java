@@ -496,10 +496,12 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 							  else
 								  testCase = testCase + "true" + ",";
 						  }
-						  else
+						  else if (actualType == Types.T_ARRAY) {
                               System.out.println("TODO print arrays");
-						//	  throw new RuntimeException("## Error: listener does not support type other than int, long, float, double and boolean");
 						  // TODO: to extend with arrays
+                          } else {
+							  throw new RuntimeException("## Error: listener does not support type other than int, long, float, double and boolean");
+                        }
 					  }else{
 						  //need to check if value is concrete
 						  if (token.contains("CONCRETE"))

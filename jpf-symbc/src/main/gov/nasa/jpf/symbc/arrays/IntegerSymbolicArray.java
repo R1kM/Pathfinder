@@ -40,7 +40,15 @@ public class IntegerSymbolicArray extends ArrayExpression {
     public IntegerSymbolicArray(PreviousIntegerArray previous) {
         super();
         this.length = previous.ae.length;
-        this.name = previous.ae.name+ "!1";
+        String newName = previous.ae.name;
+        if (newName.indexOf("!") == -1) {
+            newName = newName+ "!1";
+        } else {
+            int aux = Integer.parseInt(newName.substring(newName.indexOf("!") + 1));
+            newName = newName.substring(0, newName.indexOf("!") +1) + (aux + 1);
+            System.out.println("new name is " + newName);    
+        }
+        this.name = newName;
         this.slot = previous.ae.slot;
         this.previous = previous;
     }
