@@ -177,6 +177,7 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 	@Override
 	 public void instructionExecuted(VM vm, ThreadInfo currentThread, Instruction nextInstruction, Instruction executedInstruction) {
 
+
 		if (!vm.getSystemState().isIgnored()) {
 			Instruction insn = executedInstruction;
 		//	SystemState ss = vm.getSystemState();

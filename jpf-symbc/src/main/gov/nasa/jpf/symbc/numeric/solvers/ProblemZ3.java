@@ -686,7 +686,7 @@ public class ProblemZ3 extends ProblemGeneral {
             if (Status.SATISFIABLE == solver.Check())
             {
                 model = solver.Model();
-                System.out.println(model);
+           //     System.out.println(model);
                 return true;
             } else
           
