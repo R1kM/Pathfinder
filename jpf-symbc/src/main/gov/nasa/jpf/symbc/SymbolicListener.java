@@ -457,7 +457,12 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 			  while(it.hasNext()){
 				  String testCase = methodSummary.getMethodName() + "(";
 				  Pair pcPair = (Pair)it.next();
-				  String pc = (String)pcPair._1;
+                  String[] aux = ((String)pcPair._1).split("Z3 Model");
+				  String pc = aux[0];
+                  String model = "";
+                  if (aux.length > 1) {
+                  model = aux[1];
+                  }
 				  String errorMessage = (String)pcPair._2;
 				  String symValues = methodSummary.getSymValues();
 				  String argValues = methodSummary.getArgValues();
@@ -516,7 +521,7 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 								  testCase = testCase + "true" + ",";
 						  }
 						  else if (actualType == Types.T_ARRAY) {
-                              testCase = testCase + "array" + ",";
+                              testCase = testCase + token  + ",";
 						  // TODO: to extend with arrays
                           } else {
 							  throw new RuntimeException("## Error: listener does not support type other than int, long, float, double and boolean");
@@ -538,7 +543,8 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 					  testCase = testCase + "  --> " + errorMessage;
 				  //do not add duplicate test case
 				  if (!allTestCases.contains(testCase))
-					  allTestCases = allTestCases + "\n" + testCase;
+					  allTestCases = allTestCases + "\n" + testCase + "\n" + model;
+                      // TODO : parse correctly model to keep only the interesting information
 			  }
 			  pw.println(allTestCases);
 		  }else{
