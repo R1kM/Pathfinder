@@ -699,6 +699,19 @@ public class ProblemZ3 extends ProblemGeneral {
         }
 	}
 
+    public String getModel() {
+        try {
+            if (Status.SATISFIABLE == solver.Check())
+            {
+                return solver.Model().toString();
+            } else
+            return "";
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("## Error Z3: " +e);
+        }
+    }
+
 	public void post(Object constraint) {
 		try{
 			solver.Assert((BoolExpr)constraint);

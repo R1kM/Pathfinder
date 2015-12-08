@@ -53,11 +53,14 @@ import gov.nasa.jpf.symbc.numeric.Expression;
 import gov.nasa.jpf.symbc.numeric.IntegerConstant;
 import gov.nasa.jpf.symbc.numeric.IntegerExpression;
 import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
+import gov.nasa.jpf.symbc.numeric.PCParser;
 import gov.nasa.jpf.symbc.numeric.PathCondition;
 import gov.nasa.jpf.symbc.numeric.RealConstant;
 import gov.nasa.jpf.symbc.numeric.RealExpression;
 import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
 import gov.nasa.jpf.symbc.numeric.SymbolicReal;
+import gov.nasa.jpf.symbc.numeric.solvers.ProblemGeneral;
+import gov.nasa.jpf.symbc.numeric.solvers.ProblemZ3;
 
 import gov.nasa.jpf.symbc.numeric.SymbolicConstraintsGeneral;
 //import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
@@ -129,6 +132,7 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 	public void propertyViolated (Search search){
 
 		VM vm = search.getVM();
+        String Model = "";
 
 			ChoiceGenerator <?>cg = vm.getChoiceGenerator();
 			if (!(cg instanceof PCChoiceGenerator)){
@@ -141,6 +145,11 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 			if ((cg instanceof PCChoiceGenerator) &&
 				      ((PCChoiceGenerator) cg).getCurrentPC() != null){
 				PathCondition pc = ((PCChoiceGenerator) cg).getCurrentPC();
+                if (SymbolicInstructionFactory.dp[0].equalsIgnoreCase("z3")) {
+                    ProblemGeneral pb = new ProblemZ3();
+                    pb = PCParser.parse(pc, pb);
+                    Model = "Z3 Model\n" + pb.getModel();
+                }
 				String error = search.getLastError().getDetails();
 				error = "\"" + error.substring(0,error.indexOf("\n")) + "...\"";
 				// C: not clear where result was used here -- to review
@@ -158,7 +167,7 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 				else
 					pc.solve();
 
-				Pair<String,String> pcPair = new Pair<String,String>(pc.toString(),error);//(pc.toString(),error);
+				Pair<String,String> pcPair = new Pair<String,String>(pc.toString() + Model,error);//(pc.toString(),error);
 
 				//String methodName = vm.getLastInstruction().getMethodInfo().getName();
 				MethodSummary methodSummary = allSummaries.get(currentMethodName);
