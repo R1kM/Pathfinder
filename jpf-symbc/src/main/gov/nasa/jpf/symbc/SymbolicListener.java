@@ -47,7 +47,7 @@ import gov.nasa.jpf.symbc.bytecode.BytecodeUtils;
 import gov.nasa.jpf.symbc.bytecode.INVOKESTATIC;
 import gov.nasa.jpf.symbc.concolic.PCAnalyzer;
 
-
+import gov.nasa.jpf.symbc.arrays.IntegerSymbolicArray;
 import gov.nasa.jpf.symbc.numeric.Comparator;
 import gov.nasa.jpf.symbc.numeric.Expression;
 import gov.nasa.jpf.symbc.numeric.IntegerConstant;
@@ -250,7 +250,11 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 					for(int i=0; i < numberOfArgs; i++){
 						Expression expLocal = (Expression)sf.getLocalAttr(sfIndex);
 						if (expLocal != null) // symbolic
-							symVarNameStr = expLocal.toString();
+							if (expLocal instanceof IntegerSymbolicArray) {
+                                symVarNameStr = ((IntegerSymbolicArray)expLocal).getName();
+                            } else {
+                            symVarNameStr = expLocal.toString();
+                            }
 						else
 							symVarNameStr = argsInfo[namesIndex].getName() + "_CONCRETE" + ",";
 						// TODO: what happens if the argument is an array?
@@ -462,6 +466,13 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 					  byte actualType = Byte.parseByte(st3.nextToken());
 					  if (st.hasMoreTokens())
 						  token = st.nextToken();
+                          if (token.contains("SYMARRAY")) {
+                            String[] parts = token.split("_");
+                            token = parts[0] ;
+                            for (int i = 1; i<parts.length - 2; i++) {
+                                token = token + "_" + parts[i];
+                            }
+                          }
 					  if (pc.contains(token)){
 						  String temp = pc.substring(pc.indexOf(token));
 						  if (temp.indexOf(']') < 0) {
@@ -469,7 +480,6 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 						  }
 						  
 						  String val = temp.substring(temp.indexOf("[")+1,temp.indexOf("]"));
-						  
 						  
 						  //if(actualType == Types.T_INT || actualType == Types.T_FLOAT || actualType == Types.T_LONG || actualType == Types.T_DOUBLE)
 							  //testCase = testCase + val + ",";
@@ -497,7 +507,7 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 								  testCase = testCase + "true" + ",";
 						  }
 						  else if (actualType == Types.T_ARRAY) {
-                              System.out.println("TODO print arrays");
+                              testCase = testCase + "array" + ",";
 						  // TODO: to extend with arrays
                           } else {
 							  throw new RuntimeException("## Error: listener does not support type other than int, long, float, double and boolean");
