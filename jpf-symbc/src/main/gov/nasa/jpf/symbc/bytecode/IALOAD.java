@@ -22,6 +22,7 @@ package gov.nasa.jpf.symbc.bytecode;
 
 import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
 import gov.nasa.jpf.symbc.arrays.ArrayExpression;
+import gov.nasa.jpf.symbc.arrays.ConcreteArrayAttr;
 import gov.nasa.jpf.symbc.arrays.SelectExpression;
 import gov.nasa.jpf.symbc.arrays.IntegerSymbolicArray;
 import gov.nasa.jpf.symbc.arrays.SymbolicIntegerValueAtIndex;
@@ -47,41 +48,9 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
 	 @Override
 	  public Instruction execute (ThreadInfo ti) {
 
-          // We may need to add the case where we have a symbolic index and a concrete array
-		
-          if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
-              // In this case, the array isn't symbolic
-              if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) { 
-                  // In this case, the index isn't symbolic either
-                  return super.execute(ti);
-              }
-              // In this case, the array is concrete, but the index is symbolic
-              throw new RuntimeException("concrete array with symbolic index in get not implemented");
-          }
-
-          IntegerSymbolicArray arrayAttr = (IntegerSymbolicArray)peekArrayAttr(ti);
-          IntegerExpression indexAttr = null;
-          SelectExpression se = null;
+          IntegerSymbolicArray arrayAttr = null;
           StackFrame frame = ti.getModifiableTopFrame();
 		  arrayRef = frame.peek(1); // ..,arrayRef,idx
-
-		  if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
-              // In this case, the index isn't symbolic.
-              index = frame.peek();
-              se = new SelectExpression(arrayAttr, index);
-              indexAttr = new IntegerConstant(index);
-
-          } else {          
-              indexAttr = (IntegerExpression)peekIndexAttr(ti);
-              se = new SelectExpression(arrayAttr, indexAttr);
-          }
-
-          assert indexAttr != null;
-          assert se != null;
-
-		  if (arrayRef == MJIEnv.NULL) {
-		    return ti.createAndThrowException("java.lang.NullPointerException");
-		  }
 
           ChoiceGenerator<?> cg;
           boolean condition;
@@ -106,6 +75,52 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
               pc = ((PCChoiceGenerator)prev_cg).getCurrentPC();
 
           assert pc != null;
+
+          if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
+              // In this case, the array isn't symbolic
+              if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) { 
+                  // In this case, the index isn't symbolic either
+                  return super.execute(ti);
+              }
+              // In this case, the array is concrete, but the index is symbolic
+              if (peekArrayAttr(ti) instanceof ConcreteArrayAttr) {
+                 ConcreteArrayAttr ca = (ConcreteArrayAttr)peekArrayAttr(ti);
+                 ElementInfo arrayInfo = ti.getElementInfo(arrayRef);
+                 arrayAttr = new IntegerSymbolicArray(arrayInfo.arrayLength(), ca.getSlot()); 
+                 for (int i = 0; i < arrayInfo.arrayLength(); i++) {
+                    int arrValue = arrayInfo.getIntElement(i);
+                    pc._addDet(Comparator.EQ, new SelectExpression(arrayAttr, i), new IntegerConstant(arrValue));
+                 }
+              } else {
+                  // In this case, the array wasn't loaded, and thus isn't stored in the local variables yet (can this happen ?)
+                throw new RuntimeException("concrete array with symbolic index in get not implemented");
+              }
+          }
+
+          else {
+            arrayAttr = (IntegerSymbolicArray)peekArrayAttr(ti);
+          }
+          IntegerExpression indexAttr = null;
+          SelectExpression se = null;
+
+		  if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
+              // In this case, the index isn't symbolic.
+              index = frame.peek();
+              se = new SelectExpression(arrayAttr, index);
+              indexAttr = new IntegerConstant(index);
+
+          } else {          
+              indexAttr = (IntegerExpression)peekIndexAttr(ti);
+              se = new SelectExpression(arrayAttr, indexAttr);
+          }
+
+          assert indexAttr != null;
+          assert se != null;
+
+		  if (arrayRef == MJIEnv.NULL) {
+		    return ti.createAndThrowException("java.lang.NullPointerException");
+		  }
+
 
           if ((Integer)cg.getNextChoice()==1) { // check bounds of the index
               pc._addDet(Comparator.GE, se.index, se.ae.length);
