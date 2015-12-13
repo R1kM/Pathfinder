@@ -20,7 +20,6 @@ package gov.nasa.jpf.symbc.bytecode;
 
 import gov.nasa.jpf.Config;
 import gov.nasa.jpf.symbc.arrays.ArrayExpression;
-import gov.nasa.jpf.symbc.arrays.ConcreteArrayAttr;
 import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
 import gov.nasa.jpf.symbc.heap.HeapChoiceGenerator;
 import gov.nasa.jpf.symbc.heap.HeapNode;
@@ -58,16 +57,6 @@ public class ALOAD extends gov.nasa.jpf.jvm.bytecode.ALOAD {
 
     @Override
 	public Instruction execute (ThreadInfo th) {
-		StackFrame sf = th.getModifiableTopFrame();
-        // Just to place a placeholder if the element to load is an array
-        sf.pushLocal(index);
-        int arrayRef = sf.pop();
-        ElementInfo elemInfo = th.getElementInfo(arrayRef);
-        if (elemInfo.isArray()) {
-           if (!(sf.getLocalAttr(index) instanceof ArrayExpression)) {
-               sf.setLocalAttr(index, new ConcreteArrayAttr(index));
-           }
-        }
          
 		HeapNode[] prevSymRefs = null; // previously initialized objects of same type: candidates for lazy init
         int numSymRefs = 0; // # of prev. initialized objects
@@ -80,7 +69,7 @@ public class ALOAD extends gov.nasa.jpf.jvm.bytecode.ALOAD {
 
 		// TODO: fix handle polymorphism
 		
-
+		StackFrame sf = th.getModifiableTopFrame();
 		int objRef = sf.peek();
 		ElementInfo ei = th.getElementInfo(objRef);
 		Object attr = sf.getLocalAttr(index);
