@@ -47,39 +47,8 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
 	 @Override
 	  public Instruction execute (ThreadInfo ti) {
 
-          if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
-              // In this case, the array isn't symbolic
-              if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) { 
-                  // In this case, the index isn't symbolic either
-                  return super.execute(ti);
-              }
-                throw new RuntimeException("concrete array with symbolic index in get not implemented");
-          }
-
-          IntegerSymbolicArray arrayAttr = (IntegerSymbolicArray)peekArrayAttr(ti);
-          IntegerExpression indexAttr = null;
-          SelectExpression se = null;
-          StackFrame frame = ti.getModifiableTopFrame();
-          arrayRef = frame.peek(1); // ..., arrayRef, idx
-
-		  if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
-              // In this case, the index isn't symbolic.
-              index = frame.peek();
-              se = new SelectExpression(arrayAttr, index);
-              indexAttr = new IntegerConstant(index);
-
-          } else {          
-              indexAttr = (IntegerExpression)peekIndexAttr(ti);
-              se = new SelectExpression(arrayAttr, indexAttr);
-          }
-
-          assert indexAttr != null;
-          assert se != null;
-
-		  if (arrayRef == MJIEnv.NULL) {
-		    return ti.createAndThrowException("java.lang.NullPointerException");
-		  }
-
+        IntegerSymbolicArray arrayAttr = null;
+        boolean isConcreteArray = false;
           ChoiceGenerator<?> cg;
           boolean condition;
 
@@ -103,6 +72,50 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
               pc = ((PCChoiceGenerator)prev_cg).getCurrentPC();
 
           assert pc != null;
+
+          if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
+              // In this case, the array isn't symbolic
+              if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) { 
+                  // In this case, the index isn't symbolic either
+                  return super.execute(ti);
+              }
+              // We have a concrete array, but a symbolic index. We add all the constraints about the elements of the array, and perform the select
+              ElementInfo arrayInfo = ti.getElementInfo(arrayRef);
+              arrayAttr = new IntegerSymbolicArray(arrayInfo.arrayLength(), -1);
+              for (int i = 0; i < arrayInfo.arrayLength(); i++) {
+                int arrValue = arrayInfo.getIntElement(i);
+                pc._addDet(Comparator.EQ, new SelectExpression(arrayAttr, i), new IntegerConstant(arrValue));
+              }
+              isConcreteArray = true;
+          }
+
+          else {
+              arrayAttr = (IntegerSymbolicArray)peekArrayAttr(ti); 
+             }
+          IntegerExpression indexAttr = null;
+          SelectExpression se = null;
+          StackFrame frame = ti.getModifiableTopFrame();
+          arrayRef = frame.peek(1); // ..., arrayRef, idx
+
+		  if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
+              // In this case, the index isn't symbolic.
+              index = frame.peek();
+              se = new SelectExpression(arrayAttr, index);
+              indexAttr = new IntegerConstant(index);
+
+          } else {          
+              indexAttr = (IntegerExpression)peekIndexAttr(ti);
+              se = new SelectExpression(arrayAttr, indexAttr);
+          }
+
+          assert arrayAttr != null;
+          assert indexAttr != null;
+          assert se != null;
+
+		  if (arrayRef == MJIEnv.NULL) {
+		    return ti.createAndThrowException("java.lang.NullPointerException");
+		  }
+
 
           if ((Integer)cg.getNextChoice()==1) { // check bounds of the index
               pc._addDet(Comparator.GE, se.index, se.ae.length);
@@ -135,13 +148,21 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
                   // set the result
                   // We update the Symbolic Array with the get information
                   SymbolicIntegerValueAtIndex result = arrayAttr.getVal(indexAttr);
-                  frame.setLocalAttr(arrayAttr.getSlot(), arrayAttr);
-                  frame.pop(2); // We pop the array and the index
-                  frame.push(0, false);         // For symbolic expressions, the concrete value does not matter
-                  frame.setOperandAttr(result.value);
-                  // We add the select instruction in the PathCondition
-                  pc._addDet(Comparator.EQ, se, result.value);
-		          return getNext(ti); 
+                  if (isConcreteArray) {
+                      frame.pop(2); // We pop the array and the index
+                      frame.push(0, false);
+                      frame.setOperandAttr(result.value);
+                      pc._addDet(Comparator.EQ, se, result.value);
+                      return getNext(ti);
+                  } else {
+                    frame.setLocalAttr(arrayAttr.getSlot(), arrayAttr);
+                    frame.pop(2); // We pop the array and the index
+                    frame.push(0, false);         // For symbolic expressions, the concrete value does not matter
+                    frame.setOperandAttr(result.value);
+                    // We add the select instruction in the PathCondition
+                    pc._addDet(Comparator.EQ, se, result.value);
+		            return getNext(ti); 
+                  }
               }
               else {
                   ti.getVM().getSystemState().setIgnored(true);
