@@ -47,8 +47,7 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
 	 @Override
 	  public Instruction execute (ThreadInfo ti) {
 
-        IntegerSymbolicArray arrayAttr = null;
-        boolean isConcreteArray = false;
+          IntegerSymbolicArray arrayAttr = null;
           ChoiceGenerator<?> cg;
           boolean condition;
 
@@ -86,7 +85,6 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
                 int arrValue = arrayInfo.getIntElement(i);
                 pc._addDet(Comparator.EQ, new SelectExpression(arrayAttr, i), new IntegerConstant(arrValue));
               }
-              isConcreteArray = true;
           }
 
           else {
@@ -148,7 +146,8 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
                   // set the result
                   // We update the Symbolic Array with the get information
                   SymbolicIntegerValueAtIndex result = arrayAttr.getVal(indexAttr);
-                  if (isConcreteArray) {
+                  if (arrayAttr.getSlot() == -1) {
+                      // We had a concrete array, and don't know yet where it is from
                       frame.pop(2); // We pop the array and the index
                       frame.push(0, false);
                       frame.setOperandAttr(result.value);
