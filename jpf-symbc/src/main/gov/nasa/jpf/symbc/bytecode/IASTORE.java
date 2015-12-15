@@ -26,6 +26,7 @@ import gov.nasa.jpf.symbc.arrays.ArrayExpression;
 import gov.nasa.jpf.symbc.arrays.IntegerSymbolicArray;
 import gov.nasa.jpf.symbc.arrays.SymbolicIntegerValueAtIndex;
 import gov.nasa.jpf.symbc.arrays.PreviousIntegerArray;
+import gov.nasa.jpf.symbc.arrays.SelectExpression;
 import gov.nasa.jpf.symbc.arrays.StoreExpression;
 import gov.nasa.jpf.symbc.numeric.Comparator;
 import gov.nasa.jpf.symbc.numeric.IntegerConstant;
@@ -52,27 +53,9 @@ public class IASTORE extends gov.nasa.jpf.jvm.bytecode.IASTORE {
 	  public Instruction execute (ThreadInfo ti) {
          // We may need to add the case where we have a smybolic index and a concrete array
 
-         if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
-             //In this case, the array isn't symbolic
-             return super.execute(ti);
-         }
-
-         IntegerSymbolicArray arrayAttr = (IntegerSymbolicArray)peekArrayAttr(ti);
-         IntegerExpression indexAttr =null;
-
-
-		 if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
-              int index = ti.getTopFrame().peek(1);
-              indexAttr =  new IntegerConstant(index); 
-		  } else {
-              indexAttr = (IntegerExpression)peekIndexAttr(ti);
-          }
-          assert (indexAttr != null) : "indexAttr shouldn't be null in IASTORE instruction";
-          int arrayref = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
-		  StackFrame frame = ti.getModifiableTopFrame();
-		  if (arrayref == MJIEnv.NULL) {
-		        return ti.createAndThrowException("java.lang.NullPointerException");
-		  } 
+         IntegerExpression indexAttr = null;
+         IntegerSymbolicArray arrayAttr = null;
+		 StackFrame frame = ti.getModifiableTopFrame();
 
           ChoiceGenerator<?> cg;
           boolean condition;
@@ -97,6 +80,42 @@ public class IASTORE extends gov.nasa.jpf.jvm.bytecode.IASTORE {
               pc = ((PCChoiceGenerator)prev_cg).getCurrentPC();
           
           assert pc != null;
+
+		 if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
+              int index = ti.getTopFrame().peek(1);
+              indexAttr =  new IntegerConstant(index); 
+		  } else {
+              indexAttr = (IntegerExpression)peekIndexAttr(ti);
+          }
+          assert (indexAttr != null) : "indexAttr shouldn't be null in IASTORE instruction";
+  
+          if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
+             //In this case, the array isn't symbolic
+             if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
+                 if (frame.getOperandAttr(0) == null || !(frame.getOperandAttr(0) instanceof IntegerExpression)) {
+                     // nothing is symbolic here
+                     return super.execute(ti);
+                 }
+             } else {
+              // We create a symbolic array out of the concrete array
+               ElementInfo arrayInfo = ti.getElementInfo(arrayRef);   
+               arrayAttr = new IntegerSymbolicArray(arrayInfo.arrayLength(), -1);
+               // We add the constraints about all the elements of the array
+               for (int i = 0; i < arrayInfo.arrayLength(); i++) {
+                   int arrValue = arrayInfo.getIntElement(i);
+                   pc._addDet(Comparator.EQ, new SelectExpression(arrayAttr, i), new IntegerConstant(arrValue));
+               }
+             }
+          } else {
+            arrayAttr = (IntegerSymbolicArray)peekArrayAttr(ti);
+          }
+          assert (arrayAttr != null) : "arrayAttr shouldn't be null in IASTORE instruction";
+
+          int arrayref = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
+		  if (arrayref == MJIEnv.NULL) {
+		        return ti.createAndThrowException("java.lang.NullPointerException");
+		  } 
+
           
           if ((Integer)cg.getNextChoice() == 1) { // check bounds of the index
               pc._addDet(Comparator.GE, indexAttr, arrayAttr.length);
@@ -144,7 +163,9 @@ public class IASTORE extends gov.nasa.jpf.jvm.bytecode.IASTORE {
                   PreviousIntegerArray previous = new PreviousIntegerArray(arrayAttr, indexAttr, sym_value);
                   // We create a new arrayAttr, and inherits information from the previous attribute
                   IntegerSymbolicArray newArrayAttr = new IntegerSymbolicArray(previous);
-                  frame.setLocalAttr(newArrayAttr.getSlot(), newArrayAttr);
+                  if (newArrayAttr.getSlot() != -1) { 
+                    frame.setLocalAttr(newArrayAttr.getSlot(), newArrayAttr);
+                  }
                   frame.pop(2); // We pop the array and the index
 
                   StoreExpression se = new StoreExpression(arrayAttr, indexAttr, sym_value);
