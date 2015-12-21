@@ -53,9 +53,20 @@ public class IASTORE extends gov.nasa.jpf.jvm.bytecode.IASTORE {
 	  public Instruction execute (ThreadInfo ti) {
          // We may need to add the case where we have a smybolic index and a concrete array
 
-         IntegerExpression indexAttr = null;
-         IntegerSymbolicArray arrayAttr = null;
-		 StackFrame frame = ti.getModifiableTopFrame();
+          IntegerExpression indexAttr = null;
+          IntegerSymbolicArray arrayAttr = null;
+		  StackFrame frame = ti.getModifiableTopFrame();
+
+          if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
+             //In this case, the array isn't symbolic
+             if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
+                 if (frame.getOperandAttr(0) == null || !(frame.getOperandAttr(0) instanceof IntegerExpression)) {
+                     // nothing is symbolic here
+                     return super.execute(ti);
+                 }
+             }
+          }
+
 
           ChoiceGenerator<?> cg;
           boolean condition;
