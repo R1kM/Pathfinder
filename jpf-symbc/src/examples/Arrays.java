@@ -16,6 +16,7 @@ public class Arrays {
     
     public static int check_length(int i, int[] arr) {
         int j = arr.length;
+        int a = arr[1];
         int b = 10/(i-j);
         return b;
     }
