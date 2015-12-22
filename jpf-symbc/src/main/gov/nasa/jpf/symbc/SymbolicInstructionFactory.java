@@ -508,7 +508,9 @@ public class SymbolicInstructionFactory extends gov.nasa.jpf.jvm.bytecode.Instru
     	  return (filter.isPassing(ci) ? new SASTORE() : super.sastore());
       }
 
-	  
+	 public Instruction arraylength() {
+         return (filter.isPassing(ci) ? new ARRAYLENGTH() : super.arraylength());
+     }
 	  
 		//TODO: to review
         //From Fujitsu:
