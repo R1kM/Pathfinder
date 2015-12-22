@@ -47,6 +47,14 @@ public class IALOAD extends gov.nasa.jpf.jvm.bytecode.IALOAD {
 	 @Override
 	  public Instruction execute (ThreadInfo ti) {
 
+          if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
+              // In this case, the array isn't symbolic
+              if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) { 
+                  // In this case, the index isn't symbolic either
+                  return super.execute(ti);
+              }
+          }
+
           IntegerSymbolicArray arrayAttr = null;
           ChoiceGenerator<?> cg;
           boolean condition;
