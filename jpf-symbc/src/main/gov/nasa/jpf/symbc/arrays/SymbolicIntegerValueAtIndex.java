@@ -21,4 +21,19 @@ public class SymbolicIntegerValueAtIndex  {
         this.index = index;
         this.value = value;
     }
+
+    public SymbolicIntegerValueAtIndex(ArrayExpression ae, IntegerExpression index, boolean isBool) {
+        if (isBool) {
+         IntegerExpression value = new SymbolicInteger("ValueAt("+index.toString()+")", 0, 1);
+         this.value = value;
+         this.ae = ae;
+         this.index = index;
+        }
+        else {
+        IntegerExpression value = new SymbolicInteger("ValueAt("+index.toString()+")");
+        this.value = value;
+        this.ae = ae;
+        this.index = index;
+        }
+    }
 }

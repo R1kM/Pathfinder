@@ -32,6 +32,18 @@ public abstract class ArrayExpression extends Expression {
         return result;
     }
 
+    public SymbolicIntegerValueAtIndex getBoolVal(IntegerExpression index) {
+        if (valAt == null) {
+            valAt = new HashMap<String, SymbolicIntegerValueAtIndex>();
+        }
+        SymbolicIntegerValueAtIndex result = valAt.get(index.toString());
+        if (result == null) {
+            result = new SymbolicIntegerValueAtIndex(this, index, true);
+            valAt.put(index.toString(), result);
+        }
+        return result;
+    }
+
     public void setVal(IntegerExpression index, SymbolicIntegerValueAtIndex value) {
         if (valAt == null) {
             valAt = new HashMap<String, SymbolicIntegerValueAtIndex>();
