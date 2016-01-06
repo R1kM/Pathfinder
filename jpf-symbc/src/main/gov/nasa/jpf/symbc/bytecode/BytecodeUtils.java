@@ -350,13 +350,12 @@ public class BytecodeUtils {
 						Object[] argValues = invInst.getArgumentValues(th);
 						ElementInfo eiArray = (ElementInfo)argValues[j];
 
-						if(eiArray!=null)
-							for(int i =0; i< eiArray.arrayLength(); i++) {
-								IntegerExpression sym_v = new SymbolicInteger(varName(name+i, VarType.INT),0,1);
-								expressionMap.put(name+i, sym_v);
-								eiArray.addElementAttr(i, sym_v);
-								outputString = outputString.concat(" " + sym_v + ",");
-							}
+						if(eiArray!=null) {
+                            IntegerSymbolicArray sym_v = new IntegerSymbolicArray(new SymbolicInteger(name + "!length"), varName(name, VarType.ARRAY), j);
+                            expressionMap.put(name, sym_v);
+                            sf.setOperandAttr(stackIdx, sym_v);
+                            outputString = outputString.concat(" " + sym_v + ",");
+                        }
 						else
 							System.out.println("Warning: input array empty! "+name);
 					}
