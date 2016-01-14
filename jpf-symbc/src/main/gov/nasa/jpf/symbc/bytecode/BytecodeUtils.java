@@ -24,6 +24,7 @@ import gov.nasa.jpf.Config;
 
 import gov.nasa.jpf.jvm.bytecode.JVMInvokeInstruction;
 import gov.nasa.jpf.symbc.arrays.IntegerSymbolicArray;
+import gov.nasa.jpf.symbc.arrays.ObjectSymbolicArray;
 import gov.nasa.jpf.symbc.heap.Helper;
 import gov.nasa.jpf.symbc.numeric.Expression;
 import gov.nasa.jpf.symbc.numeric.IntegerExpression;
@@ -358,7 +359,21 @@ public class BytecodeUtils {
                         }
 						else
 							System.out.println("Warning: input array empty! "+name);
-					}
+					} else if (argTypes[j].contains("[]")) {
+                        // If the type name contains [] but wasn't catched previously, then it is an object array
+                        Object[] argValues = invInst.getArgumentValues(th);
+                        ElementInfo eiArray = (ElementInfo)argValues[j];
+
+                        if (eiArray != null) {
+                            ObjectSymbolicArray sym_v = new ObjectSymbolicArray(new SymbolicInteger(name = "!length"), varName(name, VarType.ARRAY), j);
+                            expressionMap.put(name, sym_v);
+                            sf.setOperandAttr(stackIdx, sym_v);
+                            outputString = outputString.concat(" " + sym_v + ",");
+                        }
+                        else {
+							System.out.println("Warning: input array empty! "+name);
+                        }
+                    }
 
 					else {
                         // the argument is of reference type and it is symbolic
