@@ -21,10 +21,29 @@ public class Arrays {
         return b;
     }
 
+    public static void obj_array(ObjTest[] arr) {
+        int a = 1/(arr[0].y);
+    }
+
     public static void main(String[] args) {
         int[] test = {1,2,3};
+        ObjTest[] objTest = {new ObjTest(1,2), new ObjTest(1,0)};
+        obj_array(objTest);
         int j = counter_bis(1, test);
         int k = counter(1, test);
         int b = check_length(2, test);
     }
+
+
+    public static class ObjTest {
+        int x;
+        int y;
+
+        public ObjTest(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
+    
 }
