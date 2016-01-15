@@ -10,7 +10,7 @@ public class ObjectSymbolicArray extends ArrayExpression {
     private String name;
     private String solution = "UNDEFINED";
     public int slot;
-    private String elemType = null;
+    private String elemType = "?";
 
     public ObjectSymbolicArray(int size, int slot) {
         super();
