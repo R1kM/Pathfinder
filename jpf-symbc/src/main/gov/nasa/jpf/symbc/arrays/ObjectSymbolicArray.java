@@ -10,6 +10,7 @@ public class ObjectSymbolicArray extends ArrayExpression {
     private String name;
     private String solution = "UNDEFINED";
     public int slot;
+    private String elemType = null;
 
     public ObjectSymbolicArray(int size, int slot) {
         super();
@@ -24,15 +25,20 @@ public class ObjectSymbolicArray extends ArrayExpression {
         this.slot = slot;
     }
 
-    public ObjectSymbolicArray(IntegerExpression n, String name, int slot) {
+    public ObjectSymbolicArray(IntegerExpression n, String name, int slot, String arrayType) {
         super();
         this.name = name;
         this.length = n;
         this.slot = slot;
+        this.elemType = arrayType.substring(0, arrayType.length() - 2); // We remove [] at the end of the arrayType
     }
 
     public IntegerExpression __length() {
         return length;
+    }
+
+    public String getElemType() {
+        return elemType;
     }
 
     public int getSlot() {
