@@ -18,8 +18,8 @@
 
 package gov.nasa.jpf.symbc.heap;
 
-
-
+import gov.nasa.jpf.symbc.arrays.HelperResult;
+import gov.nasa.jpf.symbc.arrays.ObjectSymbolicArray;
 import gov.nasa.jpf.symbc.numeric.Comparator;
 import gov.nasa.jpf.symbc.numeric.Expression;
 import gov.nasa.jpf.symbc.numeric.IntegerConstant;
@@ -160,5 +160,52 @@ public class Helper {
 		  for (int i=0; i< numSymRefs; i++)
 			  pcHeap._addDet(Comparator.NE, n.getSymbolic(), prevSymRefs[i].getSymbolic());
 		  return daIndex;
+	  }
+
+
+	  public static HelperResult addNewArrayHeapNode(ClassInfo typeClassInfo, ThreadInfo ti, Object attr,
+			  PathCondition pcHeap, SymbolicInputHeap symInputHeap,
+			  int numSymRefs, HeapNode[] prevSymRefs, boolean setShared) {
+		  int daIndex = ti.getHeap().newObject(typeClassInfo, ti).getObjectRef();
+		  ti.getHeap().registerPinDown(daIndex);
+		  String refChain = ((ObjectSymbolicArray) attr).getName() + "[" + daIndex + "]"; // do we really need to add daIndex here?
+		  SymbolicInteger newSymRef = new SymbolicInteger( refChain);
+		  ElementInfo eiRef =  ti.getModifiableElementInfo(daIndex);//ti.getElementInfo(daIndex); // TODO to review!
+		  if(setShared) {
+			  eiRef.setShared(ti,true);//??
+		  }
+		  //daIndex.getObjectRef() -> number
+
+		  // neha: this change allows all the fields in the class hierarchy of the
+		  // object to be initialized as symbolic and not just its instance fields
+
+		  int numOfFields = eiRef.getNumberOfFields();
+		  FieldInfo[] fields = new FieldInfo[numOfFields];
+		  for(int fieldIndex = 0; fieldIndex < numOfFields; fieldIndex++) {
+			  fields[fieldIndex] = eiRef.getFieldInfo(fieldIndex);
+		  }
+
+		  Helper.initializeInstanceFields(fields, eiRef,refChain);
+
+		  //neha: this change allows all the static fields in the class hierarchy
+		  // of the object to be initialized as symbolic and not just its immediate
+		  // static fields
+		  ClassInfo superClass = typeClassInfo;
+		  while(superClass != null) {
+			  FieldInfo[] staticFields = superClass.getDeclaredStaticFields();
+			  Helper.initializeStaticFields(staticFields, superClass, ti);
+			  superClass = superClass.getSuperClass();
+		  }
+
+		  // create new HeapNode based on above info
+		  // update associated symbolic input heap
+		  HeapNode n= new HeapNode(daIndex,typeClassInfo,newSymRef);
+		  symInputHeap._add(n);
+		  pcHeap._addDet(Comparator.NE, newSymRef, new IntegerConstant(-1));
+		  //pcHeap._addDet(Comparator.EQ, newSymRef, (SymbolicInteger) attr);
+		  for (int i=0; i< numSymRefs; i++)
+			  pcHeap._addDet(Comparator.NE, n.getSymbolic(), prevSymRefs[i].getSymbolic());
+		  HelperResult result = new HelperResult(n, daIndex);
+          return result;
 	  }
 }

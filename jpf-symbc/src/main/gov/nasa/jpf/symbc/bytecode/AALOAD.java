@@ -22,10 +22,12 @@ package gov.nasa.jpf.symbc.bytecode;
 
 import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
 import gov.nasa.jpf.symbc.arrays.ArrayExpression;
+import gov.nasa.jpf.symbc.arrays.HelperResult;
 import gov.nasa.jpf.symbc.arrays.ObjectSymbolicArray;
 import gov.nasa.jpf.symbc.arrays.SelectExpression;
 import gov.nasa.jpf.symbc.heap.HeapChoiceGenerator;
 import gov.nasa.jpf.symbc.heap.HeapNode;
+import gov.nasa.jpf.symbc.heap.Helper;
 import gov.nasa.jpf.symbc.heap.SymbolicInputHeap;
 import gov.nasa.jpf.symbc.numeric.Comparator;
 import gov.nasa.jpf.symbc.numeric.IntegerConstant;
@@ -54,6 +56,7 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
   @Override
   public Instruction execute (ThreadInfo ti) {
 
+      boolean abstractClass = false;
       ObjectSymbolicArray arrayAttr = null;
       HeapNode[] prevSymRefs = null; // previously initialized objects of same type
       int numSymRefs = 0; // number of previously initialized objects
@@ -97,8 +100,13 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
               prevSymRefs = symInputHeap.getNodesOfType(typeClassInfo);
               numSymRefs = prevSymRefs.length;
           }
+          int increment = 2;
+          if (typeClassInfo.isAbstract()) {
+               abstractClass =true;
+               increment = 1;
+          }
 
-          thisHeapCG = new HeapChoiceGenerator(numSymRefs + 2); // Number of prev. init. objects + 2 conditions on index in bounds
+          thisHeapCG = new HeapChoiceGenerator(numSymRefs + increment + 2); // Number of prev. init. objects + 2 conditions on index in bounds
           ti.getVM().setNextChoiceGenerator(thisHeapCG);
           return this;
       } else { // this is what really returns results
@@ -178,7 +186,7 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
                 ti.getVM().getSystemState().setIgnored(true);
                 return getNext(ti);
             }
-        } else {
+        } else if (currentChoice == (numSymRefs + 1)) {
             pcHeap._addDet(Comparator.LT, se.index, new IntegerConstant(0));
             if (pcHeap.simplify()) { // satisfiable
                 ((HeapChoiceGenerator) thisHeapCG).setCurrentPCheap(pcHeap);
@@ -187,6 +195,47 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
                 ti.getVM().getSystemState().setIgnored(true);
                 return getNext(ti);
             }
-        } 
+        } else if (currentChoice == (numSymRefs + 2)) { // null object
+            pcHeap._addDet(Comparator.LT, se.index, se.ae.length);
+            pcHeap._addDet(Comparator.GE, se.index, new IntegerConstant(0));
+            if (pcHeap.simplify()) { // satisfiable
+                pcHeap._addDet(Comparator.EQ, se, new IntegerConstant(-1));
+                daIndex = -1;
+                if (arrayAttr.getSlot() != -1) {
+                    frame.setLocalAttr(arrayAttr.getSlot(), arrayAttr);
+                }
+                frame.pop(2); // We pop the array and the index;
+                frame.push(daIndex, true);
+
+                ((HeapChoiceGenerator)thisHeapCG).setCurrentPCheap(pcHeap);
+                ((HeapChoiceGenerator)thisHeapCG).setCurrentSymInputHeap(symInputHeap);
+                return getNext(ti);
+            } else {
+                ti.getVM().getSystemState().setIgnored(true);
+                return getNext(ti);
+            }
+        } else if (currentChoice == (numSymRefs + 3)) {
+            pcHeap._addDet(Comparator.LT, se.index, se.ae.length);
+            pcHeap._addDet(Comparator.GE, se.index, new IntegerConstant(0));
+            if (pcHeap.simplify()) { // satisfiable
+                HelperResult hpResult = Helper.addNewArrayHeapNode(typeClassInfo, ti, arrayAttr, pcHeap, symInputHeap, numSymRefs, prevSymRefs, false);
+                daIndex = hpResult.idx;
+                HeapNode candidateNode = hpResult.n;
+                pcHeap._addDet(Comparator.EQ, se, candidateNode.getSymbolic());
+                if (arrayAttr.getSlot() != -1) {
+                    frame.setLocalAttr(arrayAttr.getSlot(), arrayAttr);
+                }
+                frame.pop(2); // We pop the array and the index
+                frame.push(daIndex, true);
+
+                ((HeapChoiceGenerator)thisHeapCG).setCurrentPCheap(pcHeap);
+                ((HeapChoiceGenerator)thisHeapCG).setCurrentSymInputHeap(symInputHeap);
+                return getNext(ti);
+            } else {
+                ti.getVM().getSystemState().setIgnored(true);
+                return getNext(ti);
+            }
+        }   
+        throw new RuntimeException("This point is unreachable");
     }
 }
