@@ -93,7 +93,7 @@ public class FALOAD extends gov.nasa.jpf.jvm.bytecode.FALOAD {
               ElementInfo arrayInfo = ti.getElementInfo(arrayRef);
               arrayAttr = new RealSymbolicArray(arrayInfo.arrayLength(), -1);
               for (int i = 0; i < arrayInfo.arrayLength(); i++) {
-                float arrValue = arrayInfo.getIntElement(i);
+                float arrValue = arrayInfo.getFloatElement(i);
                 pc._addDet(Comparator.EQ, new SelectExpression(arrayAttr, i), new RealConstant(arrValue));
               }
           }
