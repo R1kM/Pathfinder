@@ -42,8 +42,10 @@ import za.ac.sun.cs.green.Instance;
 import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
 import gov.nasa.jpf.symbc.arrays.ArrayExpression;
 import gov.nasa.jpf.symbc.arrays.ArrayConstraint;
+import gov.nasa.jpf.symbc.arrays.RealArrayConstraint;
 import gov.nasa.jpf.symbc.arrays.SelectExpression;
 import gov.nasa.jpf.symbc.arrays.StoreExpression;
+import gov.nasa.jpf.symbc.arrays.RealStoreExpression;
 import gov.nasa.jpf.symbc.concolic.PCAnalyzer;
 import gov.nasa.jpf.symbc.numeric.solvers.SolverTranslator;
 import gov.nasa.jpf.symbc.numeric.visitors.CollectVariableVisitor;
@@ -117,6 +119,20 @@ public class PathCondition implements Comparable<PathCondition> {
         t.and = header;
         header = t;
         count++;
+    }
+
+    public void _addDet(Comparator c, SelectExpression se, RealExpression ae) {
+        Constraint t = new RealArrayConstraint(se, c, ae);
+        t.and = header;
+        header = t;
+        count ++;
+    }
+
+    public void _addDet(Comparator c, RealStoreExpression se, ArrayExpression ae) {
+        Constraint t = new RealArrayConstraint(se, c, ae);
+        t.and = header;
+        header = t;
+        count ++;
     }
 
     // End array
