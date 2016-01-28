@@ -21,6 +21,10 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
+import gov.nasa.jpf.symbc.arrays.ArrayExpression;
+import gov.nasa.jpf.symbc.arrays.SelectExpression;
+import gov.nasa.jpf.symbc.arrays.RealSymbolicArray;
+import gov.nasa.jpf.symbc.arrays.SymbolicRealValueAtIndex;
 import gov.nasa.jpf.symbc.numeric.Comparator;
 import gov.nasa.jpf.symbc.numeric.IntegerExpression;
 import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
