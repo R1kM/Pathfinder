@@ -45,6 +45,9 @@ import java.util.Map;
 import gov.nasa.jpf.symbc.arrays.ArrayConstraint;
 import gov.nasa.jpf.symbc.arrays.ArrayExpression;
 import gov.nasa.jpf.symbc.arrays.IntegerSymbolicArray;
+import gov.nasa.jpf.symbc.arrays.RealSymbolicArray;
+import gov.nasa.jpf.symbc.arrays.RealArrayConstraint;
+import gov.nasa.jpf.symbc.arrays.RealStoreExpression;
 import gov.nasa.jpf.symbc.arrays.SelectExpression;
 import gov.nasa.jpf.symbc.arrays.StoreExpression;
 import gov.nasa.jpf.symbc.numeric.solvers.ProblemCoral;
@@ -943,6 +946,70 @@ public class PCParser {
         return true;
     }
 
+    public static boolean createDPRealArrayConstraint(final RealArrayConstraint cRef) {
+        final Comparator c_compRef = cRef.getComparator();
+
+
+        SelectExpression selex = null;
+        RealStoreExpression stoex = null;
+        RealExpression sel_right = null;
+        ArrayExpression sto_right = null;
+        try {
+             selex = (SelectExpression)cRef.getLeft();
+             sel_right = (RealExpression)cRef.getRight();
+        } catch (Exception e) {
+           try {
+               stoex = (RealStoreExpression)cRef.getLeft(); 
+               sto_right = (ArrayExpression)cRef.getRight();
+           }  catch (Exception r) {
+                   throw new RuntimeException("ArrayConstraint is not select or store");
+               }
+           
+        }
+        
+        switch(c_compRef) {
+        case EQ:
+
+            if (selex != null && sel_right != null) {
+                // The array constraint is a select
+                RealSymbolicArray ae = (RealSymbolicArray) selex.ae;
+                pb.post(pb.eq(pb.realSelect(pb.makeRealArrayVar(ae.getName()), 
+                  (selex.index instanceof IntegerConstant) ? pb.makeIntConst(((IntegerConstant)selex.index).value) : getExpression(selex.index)),
+                  (sel_right instanceof RealConstant) ? pb.makeRealConst(((RealConstant)sel_right).value) : getExpression(sel_right)));
+                break;
+            }
+            if (stoex != null && sto_right != null) {
+                // The array constraint is a store
+                RealSymbolicArray ae = (RealSymbolicArray) stoex.ae;
+                RealSymbolicArray newae = (RealSymbolicArray) sto_right;
+                pb.post(pb.eq(pb.realStore(pb.makeRealArrayVar(ae.getName()), 
+                  (stoex.index instanceof IntegerConstant) ? pb.makeIntConst(((IntegerConstant)stoex.index).value) : getExpression(stoex.index), 
+                  (stoex.value instanceof RealConstant) ? pb.makeRealConst(((RealConstant)stoex.value).value) :  getExpression(stoex.value)),
+                   pb.makeRealArrayVar(newae.getName())));
+                break;
+            }
+            throw new RuntimeException("ArrayConstraint is not correct select or store");
+        case NE:
+            if (selex != null && sel_right != null) {
+                // The array constraint is a select
+                RealSymbolicArray ae = (RealSymbolicArray) selex.ae;
+                pb.post(pb.neq(pb.realSelect(pb.makeRealArrayVar(ae.getName()), getExpression(selex.index)), getExpression(sel_right)));
+                break;
+            }
+            if (stoex != null && sto_right != null) {
+                // The array constraint is a store
+                RealSymbolicArray ae = (RealSymbolicArray)stoex.ae;
+                RealSymbolicArray newae = (RealSymbolicArray) sto_right;
+                pb.post(pb.neq(pb.realStore(pb.makeRealArrayVar(ae.getName()), getExpression(stoex.index), getExpression(stoex.value)), newae));
+                break;
+            }
+            throw new RuntimeException("ArrayConstraint is not correct select or store");
+        default:
+            throw new RuntimeException("ArrayConstraint is not select or store");
+        }
+        return true;
+    }
+
 	// result is in pb
 	public static ProblemGeneral parse(final PathCondition pc, final ProblemGeneral pbtosolve) {
 		pb=pbtosolve;
@@ -978,8 +1045,12 @@ public class PCParser {
                     constraintResult = createDPArrayConstraint((ArrayConstraint)cRef);
                 else
                     throw new RuntimeException("## Error: Array Constraint not handled (only Z3 can handle it)"+cRef); 
-            }
-            else {
+            } else if (cRef instanceof RealArrayConstraint) {
+                if (pb instanceof ProblemZ3)
+                    constraintResult = createDPRealArrayConstraint((RealArrayConstraint)cRef);
+                else
+                    throw new RuntimeException("## Error: Array Constraint not handled (only Z3 can handle it)"+cRef); 
+            } else {
 				System.out.println("## Warning: Non Linear Integer Constraint (only coral can handle it)" + cRef);
 				if(pb instanceof ProblemCoral)
 					constraintResult= createDPNonLinearIntegerConstraint((NonLinearIntegerConstraint)cRef);

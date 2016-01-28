@@ -139,6 +139,22 @@ public abstract class ProblemGeneral{
         throw new RuntimeException("## Error : makeIntConst not supported");
     }
 
+    public Object realSelect(Object exp1, Object exp2) {
+        throw new RuntimeException("## Error: Get in Array not supported");
+    }
+
+    public Object realStore(Object exp1, Object exp2, Object exp3) {
+        throw new RuntimeException("## Error : Store in Array not supported");
+    }
+
+    public Object makeRealArrayVar(String name) {
+        throw new RuntimeException("## Error: Array declaration not supported");
+    }
+
+    public Object makeRealConst(double value) {
+        throw new RuntimeException("## Error : makeIntConst not supported");
+    }
+
     public String getModel() {
         throw new RuntimeException("## Error : not implemented if not z3");
     }

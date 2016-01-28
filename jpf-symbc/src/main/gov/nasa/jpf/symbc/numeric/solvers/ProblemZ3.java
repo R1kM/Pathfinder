@@ -648,6 +648,38 @@ public class ProblemZ3 extends ProblemGeneral {
     }
 
 	
+    public Object realSelect(Object exp1, Object exp2) {
+        try {
+            return ctx.MkSelect((ArrayExpr)exp1, (RealExpr)exp2);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
+        }
+    }
+    
+    public Object realStore(Object exp1, Object exp2, Object exp3) {
+        try {
+            return ctx.MkStore((ArrayExpr)exp1, (IntExpr)exp2, (RealExpr)exp3);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
+        }
+    }
+
+    public Object makeRealArrayVar(String name) {
+        try {
+            Sort int_type = ctx.IntSort();
+            Sort real_type = ctx.RealSort();
+            return ctx.MkArrayConst(name, int_type, real_type);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: " + e);
+        }
+    }
+
+    public Object makeRealConst(double value) {
+        throw new RuntimeException("floats not supported by Z3");
+    }
 	
 
 	public int getIntValue(Object dpVar) { 
