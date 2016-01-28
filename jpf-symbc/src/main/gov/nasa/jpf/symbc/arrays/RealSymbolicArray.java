@@ -1,5 +1,6 @@
 package gov.nasa.jpf.symbc.arrays;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import gov.nasa.jpf.symbc.numeric.ConstraintExpressionVisitor;
@@ -17,6 +18,7 @@ public class RealSymbolicArray extends ArrayExpression {
     // Indicates the previous ArrayExpression, as well as the index and value
     // when we store something in the array
     public PreviousRealArray previous = null;
+    public Map<String, SymbolicRealValueAtIndex> realValAt = null;
 
 
     public RealSymbolicArray(int size, int slot) {
@@ -82,5 +84,17 @@ public class RealSymbolicArray extends ArrayExpression {
 
     public void getVarsVals(Map<String,Object> varsVals) {
         varsVals.put(name, solution);
+    }
+
+    public SymbolicRealValueAtIndex getRealVal(IntegerExpression index) {
+        if (realValAt == null) {
+            realValAt = new HashMap<String, SymbolicRealValueAtIndex>();
+        }
+        SymbolicRealValueAtIndex result = realValAt.get(index.toString());
+        if (result == null) {
+            result = new SymbolicRealValueAtIndex(this, index);
+            realValAt.put(index.toString(), result);
+        }
+        return result;
     }
 }
