@@ -25,10 +25,22 @@ public class Arrays {
         int a = 1/(arr[i].y);
     }
 
+    public static void check_obj_length(int i, ObjTest[] arr) {
+        int j = arr.length;
+        int b = 10/(i-j);
+    }
+
+    public static void obj_store(ObjTest i, ObjTest[] arr) {
+        arr[1] = i;
+        int a = 1/ arr[1].x;
+    }        
+
     public static void main(String[] args) {
         int[] test = {1,2,3};
         ObjTest[] objTest = {new ObjTest(1,2), new ObjTest(1,0)};
         obj_array(0, objTest);
+        check_obj_length(0, objTest);
+        obj_store(new ObjTest(1,2), objTest);
         int j = counter_bis(1, test);
         int k = counter(1, test);
         int b = check_length(2, test);
