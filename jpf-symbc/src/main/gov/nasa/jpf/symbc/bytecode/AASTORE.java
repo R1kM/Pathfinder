@@ -94,9 +94,10 @@ public class AASTORE extends gov.nasa.jpf.jvm.bytecode.AASTORE {
           }
           assert (indexAttr != null) : "indexAttr shouldn't be null in AASTORE instruction";
 
-          if (peekArrayAttr(ti) == null || !(peekArrayAttr(ti) instanceof IntegerExpression)) {
+          if (peekArrayAttr(ti) == null || !(peekArrayAttr(ti) instanceof ObjectSymbolicArray)) {
               // In this case the array isn't symbolic, and we checked earlier that the index was symbolic
               ElementInfo arrayInfo = ti.getElementInfo(arrayRef);
+              // We need to add information about the type of the elements in the array as well
               arrayAttr = new ObjectSymbolicArray(arrayInfo.arrayLength(), -1);
               // We should add the constraints about the elements of the array here
               // TODO
@@ -105,6 +106,7 @@ public class AASTORE extends gov.nasa.jpf.jvm.bytecode.AASTORE {
               arrayAttr = (ObjectSymbolicArray)peekArrayAttr(ti);
           }
           assert (arrayAttr != null) : "arrayAttr shouldn't be null in AASTORE instruction";
+          System.out.println(arrayAttr.getElemType());
 
 		  int arrayref = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
 		  if (arrayref == MJIEnv.NULL) {

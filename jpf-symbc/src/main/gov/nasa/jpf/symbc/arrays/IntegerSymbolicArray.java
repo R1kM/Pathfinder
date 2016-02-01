@@ -9,7 +9,6 @@ import gov.nasa.jpf.symbc.numeric.IntegerExpression;
 
 
 public class IntegerSymbolicArray extends ArrayExpression {
-    private String name;
     public String solution = "UNDEFINED";
     public int slot;
     // Indicates the previous ArrayExpression, as well as the index and value
@@ -59,10 +58,6 @@ public class IntegerSymbolicArray extends ArrayExpression {
     public int getSlot() {
         return slot;
     }
-
-    public String getName() {
-        return (name!=null) ? name : "ARRAY_" + hashCode();
-   }
 
     public String solution() {
         return solution;

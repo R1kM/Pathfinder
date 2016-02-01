@@ -8,7 +8,6 @@ import gov.nasa.jpf.symbc.numeric.IntegerConstant;
 import gov.nasa.jpf.symbc.numeric.IntegerExpression;
 
 public class ObjectSymbolicArray extends ArrayExpression {
-    private String name;
     private String solution = "UNDEFINED";
     public int slot;
     private String elemType = "?";
@@ -47,6 +46,7 @@ public class ObjectSymbolicArray extends ArrayExpression {
         }
         this.name = newName;
         this.slot = previous.ae.slot;
+        this.elemType = previous.ae.elemType;
         this.previous = previous;
     }
 
@@ -62,9 +62,6 @@ public class ObjectSymbolicArray extends ArrayExpression {
         return slot;
     }
 
-    public String getName() {
-        return (name != null) ? name : "ARRAY_"+hashCode();
-    }
 
     public String solution() {
         return solution;

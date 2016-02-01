@@ -1,6 +1,6 @@
 target = Arrays
 
-symbolic.method=Arrays.obj_store(sym#sym)
+symbolic.method=Arrays.obj_store(con#sym)
 symbolic.lazy=on
 classpath=${jpf-symbc}/build/examples
 search.multiple_errors=true
