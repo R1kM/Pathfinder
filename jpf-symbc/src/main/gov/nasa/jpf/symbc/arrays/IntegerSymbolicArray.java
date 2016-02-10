@@ -47,7 +47,7 @@ public class IntegerSymbolicArray extends ArrayExpression {
             newName = newName.substring(0, newName.indexOf("!") +1) + (aux + 1);
         }
         this.name = newName;
-        this.slot = previous.ae.slot;
+        this.slot = -1;
         this.previous = previous;
     }
 
