@@ -72,6 +72,7 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
           // We will need to get information about the type of the elements as well
           // We need to add the information in PC after it is declared.
           // TODO
+          // Make a PCChoiceGenerator on all the possible indices. Return the object at array[i] for each i
           throw new RuntimeException("AALOAD : Concrete array, symbolic index not handled");
        } else {
            arrayAttr = (ObjectSymbolicArray)peekArrayAttr(ti);
@@ -87,6 +88,9 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
 
       ChoiceGenerator<?> thisHeapCG;
       int currentChoice;
+
+    // TODO Replace HeapChoiceGenerator by a PCChoiceGenerator, and mimick concrete case behaviour
+    // index in bounds will be detected by PCChoiceGenerator
 
       if (!ti.isFirstStepInsn()) { // first time around
           prevSymRefs = null;
@@ -156,6 +160,10 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
 	    }
 	  
        int daIndex = 0; // index into JPF's dynamic area
+       // TODO We should have a different strategy : 
+       // We can either load one of the objects previously loaded from this array (add a field in ObjectSymbolicArray)
+       // Or do lazy initialization (null / new object)
+       // The implementation first case is similar to the concrete case
 
        if (currentChoice < numSymRefs) { // using a previously initialized object
            pcHeap._addDet(Comparator.LT, se.index, se.ae.length);
