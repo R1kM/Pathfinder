@@ -91,7 +91,7 @@ public class FALOAD extends gov.nasa.jpf.jvm.bytecode.FALOAD {
               }
               // We have a concrete array, but a symbolic index. We add all the constraints about the elements of the array, and perform the select
               ElementInfo arrayInfo = ti.getElementInfo(arrayRef);
-              arrayAttr = new RealSymbolicArray(arrayInfo.arrayLength(), -1);
+              arrayAttr = new RealSymbolicArray(arrayInfo.arrayLength());
               for (int i = 0; i < arrayInfo.arrayLength(); i++) {
                 float arrValue = arrayInfo.getFloatElement(i);
                 pc._addDet(Comparator.EQ, new SelectExpression(arrayAttr, i), new RealConstant(arrValue));
@@ -157,22 +157,12 @@ public class FALOAD extends gov.nasa.jpf.jvm.bytecode.FALOAD {
                   // set the result
                   // We update the Symbolic Array with the get information
                   SymbolicRealValueAtIndex result = arrayAttr.getRealVal(indexAttr);
-                  if (arrayAttr.getSlot() == -1) {
-                      // We had a concrete array, and don't know yet where it is from
-                      frame.pop(2); // We pop the array and the index
-                      frame.push(0, false);
-                      frame.setOperandAttr(result.value);
-                      pc._addDet(Comparator.EQ, se, result.value);
-                      return getNext(ti);
-                  } else {
-                    frame.setLocalAttr(arrayAttr.getSlot(), arrayAttr);
-                    frame.pop(2); // We pop the array and the index
-                    frame.push(0, false);         // For symbolic expressions, the concrete value does not matter
-                    frame.setOperandAttr(result.value);
-                    // We add the select instruction in the PathCondition
-                    pc._addDet(Comparator.EQ, se, result.value);
-		            return getNext(ti); 
-                  }
+                  frame.pop(2); // We pop the array and the index
+                  frame.push(0, false);         // For symbolic expressions, the concrete value does not matter
+                  frame.setOperandAttr(result.value);
+                  // We add the select instruction in the PathCondition
+                  pc._addDet(Comparator.EQ, se, result.value);
+		          return getNext(ti); 
               }
               else {
                   ti.getVM().getSystemState().setIgnored(true);

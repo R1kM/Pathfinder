@@ -312,7 +312,7 @@ public class BytecodeUtils {
                         ElementInfo eiArray = (ElementInfo)argValues[j];
 
                         if (eiArray!= null) {
-                            IntegerSymbolicArray sym_v = new IntegerSymbolicArray(new SymbolicInteger(name + "!length"), varName(name, VarType.ARRAY), j);
+                            IntegerSymbolicArray sym_v = new IntegerSymbolicArray(new SymbolicInteger(name + "!length"), varName(name, VarType.ARRAY));
                             expressionMap.put(name, sym_v);
                             sf.setOperandAttr(stackIdx, sym_v);
                             outputString = outputString.concat(" " + sym_v + ",");
@@ -352,7 +352,7 @@ public class BytecodeUtils {
 						ElementInfo eiArray = (ElementInfo)argValues[j];
 
 						if(eiArray!=null) {
-                            IntegerSymbolicArray sym_v = new IntegerSymbolicArray(new SymbolicInteger(name + "!length"), varName(name, VarType.ARRAY), j);
+                            IntegerSymbolicArray sym_v = new IntegerSymbolicArray(new SymbolicInteger(name + "!length"), varName(name, VarType.ARRAY));
                             expressionMap.put(name, sym_v);
                             sf.setOperandAttr(stackIdx, sym_v);
                             outputString = outputString.concat(" " + sym_v + ",");
@@ -365,7 +365,7 @@ public class BytecodeUtils {
                         ElementInfo eiArray = (ElementInfo)argValues[j];
 
                         if (eiArray != null) {
-                            ObjectSymbolicArray sym_v = new ObjectSymbolicArray(new SymbolicInteger(name + "!length"), varName(name, VarType.ARRAY), j, argTypes[j]);
+                            ObjectSymbolicArray sym_v = new ObjectSymbolicArray(new SymbolicInteger(name + "!length"), varName(name, VarType.ARRAY), argTypes[j]);
                             expressionMap.put(name, sym_v);
                             sf.setOperandAttr(stackIdx, sym_v);
                             outputString = outputString.concat(" " + sym_v + ",");

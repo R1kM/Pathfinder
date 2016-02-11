@@ -164,9 +164,6 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
                HeapNode candidateNode = prevSymRefs[currentChoice];
                pcHeap._addDet(Comparator.EQ, se, candidateNode.getSymbolic());
                daIndex = candidateNode.getIndex();
-               if (arrayAttr.getSlot() != -1) {
-                    frame.setLocalAttr(arrayAttr.getSlot(), arrayAttr);
-               }
                frame.pop(2); // We pop the array and the index
                frame.push(daIndex, true); // We have instantiated an object here, and added the constriants in the PC
 
@@ -201,9 +198,6 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
             if (pcHeap.simplify()) { // satisfiable
                 pcHeap._addDet(Comparator.EQ, se, new IntegerConstant(-1));
                 daIndex = -1;
-                if (arrayAttr.getSlot() != -1) {
-                    frame.setLocalAttr(arrayAttr.getSlot(), arrayAttr);
-                }
                 frame.pop(2); // We pop the array and the index;
                 frame.push(daIndex, true);
 
@@ -222,9 +216,6 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
                 daIndex = hpResult.idx;
                 HeapNode candidateNode = hpResult.n;
                 pcHeap._addDet(Comparator.EQ, se, candidateNode.getSymbolic());
-                if (arrayAttr.getSlot() != -1) {
-                    frame.setLocalAttr(arrayAttr.getSlot(), arrayAttr);
-                }
                 frame.pop(2); // We pop the array and the index
                 frame.push(daIndex, true);
 

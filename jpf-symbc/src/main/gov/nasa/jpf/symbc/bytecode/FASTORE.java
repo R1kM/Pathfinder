@@ -109,7 +109,7 @@ public class FASTORE extends gov.nasa.jpf.jvm.bytecode.FASTORE {
              } else {
               // We create a symbolic array out of the concrete array
                ElementInfo arrayInfo = ti.getElementInfo(arrayRef);   
-               arrayAttr = new RealSymbolicArray(arrayInfo.arrayLength(), -1);
+               arrayAttr = new RealSymbolicArray(arrayInfo.arrayLength());
                // We add the constraints about all the elements of the array
                for (int i = 0; i < arrayInfo.arrayLength(); i++) {
                    float arrValue = arrayInfo.getFloatElement(i);
@@ -174,9 +174,6 @@ public class FASTORE extends gov.nasa.jpf.jvm.bytecode.FASTORE {
                   PreviousRealArray previous = new PreviousRealArray(arrayAttr, indexAttr, sym_value);
                   // We create a new arrayAttr, and inherits information from the previous attribute
                   RealSymbolicArray newArrayAttr = new RealSymbolicArray(previous);
-                  if (newArrayAttr.getSlot() != -1) { 
-                    frame.setLocalAttr(newArrayAttr.getSlot(), newArrayAttr);
-                  }
                   frame.pop(2); // We pop the array and the index
 
                   RealStoreExpression se = new RealStoreExpression(arrayAttr, indexAttr, sym_value);

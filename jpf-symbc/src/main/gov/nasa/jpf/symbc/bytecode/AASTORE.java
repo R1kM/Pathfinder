@@ -98,7 +98,7 @@ public class AASTORE extends gov.nasa.jpf.jvm.bytecode.AASTORE {
               // In this case the array isn't symbolic, and we checked earlier that the index was symbolic
               ElementInfo arrayInfo = ti.getElementInfo(arrayRef);
               // We need to add information about the type of the elements in the array as well
-              arrayAttr = new ObjectSymbolicArray(arrayInfo.arrayLength(), -1);
+              arrayAttr = new ObjectSymbolicArray(arrayInfo.arrayLength());
               // We should add the constraints about the elements of the array here
               // TODO
               throw new RuntimeException("constant object array with symbolic index not implemented");
@@ -142,9 +142,6 @@ public class AASTORE extends gov.nasa.jpf.jvm.bytecode.AASTORE {
                   PreviousObjectArray previous = new PreviousObjectArray(arrayAttr, indexAttr, sym_value);
                   // We create a new arrayAttr, and inherits information from the previous attribute
                   ObjectSymbolicArray newArrayAttr = new ObjectSymbolicArray(previous);
-                  if (newArrayAttr.getSlot() != -1) {
-                      frame.setLocalAttr(newArrayAttr.getSlot(), newArrayAttr);
-                  } // probably to remove, after a set, the array differs from the one in the local slot
                   frame.pop(2); // We pop the array and the index
 
                   StoreExpression se = new StoreExpression(arrayAttr, indexAttr, sym_value);

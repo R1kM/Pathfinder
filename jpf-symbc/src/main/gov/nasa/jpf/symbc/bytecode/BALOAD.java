@@ -91,7 +91,7 @@ public class BALOAD extends gov.nasa.jpf.jvm.bytecode.BALOAD {
               }
               // We have a concrete array, but a symbolic index. We add all the constraints about the elements of the array, and perform the select
               ElementInfo arrayInfo = ti.getElementInfo(arrayRef);
-              arrayAttr = new IntegerSymbolicArray(arrayInfo.arrayLength(), -1);
+              arrayAttr = new IntegerSymbolicArray(arrayInfo.arrayLength());
               for (int i = 0; i < arrayInfo.arrayLength(); i++) {
                 int arrValue = arrayInfo.getIntElement(i);
                 pc._addDet(Comparator.EQ, new SelectExpression(arrayAttr, i), new IntegerConstant(arrValue));
@@ -157,22 +157,11 @@ public class BALOAD extends gov.nasa.jpf.jvm.bytecode.BALOAD {
                   // set the result
                   // We update the Symbolic Array with the get information
                   SymbolicIntegerValueAtIndex result = arrayAttr.getBoolVal(indexAttr);
-                  if (arrayAttr.getSlot() == -1) {
-                      // We had a concrete array, and don't know yet where it is from
-                      frame.pop(2); // We pop the array and the index
-                      frame.push(0, false);
-                      frame.setOperandAttr(result.value);
-                      pc._addDet(Comparator.EQ, se, result.value);
-                      return getNext(ti);
-                  } else {
-                    frame.setLocalAttr(arrayAttr.getSlot(), arrayAttr);
-                    frame.pop(2); // We pop the array and the index
-                    frame.push(0, false);         // For symbolic expressions, the concrete value does not matter
-                    frame.setOperandAttr(result.value);
-                    // We add the select instruction in the PathCondition
-                    pc._addDet(Comparator.EQ, se, result.value);
-		            return getNext(ti); 
-                  }
+                  frame.pop(2); // We pop the array and the index
+                  frame.push(0, false);
+                  frame.setOperandAttr(result.value);
+                  pc._addDet(Comparator.EQ, se, result.value);
+                  return getNext(ti);
               }
               else {
                   ti.getVM().getSystemState().setIgnored(true);
