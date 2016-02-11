@@ -109,7 +109,7 @@ public class CASTORE extends gov.nasa.jpf.jvm.bytecode.CASTORE {
              } else {
               // We create a symbolic array out of the concrete array
                ElementInfo arrayInfo = ti.getElementInfo(arrayRef);   
-               arrayAttr = new IntegerSymbolicArray(arrayInfo.arrayLength(), -1);
+               arrayAttr = new IntegerSymbolicArray(arrayInfo.arrayLength());
                // We add the constraints about all the elements of the array
                for (int i = 0; i < arrayInfo.arrayLength(); i++) {
                    int arrValue = arrayInfo.getIntElement(i);
@@ -173,9 +173,6 @@ public class CASTORE extends gov.nasa.jpf.jvm.bytecode.CASTORE {
                   PreviousIntegerArray previous = new PreviousIntegerArray(arrayAttr, indexAttr, sym_value);
                   // We create a new arrayAttr, and inherits information from the previous attribute
                   IntegerSymbolicArray newArrayAttr = new IntegerSymbolicArray(previous);
-                  if (newArrayAttr.getSlot() != -1) { 
-                    frame.setLocalAttr(newArrayAttr.getSlot(), newArrayAttr);
-                  }
                   frame.pop(2); // We pop the array and the index
 
                   StoreExpression se = new StoreExpression(arrayAttr, indexAttr, sym_value);

@@ -9,28 +9,24 @@ import gov.nasa.jpf.symbc.numeric.IntegerExpression;
 
 public class ObjectSymbolicArray extends ArrayExpression {
     private String solution = "UNDEFINED";
-    public int slot;
     private String elemType = "?";
     public PreviousObjectArray previous = null;
 
-    public ObjectSymbolicArray(int size, int slot) {
+    public ObjectSymbolicArray(int size) {
         super();
         this.length = new IntegerConstant(size);
-        this.slot = slot;
     }
 
-    public ObjectSymbolicArray(int n, String name, int slot) {
+    public ObjectSymbolicArray(int n, String name) {
         super();
         this.name = name;
         this.length = new IntegerConstant(n);
-        this.slot = slot;
     }
 
-    public ObjectSymbolicArray(IntegerExpression n, String name, int slot, String arrayType) {
+    public ObjectSymbolicArray(IntegerExpression n, String name, String arrayType) {
         super();
         this.name = name;
         this.length = n;
-        this.slot = slot;
         this.elemType = arrayType.substring(0, arrayType.length() - 2); // We remove [] at the end of the arrayType
     }
 
@@ -45,7 +41,6 @@ public class ObjectSymbolicArray extends ArrayExpression {
             newName = newName.substring(0, newName.indexOf("!") +1) + (aux + 1);
         }
         this.name = newName;
-        this.slot = -1;
         this.elemType = previous.ae.elemType;
         this.previous = previous;
     }
@@ -57,11 +52,6 @@ public class ObjectSymbolicArray extends ArrayExpression {
     public String getElemType() {
         return elemType;
     }
-
-    public int getSlot() {
-        return slot;
-    }
-
 
     public String solution() {
         return solution;

@@ -10,30 +10,26 @@ import gov.nasa.jpf.symbc.numeric.IntegerExpression;
 
 public class IntegerSymbolicArray extends ArrayExpression {
     public String solution = "UNDEFINED";
-    public int slot;
     // Indicates the previous ArrayExpression, as well as the index and value
     // when we store something in the array
     public PreviousIntegerArray previous = null;
 
 
-    public IntegerSymbolicArray(int size, int slot) {
+    public IntegerSymbolicArray(int size) {
         super();
         this.length = new IntegerConstant(size);
-        this.slot = slot;
     }
 
-    public IntegerSymbolicArray(int n, String name, int slot) {
+    public IntegerSymbolicArray(int n, String name) {
         super();
         this.name = name;
         this.length = new IntegerConstant(n);
-        this.slot = slot;
     }
 
-    public IntegerSymbolicArray(IntegerExpression n, String name, int slot) {
+    public IntegerSymbolicArray(IntegerExpression n, String name) {
         super();
         this.name = name;
         this.length = n;
-        this.slot = slot;
     }
 
     public IntegerSymbolicArray(PreviousIntegerArray previous) {
@@ -47,7 +43,6 @@ public class IntegerSymbolicArray extends ArrayExpression {
             newName = newName.substring(0, newName.indexOf("!") +1) + (aux + 1);
         }
         this.name = newName;
-        this.slot = -1;
         this.previous = previous;
     }
 
@@ -55,10 +50,6 @@ public class IntegerSymbolicArray extends ArrayExpression {
         return length;
     }
     
-    public int getSlot() {
-        return slot;
-    }
-
     public String solution() {
         return solution;
     }

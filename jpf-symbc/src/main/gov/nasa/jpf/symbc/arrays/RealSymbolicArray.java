@@ -14,31 +14,27 @@ import gov.nasa.jpf.symbc.numeric.RealExpression;
 public class RealSymbolicArray extends ArrayExpression {
     private String name;
     public String solution = "UNDEFINED";
-    public int slot;
     // Indicates the previous ArrayExpression, as well as the index and value
     // when we store something in the array
     public PreviousRealArray previous = null;
     public Map<String, SymbolicRealValueAtIndex> realValAt = null;
 
 
-    public RealSymbolicArray(int size, int slot) {
+    public RealSymbolicArray(int size) {
         super();
         this.length = new IntegerConstant(size);
-        this.slot = slot;
     }
 
-    public RealSymbolicArray(int n, String name, int slot) {
+    public RealSymbolicArray(int n, String name) {
         super();
         this.name = name;
         this.length = new IntegerConstant(n);
-        this.slot = slot;
     }
 
-    public RealSymbolicArray(IntegerExpression n, String name, int slot) {
+    public RealSymbolicArray(IntegerExpression n, String name) {
         super();
         this.name = name;
         this.length = n;
-        this.slot = slot;
     }
 
     public RealSymbolicArray(PreviousRealArray previous) {
@@ -52,7 +48,6 @@ public class RealSymbolicArray extends ArrayExpression {
             newName = newName.substring(0, newName.indexOf("!") +1) + (aux + 1);
         }
         this.name = newName;
-        this.slot = -1;
         this.previous = previous;
     }
 
@@ -61,10 +56,6 @@ public class RealSymbolicArray extends ArrayExpression {
         return length;
     }
     
-    public int getSlot() {
-        return slot;
-    }
-
     public String getName() {
         return (name!=null) ? name : "ARRAY_" + hashCode();
    }
