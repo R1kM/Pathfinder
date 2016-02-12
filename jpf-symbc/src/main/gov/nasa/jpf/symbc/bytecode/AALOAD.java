@@ -61,6 +61,9 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
       HeapNode[] prevSymRefs = null; // previously initialized objects of same type
       int numSymRefs = 0; // number of previously initialized objects
       ChoiceGenerator<?> prevHeapCG = null;
+      ChoiceGenerator<?> cg;
+      int currentChoice;
+      IntegerExpression indexAttr = null;
 	
       if (peekArrayAttr(ti) == null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
           // In this case, the array isn't symbolic
@@ -73,7 +76,43 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
           // We need to add the information in PC after it is declared.
           // TODO
           // Make a PCChoiceGenerator on all the possible indices. Return the object at array[i] for each i
-          throw new RuntimeException("AALOAD : Concrete array, symbolic index not handled");
+          ElementInfo arrayInfo = ti.getElementInfo(arrayRef);
+          if (!ti.isFirstStepInsn()) { // first time around
+              cg = new PCChoiceGenerator(arrayInfo.arrayLength() + 2);
+              ((PCChoiceGenerator)cg).setOffset(this.position);
+              ((PCChoiceGenerator)cg).setMethodName(this.getMethodInfo().getFullName());
+              ti.getVM().setNextChoiceGenerator(cg);
+              return this;
+          } else { // this is what really returns results
+            cg = ti.getVM().getLastChoiceGeneratorOfType(PCChoiceGenerator.class);
+            assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
+            currentChoice = (Integer)cg.getNextChoice();
+          }
+
+          if (currentChoice < arrayInfo.arrayLength()) {
+            indexAttr = (IntegerExpression)peekIndexAttr(ti);
+            // TODO Return the object at array[i] and add constraints
+          } else if (currentChoice == arrayInfo.arrayLength()) {
+            pc._addDet(Comparator.GE, indexAttr, new IntegerConstant(arrayInfo.arrayLength()));
+            if (pc.simplify()) { // satisfiable
+                ((PCChoiceGenerator) cg).setCurrentPC(pc);
+                return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException", "index greater than array bounds");
+            } else {
+                ti.getVM().getSystemState().setIgnored(true);
+                return getNext(ti);
+            }
+          } else if (currentChoice == arrayInfo.arrayLength() +1) {
+              pc._addDet(Comparator.LT, indexAttr, new IntegerConstant(0));
+              if (pc.simplify()) { // satisfiable
+                  ((PCChoiceGenerator) cg).setCurrentPC(pc);
+                  return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException", "index smaller than array bounds");
+              } else {
+                  ti.getVM().getSystemState().setIgnored(true);
+                  return getNext(ti);
+              }
+          } else {
+              throw new RuntimeException("We shouldn't end here in AALOAD");
+          }
        } else {
            arrayAttr = (ObjectSymbolicArray)peekArrayAttr(ti);
        }
@@ -87,7 +126,6 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
       ClassInfo typeClassInfo = ClassLoaderInfo.getCurrentResolvedClassInfo(typeElemArray);
 
       ChoiceGenerator<?> thisHeapCG;
-      int currentChoice;
 
     // TODO Replace HeapChoiceGenerator by a PCChoiceGenerator, and mimick concrete case behaviour
     // index in bounds will be detected by PCChoiceGenerator
@@ -135,7 +173,6 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
       assert pcHeap != null;
       assert symInputHeap != null;
 
-       IntegerExpression indexAttr = null;
        SelectExpression se = null;
 
    	   StackFrame frame = ti.getModifiableTopFrame();
