@@ -89,6 +89,16 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
             currentChoice = (Integer)cg.getNextChoice();
           }
 
+          PathCondition pc;
+          ChoiceGenerator<?> prev_cg = cg.getPreviousChoiceGeneratorOfType(PCChoiceGenerator.class);
+
+          if (prev_cg == null)
+              pc = new PathCondition();
+          else
+              pc = ((PCChoiceGenerator)prev_cg).getCurrentPC();
+
+          assert pc != null;
+
           if (currentChoice < arrayInfo.arrayLength()) {
             indexAttr = (IntegerExpression)peekIndexAttr(ti);
             // TODO Return the object at array[i] and add constraints
