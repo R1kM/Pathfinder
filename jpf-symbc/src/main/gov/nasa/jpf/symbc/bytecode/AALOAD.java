@@ -65,6 +65,7 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
       int currentChoice;
       IntegerExpression indexAttr = null;
    	  StackFrame frame = ti.getModifiableTopFrame();
+	   arrayRef = frame.peek(1); // ..,arrayRef,idx
 	
       if (peekArrayAttr(ti) == null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
           // In this case, the array isn't symbolic
@@ -99,9 +100,9 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
               pc = ((PCChoiceGenerator)prev_cg).getCurrentPC();
 
           assert pc != null;
+          indexAttr = (IntegerExpression)peekIndexAttr(ti);
 
           if (currentChoice < arrayInfo.arrayLength()) {
-            indexAttr = (IntegerExpression)peekIndexAttr(ti);
             // For each possible index, we check if the symbolic index can be equal to it. If so, we return the value at this index
 
             pc._addDet(Comparator.EQ, indexAttr, new IntegerConstant(currentChoice));
@@ -202,7 +203,6 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
 
        SelectExpression se = null;
 
-	   arrayRef = frame.peek(1); // ..,arrayRef,idx
 
        if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
            // In this case, the index isn't symbolic
