@@ -64,6 +64,7 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
       ChoiceGenerator<?> cg;
       int currentChoice;
       IntegerExpression indexAttr = null;
+   	  StackFrame frame = ti.getModifiableTopFrame();
 	
       if (peekArrayAttr(ti) == null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
           // In this case, the array isn't symbolic
@@ -101,7 +102,23 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
 
           if (currentChoice < arrayInfo.arrayLength()) {
             indexAttr = (IntegerExpression)peekIndexAttr(ti);
-            // TODO Return the object at array[i] and add constraints
+            // For each possible index, we check if the symbolic index can be equal to it. If so, we return the value at this index
+
+            pc._addDet(Comparator.EQ, indexAttr, new IntegerConstant(currentChoice));
+            if (pc.simplify()) { // satisfiable
+                frame.pop(2);
+                arrayInfo.checkArrayBounds(currentChoice); // should not fail
+                int value = arrayInfo.getReferenceElement(currentChoice);
+                frame.pushRef(value);
+                Object elementAttr = arrayInfo.getElementAttr(currentChoice);
+                if (elementAttr != null) {
+                    frame.setOperandAttr(elementAttr);
+                }
+                return getNext(ti);
+            } else {
+                ti.getVM().getSystemState().setIgnored(true);
+                return getNext(ti);
+            }
           } else if (currentChoice == arrayInfo.arrayLength()) {
             pc._addDet(Comparator.GE, indexAttr, new IntegerConstant(arrayInfo.arrayLength()));
             if (pc.simplify()) { // satisfiable
@@ -185,7 +202,6 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
 
        SelectExpression se = null;
 
-   	   StackFrame frame = ti.getModifiableTopFrame();
 	   arrayRef = frame.peek(1); // ..,arrayRef,idx
 
        if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
