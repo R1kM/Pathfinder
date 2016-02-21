@@ -3,6 +3,7 @@ package gov.nasa.jpf.symbc.arrays;
 import java.util.Map;
 
 import gov.nasa.jpf.symbc.arrays.ObjectSymbolicArray;
+import gov.nasa.jpf.symbc.heap.SymbolicInputHeap;
 import gov.nasa.jpf.symbc.numeric.ConstraintExpressionVisitor;
 import gov.nasa.jpf.symbc.numeric.IntegerConstant;
 import gov.nasa.jpf.symbc.numeric.IntegerExpression;
@@ -11,6 +12,7 @@ public class ObjectSymbolicArray extends ArrayExpression {
     private String solution = "UNDEFINED";
     private String elemType = "?";
     public PreviousObjectArray previous = null;
+    public SymbolicInputHeap symInputHeap = null;
 
     public ObjectSymbolicArray(int size) {
         super();
