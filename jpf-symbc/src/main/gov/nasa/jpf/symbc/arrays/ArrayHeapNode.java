@@ -10,7 +10,9 @@ public class ArrayHeapNode extends HeapNode {
     public IntegerExpression arrayIndex = null;
     public int arrayRef = -1;
 
-        public ArrayHeapNode(int idx, ClassInfo tClassInfo, SymbolicInteger sym) {
+        public ArrayHeapNode(int idx, ClassInfo tClassInfo, SymbolicInteger sym, IntegerExpression index, int ref) {
             super(idx, tClassInfo, sym);
+            arrayIndex = index;
+            arrayRef = ref;
         }
 }

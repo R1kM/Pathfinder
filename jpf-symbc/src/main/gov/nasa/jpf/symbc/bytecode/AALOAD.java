@@ -76,8 +76,6 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
           // We have a concrete array, but a symbolic index. We add all the constraints about the elements of the array and perform the select
           // We will need to get information about the type of the elements as well
           // We need to add the information in PC after it is declared.
-          // TODO
-          // Make a PCChoiceGenerator on all the possible indices. Return the object at array[i] for each i
           ElementInfo arrayInfo = ti.getElementInfo(arrayRef);
           if (!ti.isFirstStepInsn()) { // first time around
               cg = new PCChoiceGenerator(arrayInfo.arrayLength() + 2);
@@ -157,12 +155,17 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
 
       if (!ti.isFirstStepInsn()) {
           // We add the HeapChoiceGenerator that will be required if we can load an element
-          SymbolicInputHeap symInputHeap = arrayAttr.symInputHeap;
           numSymRefs = 0;
-          if (symInputHeap != null) {
-              prevSymRefs = symInputHeap.getNodesOfType(typeClassInfo);
+          prevSymRefs = null;
+          prevHeapCG = ti.getVM().getLastChoiceGeneratorOfType(HeapChoiceGenerator.class);
+
+          if (prevHeapCG != null) {
+              SymbolicInputHeap symInputHeap = ((HeapChoiceGenerator)prevHeapCG).getCurrentSymInputHeap();
+              // We get only the previously initialized elements for this array
+              prevSymRefs = symInputHeap.getArrayNodesOfType(typeClassInfo, arrayRef);
               numSymRefs = prevSymRefs.length;
           }
+
           int increment = 2;
           if (typeClassInfo.isAbstract()) {
                abstractClass =true;
@@ -247,7 +250,59 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
           }
       } else {
           // TODO deal with actual load
-          return getNext(ti);
+//          pc._addDet(Comparator.LT, indexAttr, arrayAttr.length);
+//          pc._addDet(Comparator.GE, indexAttr, new IntegerConstant(0));
+//          PathCondition pcHeap;
+//
+//          thisHeapCG = ti.getVM().getLastChoiceGeneratorOfType(HeapChoiceGenerator.class);
+//
+//          prevHeapCG = thisHeapCG.getLastChoiceGeneratorOfType(HeapChoiceGenerator.class);
+//
+//          if (prevHeapCG == null) {
+//              pcHeap = new PathCondition();
+//          } else {
+//              pcHeap = ((HeapChoiceGenerator)prevHeapCG).getCurrentPCHeap();
+//          }
+//
+//          assert pcHeap != null;
+//          // The symbolic input heap is linked to the symbolic array. If there is none yet, we create one
+//          if (symInputHeap == null) {
+//              symInputHeap = new SymbolicInputHeap();
+//          }
+//          assert symInputHeap != null;
+//
+//          SelectExpression se = null;
+//
+//          if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
+//              // In this case the index isn't symbolic
+//              index = frame.peek();
+//              se = new SelectExpression(arrayAttr, index);
+//              indexAttr = new IntegerConstant(index);
+//          } else {
+//              indexAttr = (IntegerExpression)peekIndexAttr(ti);
+//              se = new SelectExpression(arrayAttr, indexAttr);
+//          }
+//          assert arrayAttr != null;
+//          assert indexAttr != null;
+//          assert se != null;
+//
+//          if (arrayRef == MJIEnv.NULL) {
+//              return ti.createAndThrowException("java.lang.NullPointerException");
+//          }
+//
+//          int daIndex = 0; // index into JPF's dynamic area
+//          currentChoice = ((HeapChoiceGenerator) thisHeapCG).getNextChoice();
+//
+//          if (currentChoice < numSymRefs) {
+//
+//            if (pc.simplify()) {
+//            
+//                return getNext(ti);
+//            } else {
+//                  ti.getVM().getSystemstate().setIgnored(true);
+//                return getNext(ti);
+//            }
+return getNext(ti);
       }
 
      // PathCondition pcHeap;

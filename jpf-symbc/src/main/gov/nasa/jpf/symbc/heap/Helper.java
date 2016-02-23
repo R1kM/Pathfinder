@@ -18,11 +18,13 @@
 
 package gov.nasa.jpf.symbc.heap;
 
+import gov.nasa.jpf.symbc.arrays.ArrayHeapNode;
 import gov.nasa.jpf.symbc.arrays.HelperResult;
 import gov.nasa.jpf.symbc.arrays.ObjectSymbolicArray;
 import gov.nasa.jpf.symbc.numeric.Comparator;
 import gov.nasa.jpf.symbc.numeric.Expression;
 import gov.nasa.jpf.symbc.numeric.IntegerConstant;
+import gov.nasa.jpf.symbc.numeric.IntegerExpression;
 import gov.nasa.jpf.symbc.numeric.PathCondition;
 import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
 import gov.nasa.jpf.symbc.numeric.SymbolicReal;
@@ -165,7 +167,7 @@ public class Helper {
 
 	  public static HelperResult addNewArrayHeapNode(ClassInfo typeClassInfo, ThreadInfo ti, Object attr,
 			  PathCondition pcHeap, SymbolicInputHeap symInputHeap,
-			  int numSymRefs, HeapNode[] prevSymRefs, boolean setShared) {
+			  int numSymRefs, HeapNode[] prevSymRefs, boolean setShared, IntegerExpression indexAttr, int arrayRef) {
 		  int daIndex = ti.getHeap().newObject(typeClassInfo, ti).getObjectRef();
 		  ti.getHeap().registerPinDown(daIndex);
 		  String refChain = ((ObjectSymbolicArray) attr).getName() + "[" + daIndex + "]"; // do we really need to add daIndex here?
@@ -199,7 +201,7 @@ public class Helper {
 
 		  // create new HeapNode based on above info
 		  // update associated symbolic input heap
-		  HeapNode n= new HeapNode(daIndex,typeClassInfo,newSymRef);
+		  ArrayHeapNode n= new ArrayHeapNode(daIndex,typeClassInfo,newSymRef, indexAttr, arrayRef);
 		  symInputHeap._add(n);
 		  pcHeap._addDet(Comparator.NE, newSymRef, new IntegerConstant(-1));
 		  //pcHeap._addDet(Comparator.EQ, newSymRef, (SymbolicInteger) attr);
