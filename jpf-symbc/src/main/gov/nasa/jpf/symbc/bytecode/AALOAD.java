@@ -22,6 +22,7 @@ package gov.nasa.jpf.symbc.bytecode;
 
 import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
 import gov.nasa.jpf.symbc.arrays.ArrayExpression;
+import gov.nasa.jpf.symbc.arrays.ArrayHeapNode;
 import gov.nasa.jpf.symbc.arrays.HelperResult;
 import gov.nasa.jpf.symbc.arrays.ObjectSymbolicArray;
 import gov.nasa.jpf.symbc.arrays.SelectExpression;
@@ -58,7 +59,7 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
 
       boolean abstractClass = false;
       ObjectSymbolicArray arrayAttr = null;
-      HeapNode[] prevSymRefs = null; // previously initialized objects of same type
+      ArrayHeapNode[] prevSymRefs = null; // previously initialized objects of same type
       int numSymRefs = 0; // number of previously initialized objects
       ChoiceGenerator<?> prevHeapCG = null;
       ChoiceGenerator<?> cg;
@@ -182,6 +183,8 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
           return this;
       } else {
           cg = ti.getVM().getLastChoiceGeneratorOfType(PCChoiceGenerator.class);
+          thisHeapCG = ti.getVM().getLastChoiceGeneratorOfType(HeapChoiceGenerator.class);
+          assert (thisHeapCG instanceof HeapChoiceGenerator) : "expected HeapChoiceGenerator, got: " + thisHeapCG;
           assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
           currentChoice = (Integer)cg.getNextChoice();
       }
@@ -250,59 +253,97 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
           }
       } else {
           // TODO deal with actual load
-//          pc._addDet(Comparator.LT, indexAttr, arrayAttr.length);
-//          pc._addDet(Comparator.GE, indexAttr, new IntegerConstant(0));
-//          PathCondition pcHeap;
-//
-//          thisHeapCG = ti.getVM().getLastChoiceGeneratorOfType(HeapChoiceGenerator.class);
-//
-//          prevHeapCG = thisHeapCG.getLastChoiceGeneratorOfType(HeapChoiceGenerator.class);
-//
-//          if (prevHeapCG == null) {
-//              pcHeap = new PathCondition();
-//          } else {
-//              pcHeap = ((HeapChoiceGenerator)prevHeapCG).getCurrentPCHeap();
-//          }
-//
-//          assert pcHeap != null;
-//          // The symbolic input heap is linked to the symbolic array. If there is none yet, we create one
-//          if (symInputHeap == null) {
-//              symInputHeap = new SymbolicInputHeap();
-//          }
-//          assert symInputHeap != null;
-//
-//          SelectExpression se = null;
-//
-//          if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
-//              // In this case the index isn't symbolic
-//              index = frame.peek();
-//              se = new SelectExpression(arrayAttr, index);
-//              indexAttr = new IntegerConstant(index);
-//          } else {
-//              indexAttr = (IntegerExpression)peekIndexAttr(ti);
-//              se = new SelectExpression(arrayAttr, indexAttr);
-//          }
-//          assert arrayAttr != null;
-//          assert indexAttr != null;
-//          assert se != null;
-//
-//          if (arrayRef == MJIEnv.NULL) {
-//              return ti.createAndThrowException("java.lang.NullPointerException");
-//          }
-//
-//          int daIndex = 0; // index into JPF's dynamic area
-//          currentChoice = ((HeapChoiceGenerator) thisHeapCG).getNextChoice();
-//
-//          if (currentChoice < numSymRefs) {
-//
-//            if (pc.simplify()) {
-//            
-//                return getNext(ti);
-//            } else {
-//                  ti.getVM().getSystemstate().setIgnored(true);
-//                return getNext(ti);
-//            }
-return getNext(ti);
+          pc._addDet(Comparator.LT, indexAttr, arrayAttr.length);
+          pc._addDet(Comparator.GE, indexAttr, new IntegerConstant(0));
+          PathCondition pcHeap;
+          SymbolicInputHeap symInputHeap;
+
+          prevHeapCG = thisHeapCG.getPreviousChoiceGeneratorOfType(HeapChoiceGenerator.class);
+
+          if (prevHeapCG == null) {
+              pcHeap = new PathCondition();
+              symInputHeap = new SymbolicInputHeap();
+          } else {
+              pcHeap = ((HeapChoiceGenerator)prevHeapCG).getCurrentPCheap();
+              symInputHeap = ((HeapChoiceGenerator) prevHeapCG).getCurrentSymInputHeap();
+          }
+
+          assert pcHeap != null;
+          assert symInputHeap != null;
+
+          SelectExpression se = null;
+
+          if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
+              // In this case the index isn't symbolic
+              index = frame.peek();
+              se = new SelectExpression(arrayAttr, index);
+              indexAttr = new IntegerConstant(index);
+          } else {
+              indexAttr = (IntegerExpression)peekIndexAttr(ti);
+              se = new SelectExpression(arrayAttr, indexAttr);
+          }
+          assert arrayAttr != null;
+          assert indexAttr != null;
+          assert se != null;
+
+          if (arrayRef == MJIEnv.NULL) {
+              return ti.createAndThrowException("java.lang.NullPointerException");
+          }
+
+          int daIndex = 0; // index into JPF's dynamic area
+          currentChoice = ((HeapChoiceGenerator) thisHeapCG).getNextChoice();
+
+          if (currentChoice < numSymRefs) {
+            // We load a previously initialized object
+            ArrayHeapNode candidateNode = prevSymRefs[currentChoice];
+            pc._addDet(Comparator.EQ, indexAttr, candidateNode.arrayIndex);
+            if (pc.simplify()) {
+                // The index is the same than the previous one
+                pc._addDet(Comparator.EQ, se, candidateNode.getSymbolic());
+                daIndex = candidateNode.getIndex();
+                frame.pop(2); // We pop the array and the index
+                frame.push(daIndex, true); // We have instantiated an object, and added the constraints in the PC
+
+                ((HeapChoiceGenerator)thisHeapCG).setCurrentPCheap(pcHeap);
+                ((HeapChoiceGenerator)thisHeapCG).setCurrentSymInputHeap(symInputHeap);
+                return getNext(ti);
+            } else {
+                  ti.getVM().getSystemState().setIgnored(true);
+                return getNext(ti);
+            }
+          } else if (currentChoice == (numSymRefs)) { // null object
+            if (pc.simplify()) { // satisfiable
+                pcHeap._addDet(Comparator.EQ, se, new IntegerConstant(-1));
+                daIndex = -1;
+                frame.pop(2); // We pop the index and the array;
+                frame.push(daIndex, true);
+
+                ((HeapChoiceGenerator)thisHeapCG).setCurrentPCheap(pcHeap);
+                ((HeapChoiceGenerator)thisHeapCG).setCurrentSymInputHeap(symInputHeap);
+                return getNext(ti);
+            } else {
+                ti.getVM().getSystemState().setIgnored(true);
+                return getNext(ti);
+            }
+          } else {
+              if (pc.simplify()) { // satisfiable
+                HelperResult hpResult = Helper.addNewArrayHeapNode(typeClassInfo, ti, arrayAttr, pcHeap, symInputHeap, numSymRefs, prevSymRefs, false, indexAttr, arrayRef);
+                daIndex = hpResult.idx;
+                HeapNode candidateNode = hpResult.n;
+                // Since the object is different from all the previously initialized ones, we don't need to add constraints
+                // on the index, it will be inferred from Z3 array theory
+                pcHeap._addDet(Comparator.EQ, se, candidateNode.getSymbolic());
+                frame.pop(2); // We pop the array and the index
+                frame.push(daIndex, true);
+
+                ((HeapChoiceGenerator) thisHeapCG).setCurrentPCheap(pcHeap);
+                ((HeapChoiceGenerator) thisHeapCG).setCurrentSymInputHeap(symInputHeap);
+                return getNext(ti);
+              } else {
+                  ti.getVM().getSystemState().setIgnored(true);
+                  return getNext(ti);
+              }
+          }   
       }
 
      // PathCondition pcHeap;
