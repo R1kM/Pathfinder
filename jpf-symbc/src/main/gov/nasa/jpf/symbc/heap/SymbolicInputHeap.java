@@ -37,6 +37,7 @@
 
 package gov.nasa.jpf.symbc.heap;
 
+import gov.nasa.jpf.symbc.arrays.ArrayHeapNode;
 import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
 import gov.nasa.jpf.vm.ClassInfo;
 
@@ -133,6 +134,38 @@ public class SymbolicInputHeap {
 		  return nodes;
 	}
 	
+    public ArrayHeapNode[] getArrayNodesOfType(ClassInfo type, int ref) {
+        int numSymRefs = 0;
+        HeapNode n = header;
+        while (null != n) {
+            if (n instanceof ArrayHeapNode) {
+                ClassInfo tClassInfo = n.getType();
+                if (tClassInfo.isInstanceOf(type)) {
+                    if (((ArrayHeapNode)n).arrayRef == ref) {
+                        numSymRefs++;
+                    }
+                }
+            }
+            n.getNext();
+        }
+        n = header;
+        ArrayHeapNode[] nodes = new ArrayHeapNode[numSymRefs]; 
+        int i = 0;
+        while (null != n) {
+            if (n instanceof ArrayHeapNode) {
+                ClassInfo tClassInfo = n.getType();
+                if (tClassInfo.isInstanceOf(type)) {
+                    if (((ArrayHeapNode)n).arrayRef == ref) {
+                        nodes[i] = (ArrayHeapNode)n;
+                        i++;
+                    }
+                }
+            }
+            n = n.getNext();
+        }
+        return nodes;
+    }
+
 	public String toString() {
 		return "SymbolicInputHeap = " + count + ((header == null) ? "" : "\n" + header.toString());
 	}
