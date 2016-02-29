@@ -53,17 +53,67 @@ public class AASTORE extends gov.nasa.jpf.jvm.bytecode.AASTORE {
           IntegerExpression indexAttr = null;
           ObjectSymbolicArray arrayAttr = null;
           StackFrame frame = ti.getModifiableTopFrame();
+          ChoiceGenerator<?> cg;
+          boolean condition;
 
           if (peekArrayAttr(ti) == null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
               // In this case, the array isn't symbolic
               if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
                   // The symbolic object was concretized during AALOAD or ALOAD, so nothing is symbolic here
                   return super.execute(ti);
+              } else {
+                  // The array is not symbolic, but the index is.
+                  // We try to store the object in each possible slot
+                  ElementInfo arrayInfo = ti.getElementInfo(arrayRef);
+                  if (!ti.isFirstStepInsn()) { // first time around
+                     cg = new PCChoiceGenerator(arrayInfo.arrayLength() +2);
+                     ((PCChoiceGenerator) cg).setOffset(this.position);
+                     ((PCChoiceGenerator) cg).setMethodName(this.getMethodInfo().getFullName());
+                     ti.getVM().setNextChoiceGenerator(cg);
+                     return this;
+                  } else { // this is what really returns results
+                    cg = ti.getVM().getChoiceGenerator();
+                    assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
+                  }
+
+                  PathCondition pc;
+                  ChoiceGenerator<?> prev_cg = cg.getPreviousChoiceGeneratorOfType(PCChoiceGenerator.class);
+
+                  if (prev_cg == null)
+                      pc = new PathCondition();
+                  else
+                      pc = ((PCChoiceGenerator)prev_cg).getCurrentPC();
+
+                  assert pc != null;
+
+                  indexAttr = (IntegerExpression) peekIndexAttr(ti); // We know that the index is here symbolic
+              
+                  assert (indexAttr != null) : "indexAttr shouldn't be null in AASTORE instruction";
+
+                  if ((Integer)cg.getNextChoice() < arrayInfo.arrayLength()) {
+                      // do a store here
+                  } else if ((Integer)cg.getNextChoice() == arrayInfo.arrayLength()) {
+                      pc._addDet(Comparator.GE, indexAttr, new IntegerConstant(arrayInfo.arrayLength()));
+                      if (pc.simplify()) { // satisfiable
+                          ((PCChoiceGenerator) cg).setCurrentPC(pc);
+                          return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException", "index greater than array bounds");
+                      } else {
+                        ti.getVM().getSystemState().setIgnored(true);
+                        return getNext(ti);
+                      }
+                  } else {
+                      pc._addDet(Comparator.LT, indexAttr, new IntegerConstant(0));
+                      if (pc.simplify()) {
+                          ((PCChoiceGenerator) cg).setCurrentPC(pc);
+                          return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException", "index smaller than array bounds");
+                      } else {
+                          ti.getVM().getSystemState().setIgnored(true);
+                          return getNext(ti);
+                      }
+                  }
               }
           }
 
-          ChoiceGenerator<?> cg;
-          boolean condition;
 
           if (!ti.isFirstStepInsn()) { // first time around
               cg = new PCChoiceGenerator(3);
@@ -106,7 +156,6 @@ public class AASTORE extends gov.nasa.jpf.jvm.bytecode.AASTORE {
               arrayAttr = (ObjectSymbolicArray)peekArrayAttr(ti);
           }
           assert (arrayAttr != null) : "arrayAttr shouldn't be null in AASTORE instruction";
-          System.out.println(arrayAttr.getElemType());
 
 		  int arrayref = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
 		  if (arrayref == MJIEnv.NULL) {
