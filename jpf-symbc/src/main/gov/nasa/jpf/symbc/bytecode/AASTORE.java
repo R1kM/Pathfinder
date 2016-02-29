@@ -55,6 +55,7 @@ public class AASTORE extends gov.nasa.jpf.jvm.bytecode.AASTORE {
           StackFrame frame = ti.getModifiableTopFrame();
           ChoiceGenerator<?> cg;
           boolean condition;
+		  int arrayRef = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
 
           if (peekArrayAttr(ti) == null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
               // In this case, the array isn't symbolic
@@ -171,8 +172,7 @@ public class AASTORE extends gov.nasa.jpf.jvm.bytecode.AASTORE {
           }
           assert (arrayAttr != null) : "arrayAttr shouldn't be null in AASTORE instruction";
 
-		  int arrayref = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
-		  if (arrayref == MJIEnv.NULL) {
+		  if (arrayRef == MJIEnv.NULL) {
 		        return ti.createAndThrowException("java.lang.NullPointerException");
 		  } 
 

@@ -69,6 +69,7 @@ public class CASTORE extends gov.nasa.jpf.jvm.bytecode.CASTORE {
 
           ChoiceGenerator<?> cg;
           boolean condition;
+          int arrayRef = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
 
           if (!ti.isFirstStepInsn()) { // first time around
               cg = new PCChoiceGenerator(3);
@@ -121,8 +122,7 @@ public class CASTORE extends gov.nasa.jpf.jvm.bytecode.CASTORE {
           }
           assert (arrayAttr != null) : "arrayAttr shouldn't be null in IASTORE instruction";
 
-          int arrayref = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
-		  if (arrayref == MJIEnv.NULL) {
+		  if (arrayRef == MJIEnv.NULL) {
 		        return ti.createAndThrowException("java.lang.NullPointerException");
 		  } 
 
