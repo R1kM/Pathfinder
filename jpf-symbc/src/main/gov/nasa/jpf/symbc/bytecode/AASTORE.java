@@ -90,9 +90,23 @@ public class AASTORE extends gov.nasa.jpf.jvm.bytecode.AASTORE {
               
                   assert (indexAttr != null) : "indexAttr shouldn't be null in AASTORE instruction";
 
-                  if ((Integer)cg.getNextChoice() < arrayInfo.arrayLength()) {
-                      // do a store here
-                  } else if ((Integer)cg.getNextChoice() == arrayInfo.arrayLength()) {
+                  int currentChoice = (Integer)cg.getNextChoice();
+
+                  if (currentChoice < arrayInfo.arrayLength()) {
+                      pc._addDet(Comparator.EQ, indexAttr, new IntegerConstant(currentChoice));
+                      if (pc.simplify()) { // We can store at this index
+                        int value = frame.peek();
+                        arrayRef = frame.peek(2);
+                        ElementInfo eiArray = ti.getModifiableElementInfo(arrayRef);
+                        eiArray.setReferenceElement(currentChoice, value);
+
+                        frame.pop(3);
+                        return getNext(ti);
+                      } else {
+                        ti.getVM().getSystemState().setIgnored(true);
+                        return getNext(ti);
+                     }
+                  } else if (currentChoice == arrayInfo.arrayLength()) {
                       pc._addDet(Comparator.GE, indexAttr, new IntegerConstant(arrayInfo.arrayLength()));
                       if (pc.simplify()) { // satisfiable
                           ((PCChoiceGenerator) cg).setCurrentPC(pc);
