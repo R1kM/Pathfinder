@@ -57,6 +57,8 @@ public class LALOAD extends gov.nasa.jpf.jvm.bytecode.LALOAD {
           IntegerSymbolicArray arrayAttr = null;
           ChoiceGenerator<?> cg;
           boolean condition;
+          StackFrame frame = ti.getModifiableTopFrame();
+          arrayRef = frame.peek(1); // ..., arrayRef, idx
 
           if (!ti.isFirstStepInsn()) { // first time around
               cg = new PCChoiceGenerator(3);
@@ -99,8 +101,6 @@ public class LALOAD extends gov.nasa.jpf.jvm.bytecode.LALOAD {
              }
           IntegerExpression indexAttr = null;
           SelectExpression se = null;
-          StackFrame frame = ti.getModifiableTopFrame();
-          arrayRef = frame.peek(1); // ..., arrayRef, idx
 
 		  if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
               // In this case, the index isn't symbolic.
