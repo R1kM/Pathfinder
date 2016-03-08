@@ -95,7 +95,7 @@ public class BALOAD extends gov.nasa.jpf.jvm.bytecode.BALOAD {
               ElementInfo arrayInfo = ti.getElementInfo(arrayRef);
               arrayAttr = new IntegerSymbolicArray(arrayInfo.arrayLength());
               for (int i = 0; i < arrayInfo.arrayLength(); i++) {
-                int arrValue = arrayInfo.getIntElement(i);
+                byte arrValue = arrayInfo.getByteElement(i);
                 pc._addDet(Comparator.EQ, new SelectExpression(arrayAttr, i), new IntegerConstant(arrValue));
               }
           }

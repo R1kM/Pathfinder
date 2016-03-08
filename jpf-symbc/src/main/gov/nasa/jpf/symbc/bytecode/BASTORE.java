@@ -111,7 +111,7 @@ public class BASTORE extends gov.nasa.jpf.jvm.bytecode.BASTORE {
                arrayAttr = new IntegerSymbolicArray(arrayInfo.arrayLength());
                // We add the constraints about all the elements of the array
                for (int i = 0; i < arrayInfo.arrayLength(); i++) {
-                   int arrValue = arrayInfo.getIntElement(i);
+                   byte arrValue = arrayInfo.getByteElement(i);
                    pc._addDet(Comparator.EQ, new SelectExpression(arrayAttr, i), new IntegerConstant(arrValue));
                }
              }

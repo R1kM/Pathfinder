@@ -92,7 +92,7 @@ public class SALOAD extends gov.nasa.jpf.jvm.bytecode.SALOAD {
               ElementInfo arrayInfo = ti.getElementInfo(arrayRef);
               arrayAttr = new IntegerSymbolicArray(arrayInfo.arrayLength());
               for (int i = 0; i < arrayInfo.arrayLength(); i++) {
-                  int arrValue = arrayInfo.getIntElement(i);
+                  int arrValue = arrayInfo.getShortElement(i);
                   pc._addDet(Comparator.EQ, new SelectExpression(arrayAttr, i), new IntegerConstant(arrValue));
               }
           } else {

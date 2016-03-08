@@ -113,7 +113,7 @@ public class CASTORE extends gov.nasa.jpf.jvm.bytecode.CASTORE {
                arrayAttr = new IntegerSymbolicArray(arrayInfo.arrayLength());
                // We add the constraints about all the elements of the array
                for (int i = 0; i < arrayInfo.arrayLength(); i++) {
-                   int arrValue = arrayInfo.getIntElement(i);
+                   int arrValue = arrayInfo.getCharElement(i);
                    pc._addDet(Comparator.EQ, new SelectExpression(arrayAttr, i), new IntegerConstant(arrValue));
                }
              }
