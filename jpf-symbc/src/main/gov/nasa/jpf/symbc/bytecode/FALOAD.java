@@ -49,6 +49,7 @@ public class FALOAD extends gov.nasa.jpf.jvm.bytecode.FALOAD {
 	 @Override
 	  public Instruction execute (ThreadInfo ti) {
 		
+        // This instruction is not implemented for the moment, because of Z3 not supporting floats.
           if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
               // In this case, the array isn't symbolic
               if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) { 

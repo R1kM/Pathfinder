@@ -41,6 +41,7 @@ public class DASTORE extends gov.nasa.jpf.jvm.bytecode.DASTORE {
 
 		 @Override
 	     public Instruction execute (ThreadInfo ti) {
+             // This instruciton is not yet implemented, Z3 does not support floats
 				 if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression))
 					  return super.execute(ti);
 				  int arrayref = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
@@ -48,7 +49,7 @@ public class DASTORE extends gov.nasa.jpf.jvm.bytecode.DASTORE {
 				  if (arrayref == MJIEnv.NULL) {
 				        return ti.createAndThrowException("java.lang.NullPointerException");
 				  } 
-				  throw new RuntimeException("Arrays: symbolic index not handled");
+				  throw new RuntimeException("Symbolic Float Arrays not handled");
 					
 			 }
 }

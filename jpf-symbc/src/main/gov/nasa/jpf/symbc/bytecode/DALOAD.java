@@ -40,6 +40,8 @@ public class DALOAD extends gov.nasa.jpf.jvm.bytecode.DALOAD {
 
 	 @Override
 	  public Instruction execute (ThreadInfo ti) {
+
+         // This instruction is not yet implemented, Z3 does not support floats
 		 if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression))
 			  return super.execute(ti);
 		  StackFrame frame = ti.getModifiableTopFrame();
@@ -47,7 +49,7 @@ public class DALOAD extends gov.nasa.jpf.jvm.bytecode.DALOAD {
 		    if (arrayRef == MJIEnv.NULL) {
 		      return ti.createAndThrowException("java.lang.NullPointerException");
 		    }
-		    throw new RuntimeException("Arrays: symbolic index not handled");
+		    throw new RuntimeException("Symbolic float Arrays not handled");
 	  }
 		  
 }

@@ -52,6 +52,8 @@ public class FASTORE extends gov.nasa.jpf.jvm.bytecode.FASTORE {
 
 	@Override
 	  public Instruction execute (ThreadInfo ti) {
+
+          // This instruction is not yet implemented on the backend part, since Z3 is not supporting float
           IntegerExpression indexAttr = null;
           RealSymbolicArray arrayAttr = null;
 		  StackFrame frame = ti.getModifiableTopFrame();
