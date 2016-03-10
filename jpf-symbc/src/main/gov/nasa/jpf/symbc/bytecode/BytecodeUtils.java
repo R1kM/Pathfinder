@@ -311,71 +311,42 @@ public class BytecodeUtils {
                         Object[] argValues = invInst.getArgumentValues(th);
                         ElementInfo eiArray = (ElementInfo)argValues[j];
 
-                        if (eiArray!= null) {
-                            IntegerSymbolicArray sym_v = new IntegerSymbolicArray(new SymbolicInteger(name + "!length"), varName(name, VarType.ARRAY));
-                            expressionMap.put(name, sym_v);
-                            sf.setOperandAttr(stackIdx, sym_v);
-                            outputString = outputString.concat(" " + sym_v + ",");
-                        }
+                        IntegerSymbolicArray sym_v = new IntegerSymbolicArray(new SymbolicInteger(name + "!length"), varName(name, VarType.ARRAY));
+                        expressionMap.put(name, sym_v);
+                        sf.setOperandAttr(stackIdx, sym_v);
+                        outputString = outputString.concat(" " + sym_v + ",");
 
-                        else {
-                            System.out.println("Warning : input array empty "+name);
-                        }
 
-// CHANGE				Object[] argValues = invInst.getArgumentValues(th);
-// 						ElementInfo eiArray = (ElementInfo)argValues[j];
-// 
-// 						if(eiArray!=null)
-// 							for(int i =0; i< eiArray.arrayLength(); i++) {
-// 								IntegerExpression sym_v = new SymbolicInteger(varName(name+i, VarType.INT));
-// 								expressionMap.put(name+i, sym_v);
-// 								eiArray.addElementAttr(i, sym_v);
-// 								outputString = outputString.concat(" " + sym_v + ",");
-// 							}
-// 						else
-// 							System.out.println("Warning: input array empty! "+name);
 					} else if(argTypes[j].equalsIgnoreCase("float[]") || argTypes[j].equalsIgnoreCase("double[]")){
 						Object[] argValues = invInst.getArgumentValues(th);
 						ElementInfo eiArray = (ElementInfo)argValues[j];
 
-						if(eiArray!=null)
-							for(int i =0; i< eiArray.arrayLength(); i++) {
-								RealExpression sym_v = new SymbolicReal(varName(name+i, VarType.REAL));
-								expressionMap.put(name+i, sym_v);
-								eiArray.addElementAttr(i, sym_v);
-								outputString = outputString.concat(" " + sym_v + ",");
-							}
-						else
-							System.out.println("Warning: input array empty! "+name);
+						for(int i =0; i< eiArray.arrayLength(); i++) {
+							RealExpression sym_v = new SymbolicReal(varName(name+i, VarType.REAL));
+							expressionMap.put(name+i, sym_v);
+							eiArray.addElementAttr(i, sym_v);
+							outputString = outputString.concat(" " + sym_v + ",");
+						}
 					} else if(argTypes[j].equalsIgnoreCase("boolean[]")){
 						Object[] argValues = invInst.getArgumentValues(th);
 						ElementInfo eiArray = (ElementInfo)argValues[j];
 
-						if(eiArray!=null) {
-                            IntegerSymbolicArray sym_v = new IntegerSymbolicArray(new SymbolicInteger(name + "!length"), varName(name, VarType.ARRAY));
-                            expressionMap.put(name, sym_v);
-                            sf.setOperandAttr(stackIdx, sym_v);
-                            outputString = outputString.concat(" " + sym_v + ",");
-                        }
-						else
-							System.out.println("Warning: input array empty! "+name);
+                        IntegerSymbolicArray sym_v = new IntegerSymbolicArray(new SymbolicInteger(name + "!length"), varName(name, VarType.ARRAY));
+                        expressionMap.put(name, sym_v);
+                        sf.setOperandAttr(stackIdx, sym_v);
+                        outputString = outputString.concat(" " + sym_v + ",");
+
 					} else if (argTypes[j].contains("[]")) {
                         // If the type name contains [] but wasn't catched previously, then it is an object array
                         Object[] argValues = invInst.getArgumentValues(th);
                         ElementInfo eiArray = (ElementInfo)argValues[j];
 
-                        if (eiArray != null) {
-                            ObjectSymbolicArray sym_v = new ObjectSymbolicArray(new SymbolicInteger(name + "!length"), varName(name, VarType.ARRAY), argTypes[j]);
-                            expressionMap.put(name, sym_v);
-                            sf.setOperandAttr(stackIdx, sym_v);
-                            outputString = outputString.concat(" " + sym_v + ",");
-                        }
-                        else {
-							System.out.println("Warning: input array empty! "+name);
-                        }
-                    }
+                        ObjectSymbolicArray sym_v = new ObjectSymbolicArray(new SymbolicInteger(name + "!length"), varName(name, VarType.ARRAY), argTypes[j]);
+                        expressionMap.put(name, sym_v);
+                        sf.setOperandAttr(stackIdx, sym_v);
+                        outputString = outputString.concat(" " + sym_v + ",");
 
-					else {
+					} else {
                         // the argument is of reference type and it is symbolic
 						if(lazy != null) {
 							if(lazy[0].equalsIgnoreCase("true")) {
