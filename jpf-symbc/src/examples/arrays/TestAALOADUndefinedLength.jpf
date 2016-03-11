@@ -1,4 +1,4 @@
-target = arrays.TestAALOAD
+target = arrays.TestAALOADUndefinedLength
 
 classpath = ${jpf-symbc}/build/examples
 
@@ -8,8 +8,6 @@ symbolic.lazy = true
 
 type_classpath = ${jpf-symbc}/build/examples/arrays
 
-symbolic.method = arrays.TestAALOAD.run(sym)
+symbolic.method = arrays.TestAALOADUndefinedLength.run(sym)
 
 search.multiple_errors=true
-listener = gov.nasa.jpf.symbc.SymbolicListener
-symbolic.dp = z3
