@@ -22,7 +22,7 @@ package arrays;
 public class TestAALOAD {
 	
 	public void run(Node[] nlist) {
-        for (int i = 0; i< nlist.length; i++) {
+        for (int i = 0; i< 2; i++) {
             Node n = nlist[i];
     		if(n != null) {
                 int curr = 100/n.elem;
@@ -36,7 +36,7 @@ public class TestAALOAD {
 	
 	public static void main(String[] args) {
 		TestAALOAD taaload = new TestAALOAD();
-		Node[] n = null; 
+		Node[] n = {new Node()}; 
 		taaload.run(n);
 	}
 }
