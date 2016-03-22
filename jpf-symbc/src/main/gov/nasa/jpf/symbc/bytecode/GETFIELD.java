@@ -53,7 +53,7 @@ public class GETFIELD extends gov.nasa.jpf.jvm.bytecode.GETFIELD {
 
   @Override
   public Instruction execute (ThreadInfo ti) {
-	  
+
 	  HeapNode[] prevSymRefs = null; // previously initialized objects of same type: candidates for lazy init
 	  int numSymRefs = 0; // # of prev. initialized objects
 	  ChoiceGenerator<?> prevHeapCG = null;

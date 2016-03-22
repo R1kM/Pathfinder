@@ -287,7 +287,7 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
           } else if (currentChoice == (numSymRefs)) { // null object
             if (pc.simplify()) { // satisfiable
                 pcHeap._addDet(Comparator.EQ, se, new IntegerConstant(-1));
-                daIndex = -1;
+                daIndex = MJIEnv.NULL;
                 frame.pop(2); // We pop the index and the array;
                 frame.push(daIndex, true);
 
