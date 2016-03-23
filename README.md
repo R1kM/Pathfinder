@@ -8,7 +8,8 @@ Support for arrays is enabled with Z3.
 If Z3 can't be found, make sure that LD_LIBRARY_PATH contains the Pathfinder/jpf-symbc/lib directory.
 
 Symbolic execution of primitive types arrays is under test.  
-Symbolic execution of objects is planned.
+Symbolic execution of objects is under test.
+Symbolic execution of float arrays is planned.
 
 
 
