@@ -8,10 +8,6 @@ Our goals are the following :
 *   Implement a replay module for the execution of the scenarii with concrete examples
 *   Use [jConstraints](https://github.com/psycopaths/jconstraints) as a solver abstraction layer
 
-## How to Use it
-
-TODO
-
 ## Symbolic Execution of arrays
 
 Support for arrays is currently enabled using the Z3 solver.
@@ -51,5 +47,72 @@ Each object is referenced by a unique reference *objRef*. Thus, to link objects 
 we simply add constraints using *select/store* in Z3, and *objRef*.
 
 
+## Installing and configuring JavaPathFinder
+
+### .properties files
+
+#### site.properties
+
+In your home, create a .jpf directory. Then, create a site.properties inside the .jpf dir, looking like that:
+```
+jpf.home = /path/to/JavaPathFinder
+
+jpf-core = /path/to/JavaPathFinder/jpf-core
+
+jpf-symbc = /path/to/JavaPathFinder/jpf-symbc
+extensions = ${jpf-core},${jpf-symbc}
+```
+Please note that `${user.home}` can be used as a replacement for /path/to/home.
+
+#### jpf.properties
+
+These files are already configured. A jpf.properties file is required in each module.
+To configure the classpath, change the `jpf-symbc.classpath` variable in the jpf-symbc/jpf.properties file.
+
+If more information is needed, please see the official [wiki](babelfish.arc.nasa.gov/trac/jpf/wiki/user/run).
+
+### Build PathFinder
+
+Just run `ant build` in the jpf-core *and* in the jpf-symbc directories.
+
+## Running PathFinder
+
+Just execute `jpf` located in the jpf-core/bin/ directory on a .jpf file.
+Some examples are in the `src/examples/` directory. For instance, from the JavaPathFinder directory:
+```
+./jpf-core/bin/jpf jpf-symbc/src/examples/simple/Branches.jpf
+```
+When using z3, if an NoClassDefFoundError is raised, make sure that LD_LIBRARY_PATH is set and points to jpf-symbc/lib. 
+
+# The annotation system
+
+JPF runs on `.class` files using annotations in a .jpf file.
+Here is a basic .jpf file:
+```
+target = ClassTest
+
+symbolic.method = ClassTest.test(sym)
+symbolic.lazy = on
+listener = gov.nasa.jpf.symbc.heap.HeapSymbolicListener
+search.multiple_errors = true
+```
+
+The target argument tells which classfile JPF has to look for.
+
+The symbolic.method argument tells which methods have to be symbolically tested. The arguments can be either symbolic or concrete.
+For instance, for a method having two arguments, where only the first has to be symbolically evaluated, the syntax would be
+symbolic.method = method(sym#con).
+Please note that the number of arguments in the .jpf file has to match the actual number of arguments of the method.
+
+Listeners are used for searching and checking different properties at runtime. The HeapSymbolicListener is currently the one that should be used.
+
+The symbolic.lazy argument tells to use lazy initialization.
+
+The search.multiple_errors argument tells SPF not to stop at the first error.
+
+It is possible to change the search heuristic of SPF by specifying search.class = .search.heuristic.BFSHeuristic for instance (default is DFS search).
+Further information regarding search heuristics will be included in the wiki.
+
+For further information regarding annotations, please check the non-exhaustive list in the official [wiki](babelfish.arc.nasa.gov/trac/jpf/wiki/projects/jpf-symbc/doc).
 
 
