@@ -4,7 +4,6 @@
 .mtj.tmp/
 
 # Package Files #
-*.jar
 *.war
 *.ear
 
@@ -19,3 +18,4 @@ jpf-core/.hg/
 *.swp
 
 tags
+env.sh
