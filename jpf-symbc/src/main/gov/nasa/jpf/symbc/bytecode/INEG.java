@@ -37,6 +37,9 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.UnaryMinus;
+import gov.nasa.jpf.symbc.jconstraints.Translate;
 import gov.nasa.jpf.symbc.numeric.*;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
@@ -50,24 +53,24 @@ public class INEG extends gov.nasa.jpf.jvm.bytecode.INEG{
 		
 		StackFrame sf = th.getModifiableTopFrame();
 
-		IntegerExpression sym_v1 = (IntegerExpression) sf.getOperandAttr(); 
-		int v1 = sf.pop();
+		Expression<?> sym_v1 = sf.getOperandAttr(0, Expression.class); 
 		
 		//System.out.println("Execute INEG: "+Helper.get(index));
 		
 		if(sym_v1==null)
-			sf.push(-v1, false); // we'll still do the concrete execution
-		else
+            return super.execute(th);
+		else {
+		    int v1 = sf.pop();
 			sf.push(0, false);
+		    
+            Expression<Integer> symb = Translate.translateInt(sym_v1, v1);
+
+            UnaryMinus<Integer> result = new UnaryMinus<Integer>(symb);
+	    	sf.setOperandAttr(result);
+	
+		    //System.out.println("Execute INEG: "+result);
 		
-		IntegerExpression result = null;
-		if(sym_v1!=null) {
-			result = sym_v1._neg();
-		}
-		sf.setOperandAttr(result);
-		
-		//System.out.println("Execute INEG: "+result);
-		
-		return getNext(th);
+		    return getNext(th);
+        }
 	}
 }
