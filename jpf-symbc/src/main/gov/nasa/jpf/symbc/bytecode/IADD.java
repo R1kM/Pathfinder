@@ -35,6 +35,12 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.CastExpression;
+import gov.nasa.jpf.constraints.expressions.Constant;
+import gov.nasa.jpf.constraints.expressions.NumericCompound;
+import gov.nasa.jpf.constraints.expressions.NumericOperator;
+import gov.nasa.jpf.constraints.types.BuiltinTypes;
 import gov.nasa.jpf.symbc.numeric.*;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
@@ -46,25 +52,37 @@ public class IADD extends gov.nasa.jpf.jvm.bytecode.IADD {
 	public Instruction execute (ThreadInfo th) {
 		
 		StackFrame sf = th.getModifiableTopFrame();
-		IntegerExpression sym_v1 = (IntegerExpression) sf.getOperandAttr(0); 
-		IntegerExpression sym_v2 = (IntegerExpression) sf.getOperandAttr(1);
+
+		Expression<?> sym_right = sf.getOperandAttr(0, Expression.class); 
+		Expression<?> sym_left = sf.getOperandAttr(1, Expression.class);
 		
-		if(sym_v1==null && sym_v2==null)
+		if(sym_left==null && sym_right==null)
 			return super.execute(th); // we'll still do the concrete execution
 		else {
-			int v1 = sf.pop();
-			int v2 = sf.pop();
+			int vright = sf.pop();
+			int vleft = sf.pop();
 			sf.push(0, false); // for symbolic expressions, the concrete value does not matter
 		
-			IntegerExpression result = null;
-			if(sym_v1!=null) {
-				if (sym_v2!=null)
-					result = sym_v1._plus(sym_v2);
-				else // v2 is concrete
-					result = sym_v1._plus(v2);
-			}
-			else if (sym_v2!=null)
-				result = sym_v2._plus(v1);
+            Expression<Integer> isym_right;
+            Expression<Integer> isym_left;
+            if (sym_right == null) {
+                isym_right = Constant.create(BuiltinTypes.SINT32, vright);
+            } else if (sym_right.getType().equals(BuiltinTypes.SINT32)) {
+                isym_right = sym_right.requireAs(BuiltinTypes.SINT32);
+            } else {
+                isym_right = CastExpression.create(sym_right, BuiltinTypes.SINT32);
+            }
+
+            if (sym_left == null) {
+                isym_left = Constant.create(BuiltinTypes.SINT32, vleft);
+            } else if (sym_left.getType().equals(BuiltinTypes.SINT32)) {
+                isym_left = sym_left.requireAs(BuiltinTypes.SINT32);
+            } else {
+                isym_left = CastExpression.create(sym_left, BuiltinTypes.SINT32);
+            }
+
+            NumericCompound<Integer> result = new NumericCompound<Integer>(isym_left, NumericOperator.PLUS, isym_right);
+
 			sf.setOperandAttr(result);
 		
 			//System.out.println("Execute IADD: "+result);

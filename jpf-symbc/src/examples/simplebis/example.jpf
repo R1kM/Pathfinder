@@ -1,0 +1,4 @@
+@include=../../config/jdart.jpf
+
+target=features.simple.Input
+

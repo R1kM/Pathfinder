@@ -34,8 +34,10 @@
 //DOCUMENTATION, IF PROVIDED, WILL CONFORM TO THE SUBJECT SOFTWARE.
 package gov.nasa.jpf.symbc.bytecode;
 
-
-
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.NumericCompound;
+import gov.nasa.jpf.constraints.expressions.NumericOperator;
+import gov.nasa.jpf.symbc.jconstraints.Translate;
 import gov.nasa.jpf.symbc.numeric.*;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
@@ -46,26 +48,22 @@ public class IMUL extends gov.nasa.jpf.jvm.bytecode.IMUL {
 	@Override
 	public Instruction execute (ThreadInfo th) {
 		StackFrame sf = th.getModifiableTopFrame();
-		IntegerExpression sym_v1 = (IntegerExpression) sf.getOperandAttr(0); 
-		IntegerExpression sym_v2 = (IntegerExpression) sf.getOperandAttr(1);
+		Expression<?> sym_right = sf.getOperandAttr(0, Expression.class); 
+		Expression<?> sym_left = sf.getOperandAttr(1, Expression.class);
 		
 		
-		if(sym_v1==null && sym_v2==null)
+		if(sym_left==null && sym_right==null)
 			return super.execute(th); // we'll still do the concrete execution
 		else {
-			int v1 = sf.pop();
-			int v2 = sf.pop();
+			int vright = sf.pop();
+			int vleft = sf.pop();
 			sf.push(0, false); // for symbolic expressions, the concrete value does not matter
 
-			IntegerExpression result = null;
-			if(sym_v1!=null) {
-				if (sym_v2!=null)
-					result = sym_v1._mul(sym_v2);
-				else // v2 is concrete
-					result = sym_v1._mul(v2);
-			}
-			else if (sym_v2!=null)
-				result = sym_v2._mul(v1);
+            Expression<Integer> isym_left = Translate.translateInt(sym_left, vleft);
+            Expression<Integer> isym_right = Translate.translateInt(sym_right, vright);
+
+            NumericCompound<Integer> result = new NumericCompound<Integer>(isym_left, NumericOperator.MUL, isym_right);
+
 			sf.setOperandAttr(result);
 
 			//System.out.println("Execute IMUL: "+result);
