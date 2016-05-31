@@ -41,12 +41,12 @@ import gov.nasa.jpf.constraints.api.Expression;
 
 import java.util.Map;
 
-public abstract class Constraint implements Comparable<Constraint> {
+public abstract class Jconstraint {
   private final Expression<Boolean> head;
 
-  public Constraint and;
+  public Jconstraint and;
 
-  public Constraint(Expression<Boolean> h) {
+  public Jconstraint(Expression<Boolean> h) {
       head = h;
   }
 
@@ -58,12 +58,12 @@ public abstract class Constraint implements Comparable<Constraint> {
   /**
    * Returns the negation of this constraint, but without the tail.
    */
-  public abstract Constraint not();
+  public abstract Jconstraint not();
 
   /**
    * Returns the next conjunct.
    */
-  public Constraint getTail() {
+  public Jconstraint getTail() {
     return and;
   }
 
@@ -72,18 +72,12 @@ public abstract class Constraint implements Comparable<Constraint> {
         + ((and == null) ? "" : " && " + and.stringPC());
   }
 
-  public void getVarVals(Map<String,Object> varsVals) {
-	  if (and != null) {
-		  and.getVarVals(varsVals);
-	  }
-  }
-
   public boolean equals(Object o) {
-    if (!(o instanceof Constraint)) {
+    if (!(o instanceof Jconstraint)) {
       return false;
     }
 
-    return head.equals(((Constraint) o).head);
+    return head.equals(((Jconstraint) o).head);
   }
 
   public int hashCode() {
@@ -95,45 +89,18 @@ public abstract class Constraint implements Comparable<Constraint> {
 	  //return left.hashCode() ^ comp.hashCode() ^ right.hashCode();
   }
 
-  /**
-	 * Compare two constraints for orderedness. The function views each
-	 * constraint as a triple ({@code left}, {@code comp}, {@code right}). The
-	 * triples are compared lexicographically. Similarly, one element is less
-	 * than another if and only if (1) the first is {@code null} and the second
-	 * isn't, or (2) both are non-null and the hash code of the first is less
-	 * than the hash code of the second.
-	 * 
-	 * @param c
-	 *            the constraint to compare to
-	 * @return -1 if this constraint is less than the other, +1 if it is
-	 *         greater, and 0 if they are equal
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 */
-	@Override
-	public final int compareTo(Constraint c) {
-        // unimplemented
-        return 0;
-	}
-  
   public String toString() {
     return head.toString(Expression.DEFAULT_FLAGS)
         //+ ((and == null) ? "" : " && " + and.toString()); -- for specialization
         + ((and == null) ? "" : " &&\n" + and.toString());
   }
 
-  public Constraint last() {
-      Constraint c= this;
+  public Jconstraint last() {
+      Jconstraint c= this;
       while(c.and != null) {
           c = c.and;
       }
       return c;
   }
   
-//JacoGeldenhuys
-	public void accept(ConstraintExpressionVisitor visitor) {
-		visitor.preVisit(this);
-// TODO		head.accept(visitor);
-		visitor.postVisit(this);
-	}
-
 }
