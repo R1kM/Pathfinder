@@ -1,6 +1,8 @@
-@include=./example.jpf
+target=Input
 
-concolic.method=foo
-
+classpath=${jpf-symbc}/build/examples/simplebis/
+symbolic.method=Input.foo(sym)
+listener = gov.nasa.jpf.symbc.SymbolicListener
+symbolic.dp=z3
 
 

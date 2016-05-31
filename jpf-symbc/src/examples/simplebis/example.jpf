@@ -1,4 +1,4 @@
-@include=../../config/jdart.jpf
 
-target=features.simple.Input
-
+target=Input
+symbolic.dp=z3
+symbolic.dp.z3.bitvectors=true
