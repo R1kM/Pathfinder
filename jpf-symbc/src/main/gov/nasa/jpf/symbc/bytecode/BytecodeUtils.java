@@ -22,6 +22,8 @@ package gov.nasa.jpf.symbc.bytecode;
 
 import gov.nasa.jpf.Config;
 
+import gov.nasa.jpf.constraints.api.Variable;
+import gov.nasa.jpf.constraints.types.BuiltinTypes;
 import gov.nasa.jpf.jvm.bytecode.JVMInvokeInstruction;
 import gov.nasa.jpf.symbc.arrays.IntegerSymbolicArray;
 import gov.nasa.jpf.symbc.arrays.ObjectSymbolicArray;
@@ -286,9 +288,14 @@ public class BytecodeUtils {
 			for (int j = 0; j < argSize; j++) { // j ranges over actual arguments
 				if (symClass || args.get(j).equalsIgnoreCase("SYM")) {
 					String name =  argsInfo[localVarsIdx].getName();
-					if (argTypes[j].equalsIgnoreCase("int") || argTypes[j].equalsIgnoreCase("long")) {
-						IntegerExpression sym_v = new SymbolicInteger(varName(name, VarType.INT));
-						expressionMap.put(name, sym_v);
+					if (argTypes[j].equalsIgnoreCase("int")) {
+						Variable<?> sym_v = Variable.create(BuiltinTypes.SINT32, name);
+// TEMP. FIX IT			expressionMap.put(name, sym_v);
+						sf.setOperandAttr(stackIdx, sym_v);
+						outputString = outputString.concat(" " + sym_v + ",");
+                    } else if (argTypes[j].equalsIgnoreCase("long")) {
+						Variable<?> sym_v = Variable.create(BuiltinTypes.SINT64, name);
+// TEMP. FIX IT			expressionMap.put(name, sym_v);
 						sf.setOperandAttr(stackIdx, sym_v);
 						outputString = outputString.concat(" " + sym_v + ",");
 					} else if (argTypes[j].equalsIgnoreCase("float") || argTypes[j].equalsIgnoreCase("double")) {
