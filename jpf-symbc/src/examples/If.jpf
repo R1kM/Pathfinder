@@ -1,4 +1,5 @@
 target=Ifs
 
+symbolic.dp=z3
 classpath=${jpf-symbc}/build/examples
 symbolic.method=Ifs.iffunction(sym)

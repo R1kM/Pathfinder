@@ -62,10 +62,14 @@ public class Jconstraint {
   /** Returns the conjunction of all constraints */
   public Expression<Boolean> conjunctionConstraints() {
      Jconstraint c = this;
-     if (this == null) {
-         return ExpressionUtil.TRUE;
+     Expression<Boolean> next = null;
+     if (c.and == null) {
+        next = ExpressionUtil.TRUE;
      }
-     Expression<Boolean> result = new PropositionalCompound(this.head, LogicalOperator.AND, c.and.conjunctionConstraints());
+     else {
+        next = c.and.conjunctionConstraints();
+     }
+     Expression<Boolean> result = new PropositionalCompound(this.head, LogicalOperator.AND, next);
      return result;
   }
 
