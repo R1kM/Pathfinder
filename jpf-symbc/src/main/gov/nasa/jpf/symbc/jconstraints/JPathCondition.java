@@ -39,7 +39,9 @@ package gov.nasa.jpf.symbc.jconstraints;
 
 //import za.ac.sun.cs.green.Instance;
 import za.ac.sun.cs.green.Instance;
+import gov.nasa.jpf.constraints.api.ConstraintSolver;
 import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.solvers.ConstraintSolverFactory;
 import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
 import gov.nasa.jpf.symbc.concolic.PCAnalyzer;
 import gov.nasa.jpf.symbc.concolic.*;
@@ -84,6 +86,21 @@ public class JPathCondition {
 			count++;
 		}
 	}
+
+    public boolean simplify() {
+        Expression<Boolean> res = header.conjunctionConstraints();
+        if (SymbolicInstructionFactory.dp == null)
+            throw new RuntimeException("Please specify a solver to use in config");
+        ConstraintSolverFactory cFactory = new ConstraintSolverFactory();
+        ConstraintSolver solver = cFactory.createSolver(SymbolicInstructionFactory.dp[0]);
+        switch(solver.isSatisfiable(res)) {
+            case SAT:
+            case DONT_KNOW:
+                return true;
+            case UNSAT:
+                return false;
+        }
+    }
 
 
     public void prependAllConjuncts(Jconstraint t) {

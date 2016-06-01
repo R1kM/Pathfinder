@@ -38,7 +38,10 @@
 package gov.nasa.jpf.symbc.jconstraints;
 
 import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.LogicalOperator;
 import gov.nasa.jpf.constraints.expressions.Negation;
+import gov.nasa.jpf.constraints.expressions.PropositionalCompound;
+import gov.nasa.jpf.constraints.util.ExpressionUtil;
 
 import java.util.Map;
 
@@ -54,6 +57,16 @@ public class Jconstraint {
   /** Returns the head expression. Subclasses may override to give tighter type bounds.*/
   public Expression getHead() {
       return head;
+  }
+
+  /** Returns the conjunction of all constraints */
+  public Expression<Boolean> conjunctionConstraints() {
+     Jconstraint c = this;
+     if (this == null) {
+         return ExpressionUtil.TRUE;
+     }
+     Expression<Boolean> result = new PropositionalCompound(this.head, LogicalOperator.AND, c.and.conjunctionConstraints());
+     return result;
   }
 
   /**
