@@ -35,21 +35,22 @@
 //DOCUMENTATION, IF PROVIDED, WILL CONFORM TO THE SUBJECT SOFTWARE.
 //
 
-package gov.nasa.jpf.symbc.numeric;
+package gov.nasa.jpf.symbc.jconstraints;
 
 import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.Negation;
 
 import java.util.Map;
 
-public abstract class Jconstraint {
+public class Jconstraint {
   private final Expression<Boolean> head;
 
   public Jconstraint and;
 
   public Jconstraint(Expression<Boolean> h) {
       head = h;
-  }
-
+  }  
+  
   /** Returns the head expression. Subclasses may override to give tighter type bounds.*/
   public Expression getHead() {
       return head;
@@ -58,7 +59,9 @@ public abstract class Jconstraint {
   /**
    * Returns the negation of this constraint, but without the tail.
    */
-  public abstract Jconstraint not();
+  public Jconstraint not() {
+      return new Jconstraint(new Negation(this.head));
+  }
 
   /**
    * Returns the next conjunct.

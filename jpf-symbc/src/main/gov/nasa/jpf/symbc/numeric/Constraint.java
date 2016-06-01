@@ -37,24 +37,43 @@
 
 package gov.nasa.jpf.symbc.numeric;
 
-import gov.nasa.jpf.constraints.api.Expression;
-
 import java.util.Map;
 
 public abstract class Constraint implements Comparable<Constraint> {
-  private final Expression<Boolean> head;
+  private final Expression left;
+
+  private Comparator comp;
+
+  private final Expression right;
 
   public Constraint and;
 
-  public Constraint(Expression<Boolean> h) {
-      head = h;
+  public Constraint(Expression l, Comparator c, Expression r) {
+    left = l;
+    comp = c;
+    right = r;
   }
 
-  /** Returns the head expression. Subclasses may override to give tighter type bounds.*/
-  public Expression getHead() {
-      return head;
+  /** Returns the left expression. Subclasses may override to give tighter type bounds.*/
+  public Expression getLeft() {
+      return left;
   }
 
+  /** Returns the right expression. Subclasses may override to give tighter type bounds.*/
+  public Expression getRight() {
+      return right;
+  }
+
+  /**
+   * Returns the comparator used in this constraint.
+   */
+  public Comparator getComparator() {
+    return comp;
+  }
+
+  public void setComparator(Comparator c) {
+	    comp = c;
+	  }
   /**
    * Returns the negation of this constraint, but without the tail.
    */
@@ -68,11 +87,17 @@ public abstract class Constraint implements Comparable<Constraint> {
   }
 
   public String stringPC() {
-    return head.toString(Expression.DEFAULT_FLAGS)
+    return left.stringPC() + comp.toString() + right.stringPC()
         + ((and == null) ? "" : " && " + and.stringPC());
   }
 
   public void getVarVals(Map<String,Object> varsVals) {
+	  if (left != null) {
+		  left.getVarsVals(varsVals);
+	  }
+	  if (right != null) {
+		  right.getVarsVals(varsVals);
+	  }
 	  if (and != null) {
 		  and.getVarVals(varsVals);
 	  }
@@ -83,13 +108,21 @@ public abstract class Constraint implements Comparable<Constraint> {
       return false;
     }
 
-    return head.equals(((Constraint) o).head);
+    return left.equals(((Constraint) o).left)
+        && comp.equals(((Constraint) o).comp)
+        && right.equals(((Constraint) o).right);
   }
 
   public int hashCode() {
 	  int result = Integer.MAX_VALUE;
-	  if (head != null) {
-		  result = result ^ head.hashCode();
+	  if (left != null) {
+		  result = result ^ left.hashCode();
+	  }
+	  if (comp != null) {
+		  result = result ^ comp.hashCode();
+	  }
+	  if (right != null) {
+		  result = result ^ right.hashCode();
 	  }
 	  return result;
 	  //return left.hashCode() ^ comp.hashCode() ^ right.hashCode();
@@ -111,12 +144,18 @@ public abstract class Constraint implements Comparable<Constraint> {
 	 */
 	@Override
 	public final int compareTo(Constraint c) {
-        // unimplemented
-        return 0;
+		int r = comp.compareTo(c.getComparator());
+		if (r == 0) {
+			r = left.compareTo(c.getLeft());
+			if (r == 0) {
+				r = right.compareTo(c.getRight());
+			}
+		}
+		return r;
 	}
   
   public String toString() {
-    return head.toString(Expression.DEFAULT_FLAGS)
+    return left.toString() + comp.toString() + right.toString()
         //+ ((and == null) ? "" : " && " + and.toString()); -- for specialization
         + ((and == null) ? "" : " &&\n" + and.toString());
   }
@@ -132,7 +171,8 @@ public abstract class Constraint implements Comparable<Constraint> {
 //JacoGeldenhuys
 	public void accept(ConstraintExpressionVisitor visitor) {
 		visitor.preVisit(this);
-// TODO		head.accept(visitor);
+		left.accept(visitor);
+		right.accept(visitor);
 		visitor.postVisit(this);
 	}
 
