@@ -100,6 +100,7 @@ public class JPathCondition {
             case UNSAT:
                 return false;
         }
+        return false;
     }
 
 

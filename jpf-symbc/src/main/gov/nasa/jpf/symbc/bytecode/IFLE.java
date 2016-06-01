@@ -37,8 +37,9 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.NumericComparator;
 import gov.nasa.jpf.symbc.bytecode.util.IFInstrSymbHelper;
-import gov.nasa.jpf.symbc.numeric.*;
 import gov.nasa.jpf.vm.ChoiceGenerator;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
@@ -56,7 +57,7 @@ public class IFLE extends gov.nasa.jpf.jvm.bytecode.IFLE {
 	public Instruction execute (ThreadInfo ti) {
 
 		StackFrame sf = ti.getModifiableTopFrame();
-		IntegerExpression sym_v = (IntegerExpression) sf.getOperandAttr();
+		Expression<?> sym_v = (Expression<?>) sf.getOperandAttr();
 
 		if(sym_v == null) { // the condition is concrete
 			//System.out.println("Execute IFLE: The condition is concrete");
@@ -66,8 +67,8 @@ public class IFLE extends gov.nasa.jpf.jvm.bytecode.IFLE {
 			Instruction nxtInstr = IFInstrSymbHelper.getNextInstructionAndSetPCChoice(ti, 
 																					  this, 
 																					  sym_v, 
-																					  Comparator.LE, 
-																					  Comparator.GT);
+																					  NumericComparator.LE, 
+																					  NumericComparator.GT);
 			if(nxtInstr==getTarget())
 				conditionValue=true;
 			else 

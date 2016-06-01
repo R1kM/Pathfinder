@@ -18,8 +18,9 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.NumericComparator;
 import gov.nasa.jpf.symbc.bytecode.util.IFInstrSymbHelper;
-import gov.nasa.jpf.symbc.numeric.*;
 import gov.nasa.jpf.vm.ChoiceGenerator;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
@@ -35,7 +36,7 @@ public class IFLT extends gov.nasa.jpf.jvm.bytecode.IFLT {
 	public Instruction execute (ThreadInfo ti) {
 
 		StackFrame sf = ti.getModifiableTopFrame();
-		IntegerExpression sym_v = (IntegerExpression) sf.getOperandAttr();
+		Expression<?> sym_v = (Expression<?>) sf.getOperandAttr();
 
 		if(sym_v == null) { // the condition is concrete
 			//System.out.println("Execute IFLT: The condition is concrete");
@@ -45,8 +46,8 @@ public class IFLT extends gov.nasa.jpf.jvm.bytecode.IFLT {
 			Instruction nxtInstr = IFInstrSymbHelper.getNextInstructionAndSetPCChoice(ti, 
 																					  this, 
 																					  sym_v, 
-																					  Comparator.LT, 
-																					  Comparator.GE);
+																					  NumericComparator.LT, 
+																					  NumericComparator.GE);
 			if(nxtInstr==getTarget())
 				conditionValue=true;
 			else 

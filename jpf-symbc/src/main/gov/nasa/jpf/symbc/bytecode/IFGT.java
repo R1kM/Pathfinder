@@ -19,11 +19,9 @@ package gov.nasa.jpf.symbc.bytecode;
 
 
 
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.NumericComparator;
 import gov.nasa.jpf.symbc.bytecode.util.IFInstrSymbHelper;
-import gov.nasa.jpf.symbc.numeric.Comparator;
-import gov.nasa.jpf.symbc.numeric.IntegerExpression;
-import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
-import gov.nasa.jpf.symbc.numeric.PathCondition;
 import gov.nasa.jpf.vm.ChoiceGenerator;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
@@ -39,7 +37,7 @@ public class IFGT extends gov.nasa.jpf.jvm.bytecode.IFGT {
 	public Instruction execute (ThreadInfo ti) {
 
 		StackFrame sf = ti.getModifiableTopFrame();
-		IntegerExpression sym_v = (IntegerExpression) sf.getOperandAttr();
+		Expression<?> sym_v = (Expression<?>) sf.getOperandAttr();
 
 		if(sym_v == null) { // the condition is concrete
 			//System.out.println("Execute IFGT: The condition is concrete");
@@ -49,8 +47,8 @@ public class IFGT extends gov.nasa.jpf.jvm.bytecode.IFGT {
 			Instruction nxtInstr = IFInstrSymbHelper.getNextInstructionAndSetPCChoice(ti, 
 																					  this, 
 																					  sym_v, 
-																					  Comparator.GT, 
-																					  Comparator.LE);
+																					  NumericComparator.GT, 
+																					  NumericComparator.LE);
 			if(nxtInstr==getTarget())
 				conditionValue=true;
 			else 

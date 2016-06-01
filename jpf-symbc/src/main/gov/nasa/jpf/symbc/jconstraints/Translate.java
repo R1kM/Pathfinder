@@ -17,4 +17,14 @@ public class Translate {
         }
         return isymb;
     }
+    
+    public static Expression<Integer> translateInt(Expression<?> symb) {
+        Expression<Integer> isymb;
+        if (symb.getType().equals(BuiltinTypes.SINT32)) {
+            isymb = symb.requireAs(BuiltinTypes.SINT32);
+        } else {
+            isymb = CastExpression.create(symb, BuiltinTypes.SINT32);
+        }
+        return isymb;
+    }
 }
