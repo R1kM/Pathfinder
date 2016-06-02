@@ -18,11 +18,9 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.NumericComparator;
 import gov.nasa.jpf.symbc.bytecode.util.IFInstrSymbHelper;
-import gov.nasa.jpf.symbc.numeric.Comparator;
-import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
-import gov.nasa.jpf.symbc.numeric.PathCondition;
-import gov.nasa.jpf.symbc.numeric.RealExpression;
 import gov.nasa.jpf.vm.ChoiceGenerator;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
@@ -38,8 +36,8 @@ public class FCMPL extends gov.nasa.jpf.jvm.bytecode.FCMPL {
 	public Instruction execute(ThreadInfo th) {
 		StackFrame sf = th.getModifiableTopFrame();
 
-		RealExpression sym_v1 = (RealExpression) sf.getOperandAttr(0);
-		RealExpression sym_v2 = (RealExpression) sf.getOperandAttr(1);
+		Expression<?> sym_v1 = (Expression<?>) sf.getOperandAttr(0);
+		Expression<?> sym_v2 = (Expression<?>) sf.getOperandAttr(1);
 
 		if (sym_v1 == null && sym_v2 == null) { // both conditions are concrete
 			return super.execute(th);
@@ -49,9 +47,9 @@ public class FCMPL extends gov.nasa.jpf.jvm.bytecode.FCMPL {
 																					  this, 
 																					  sym_v1,
 																					  sym_v2,
-																					  Comparator.LT, 
-																					  Comparator.EQ,
-																					  Comparator.GT);
+																					  NumericComparator.LT, 
+																					  NumericComparator.EQ,
+																					  NumericComparator.GT);
 
 			return nxtInstr;
 		}

@@ -1,7 +1,8 @@
 target=Input
 
-classpath=${jpf-symbc}/build/examples/simplebis/
+classpath=${jpf-symbc}/build/examples/
 symbolic.method=Input.foo(sym)
 symbolic.dp=z3
+search.multiple_errors=true
 
 
