@@ -58,14 +58,12 @@ public class IFGE extends gov.nasa.jpf.jvm.bytecode.IFGE {
 
 		StackFrame sf = ti.getModifiableTopFrame();
 		Expression<?> sym_v = (Expression<?>) sf.getOperandAttr();
-System.out.println("ifgt");
 
 		if(sym_v == null) { // the condition is concrete
 			//System.out.println("Execute IFGE: The condition is concrete");
 			return super.execute( ti);
 		}
 		else { // the condition is symbolic
-System.out.println("sym ifgt");
 			Instruction nxtInstr = IFInstrSymbHelper.getNextInstructionAndSetPCChoice(ti, 
 																					  this, 
 																					  sym_v, 
