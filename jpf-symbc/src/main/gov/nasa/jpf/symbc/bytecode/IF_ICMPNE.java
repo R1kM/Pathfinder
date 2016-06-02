@@ -36,8 +36,9 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.NumericComparator;
 import gov.nasa.jpf.symbc.bytecode.util.IFInstrSymbHelper;
-import gov.nasa.jpf.symbc.numeric.*;
 import gov.nasa.jpf.vm.ChoiceGenerator;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
@@ -54,8 +55,8 @@ public class IF_ICMPNE extends gov.nasa.jpf.jvm.bytecode.IF_ICMPNE{
 
 		StackFrame sf = ti.getModifiableTopFrame();
 
-		IntegerExpression sym_v1 = (IntegerExpression) sf.getOperandAttr(1);
-		IntegerExpression sym_v2 = (IntegerExpression) sf.getOperandAttr(0);
+		Expression<?> sym_v1 = (Expression<?>) sf.getOperandAttr(1);
+		Expression<?> sym_v2 = (Expression<?>) sf.getOperandAttr(0);
 
 		if ((sym_v1 == null) && (sym_v2 == null)) { // both conditions are concrete
 			//System.out.println("Execute IF_ICMPNE: The conditions are concrete");
@@ -66,8 +67,8 @@ public class IF_ICMPNE extends gov.nasa.jpf.jvm.bytecode.IF_ICMPNE{
 																					  this, 
 																					  sym_v1,
 																					  sym_v2,
-																					  Comparator.NE, 
-																					  Comparator.EQ);
+																					  NumericComparator.NE, 
+																					  NumericComparator.EQ);
 			if(nxtInstr==getTarget())
 				conditionValue=true;
 			else 

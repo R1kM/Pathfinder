@@ -548,51 +548,45 @@ public class IFInstrSymbHelper {
 	
 	public static Instruction getNextInstructionAndSetPCChoice(ThreadInfo ti, 
 															   IfInstruction instr, 
-															   IntegerExpression sym_v1, 
-															   IntegerExpression sym_v2,
-															   Comparator trueComparator,
-															   Comparator falseComparator) {
+															   Expression<?> sym_v1_ex, 
+															   Expression<?> sym_v2_ex,
+															   NumericComparator trueComparator,
+															   NumericComparator falseComparator) {
 		
+
+	    int	v2 = ti.getModifiableTopFrame().peek();
+		int	v1 = ti.getModifiableTopFrame().peek(1);
+        Expression<Integer> sym_v1 = Translate.translateInt(sym_v1_ex, v1);
+        Expression<Integer> sym_v2 = Translate.translateInt(sym_v2_ex, v2);
+
+
 		//TODO: fix conditionValue
 		if(!ti.isFirstStepInsn()) { // first time around
-			PCChoiceGenerator prevPcGen;
+			JPCChoiceGenerator prevPcGen;
 			ChoiceGenerator<?> cg = ti.getVM().getChoiceGenerator();
-			if(cg instanceof PCChoiceGenerator)
-				prevPcGen = (PCChoiceGenerator)cg;
+			if(cg instanceof JPCChoiceGenerator)
+				prevPcGen = (JPCChoiceGenerator)cg;
 			else 
-				prevPcGen = (PCChoiceGenerator)cg.getPreviousChoiceGeneratorOfType(PCChoiceGenerator.class);
+				prevPcGen = (JPCChoiceGenerator)cg.getPreviousChoiceGeneratorOfType(JPCChoiceGenerator.class);
 		
-			PathCondition pc;
+			JPathCondition pc;
 			if(prevPcGen!=null)
 				pc = prevPcGen.getCurrentPC();
 			else
-				pc = new PathCondition();
+				pc = new JPathCondition();
 			
-			PathCondition eqPC = pc.make_copy();
-			PathCondition nePC = pc.make_copy();
+			JPathCondition eqPC = pc.make_copy();
+			JPathCondition nePC = pc.make_copy();
 			
-			int	v2 = ti.getModifiableTopFrame().peek();
-			int	v1 = ti.getModifiableTopFrame().peek(1);
-			
-			if(sym_v1 != null){
-				if(sym_v2 != null){ //both are symbolic values
-					eqPC._addDet(trueComparator,sym_v1,sym_v2);
-					nePC._addDet(falseComparator,sym_v1,sym_v2);
-				} else {
-					eqPC._addDet(trueComparator,sym_v1,v2);
-					nePC._addDet(falseComparator,sym_v1,v2);
-				}
-			} else {
-				eqPC._addDet(trueComparator, v1, sym_v2);
-				nePC._addDet(falseComparator, v1, sym_v2);
-			}
+			eqPC._addDet(new NumericBooleanExpression(sym_v1, trueComparator, sym_v2));
+			nePC._addDet(new NumericBooleanExpression(sym_v1, falseComparator, sym_v2));
 
 			boolean eqSat = eqPC.simplify();
 			boolean neSat = nePC.simplify();
 			
 			if(eqSat) {
 				if(neSat) {
-					PCChoiceGenerator newPCChoice = new PCChoiceGenerator(2);
+					JPCChoiceGenerator newPCChoice = new JPCChoiceGenerator(2);
 					newPCChoice.setOffset(instr.getPosition());
 					newPCChoice.setMethodName(instr.getMethodInfo().getFullName());
 					ti.getVM().getSystemState().setNextChoiceGenerator(newPCChoice);
@@ -609,38 +603,26 @@ public class IFInstrSymbHelper {
 			}	
 		} else { //This branch will only be taken if there is a choice
 			
-			int	v2 = ti.getModifiableTopFrame().pop();
-			int	v1 = ti.getModifiableTopFrame().pop();
-			PathCondition pc;
-			PCChoiceGenerator curCg = (PCChoiceGenerator)ti.getVM().getSystemState().getChoiceGenerator();
+			ti.getModifiableTopFrame().pop();
+			ti.getModifiableTopFrame().pop();
+			JPathCondition pc;
+			JPCChoiceGenerator curCg = (JPCChoiceGenerator)ti.getVM().getSystemState().getChoiceGenerator();
 			
-			PCChoiceGenerator prevCg = curCg.getPreviousChoiceGeneratorOfType(PCChoiceGenerator.class);
+			JPCChoiceGenerator prevCg = curCg.getPreviousChoiceGeneratorOfType(JPCChoiceGenerator.class);
 			
 			if(prevCg == null )
-				pc = new PathCondition();
+				pc = new JPathCondition();
 			else
 				pc = prevCg.getCurrentPC();
 			
 			boolean conditionValue = (Integer)curCg.getNextChoice()==1 ? true: false;
 			if(conditionValue) {
-				if(sym_v1 != null){
-					if(sym_v2 != null){ //both are symbolic values
-						pc._addDet(trueComparator,sym_v1,sym_v2);
-					} else
-						pc._addDet(trueComparator,sym_v1,v2);
-				} else
-					pc._addDet(trueComparator, v1, sym_v2);
-				((PCChoiceGenerator) curCg).setCurrentPC(pc);
+                pc._addDet(new NumericBooleanExpression(sym_v1, trueComparator, sym_v2));
+				((JPCChoiceGenerator) curCg).setCurrentPC(pc);
 				return instr.getTarget();
 			} else {
-				if(sym_v1 != null){
-					if (sym_v2 != null){ //both are symbolic values
-						pc._addDet(falseComparator,sym_v1,sym_v2);
-					} else
-						pc._addDet(falseComparator,sym_v1,v2);
-				} else
-					pc._addDet(falseComparator, v1, sym_v2);
-				((PCChoiceGenerator) curCg).setCurrentPC(pc);
+                pc._addDet(new NumericBooleanExpression(sym_v1, falseComparator, sym_v2));
+				((JPCChoiceGenerator) curCg).setCurrentPC(pc);
 				return instr.getNext(ti);
 			}
 		}		
