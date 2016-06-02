@@ -55,7 +55,6 @@ import gov.nasa.jpf.symbc.numeric.solvers.ProblemDReal;
 import gov.nasa.jpf.symbc.numeric.solvers.ProblemGeneral;
 import gov.nasa.jpf.symbc.numeric.solvers.ProblemIAsolver;
 import gov.nasa.jpf.symbc.numeric.solvers.ProblemYices;
-import gov.nasa.jpf.symbc.numeric.solvers.ProblemZ3;
 
 
 // generalized to use different constraint solvers/decision procedures
@@ -108,9 +107,6 @@ public class SymbolicConstraintsGeneral {
 			pb = new ProblemCVC3BitVector();
 		 } else if (dp[0].equalsIgnoreCase("yices")) {
 	    	pb = new ProblemYices();
-		} else if(dp[0].equalsIgnoreCase("z3")){
-			pb = new ProblemZ3();
-			
 		} else if (dp[0].equalsIgnoreCase("debug")) {
 			pb = new DebugSolvers(pc);
 		} else if (dp[0].equalsIgnoreCase("compare")){

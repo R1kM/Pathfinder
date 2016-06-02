@@ -60,7 +60,6 @@ import gov.nasa.jpf.symbc.numeric.RealExpression;
 import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
 import gov.nasa.jpf.symbc.numeric.SymbolicReal;
 import gov.nasa.jpf.symbc.numeric.solvers.ProblemGeneral;
-import gov.nasa.jpf.symbc.numeric.solvers.ProblemZ3;
 
 import gov.nasa.jpf.symbc.numeric.SymbolicConstraintsGeneral;
 //import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
@@ -145,11 +144,6 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 			if ((cg instanceof PCChoiceGenerator) &&
 				      ((PCChoiceGenerator) cg).getCurrentPC() != null){
 				PathCondition pc = ((PCChoiceGenerator) cg).getCurrentPC();
-                if (SymbolicInstructionFactory.dp[0].equalsIgnoreCase("z3")) {
-                    ProblemGeneral pb = new ProblemZ3();
-                    pb = PCParser.parse(pc, pb);
-                    Model = "Z3 Model\n" + pb.getModel();
-                }
 				String error = search.getLastError().getDetails();
 				error = "\"" + error.substring(0,error.indexOf("\n")) + "...\"";
 				// C: not clear where result was used here -- to review

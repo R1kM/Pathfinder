@@ -2,7 +2,6 @@ target=Input
 
 classpath=${jpf-symbc}/build/examples/simplebis/
 symbolic.method=Input.foo(sym)
-listener = gov.nasa.jpf.symbc.SymbolicListener
 symbolic.dp=z3
 
 

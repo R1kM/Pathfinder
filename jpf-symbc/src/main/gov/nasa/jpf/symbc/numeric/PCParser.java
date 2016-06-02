@@ -52,7 +52,6 @@ import gov.nasa.jpf.symbc.arrays.SelectExpression;
 import gov.nasa.jpf.symbc.arrays.StoreExpression;
 import gov.nasa.jpf.symbc.numeric.solvers.ProblemCoral;
 import gov.nasa.jpf.symbc.numeric.solvers.ProblemGeneral;
-import gov.nasa.jpf.symbc.numeric.solvers.ProblemZ3;
 
 
 // parses PCs
@@ -1041,14 +1040,8 @@ public class PCParser {
 
 			}
 			else if (cRef instanceof ArrayConstraint) {
-                if (pb instanceof ProblemZ3)
-                    constraintResult = createDPArrayConstraint((ArrayConstraint)cRef);
-                else
                     throw new RuntimeException("## Error: Array Constraint not handled (only Z3 can handle it)"+cRef); 
             } else if (cRef instanceof RealArrayConstraint) {
-                if (pb instanceof ProblemZ3)
-                    constraintResult = createDPRealArrayConstraint((RealArrayConstraint)cRef);
-                else
                     throw new RuntimeException("## Error: Array Constraint not handled (only Z3 can handle it)"+cRef); 
             } else {
 				System.out.println("## Warning: Non Linear Integer Constraint (only coral can handle it)" + cRef);
