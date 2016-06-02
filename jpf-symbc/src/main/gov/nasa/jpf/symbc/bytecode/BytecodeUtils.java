@@ -22,22 +22,14 @@ package gov.nasa.jpf.symbc.bytecode;
 
 import gov.nasa.jpf.Config;
 
+import gov.nasa.jpf.constraints.api.Expression;
 import gov.nasa.jpf.constraints.api.Variable;
 import gov.nasa.jpf.constraints.types.BuiltinTypes;
 import gov.nasa.jpf.jvm.bytecode.JVMInvokeInstruction;
 import gov.nasa.jpf.symbc.arrays.IntegerSymbolicArray;
 import gov.nasa.jpf.symbc.arrays.ObjectSymbolicArray;
 import gov.nasa.jpf.symbc.heap.Helper;
-import gov.nasa.jpf.symbc.numeric.Expression;
-import gov.nasa.jpf.symbc.numeric.IntegerExpression;
-import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
-import gov.nasa.jpf.symbc.numeric.PathCondition;
-import gov.nasa.jpf.symbc.numeric.PreCondition;
-import gov.nasa.jpf.symbc.numeric.RealExpression;
-import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
-import gov.nasa.jpf.symbc.numeric.SymbolicReal;
-import gov.nasa.jpf.symbc.string.StringExpression;
-import gov.nasa.jpf.symbc.string.StringSymbolic;
+import gov.nasa.jpf.symbc.jconstraints.*;
 import gov.nasa.jpf.vm.AnnotationInfo;
 import gov.nasa.jpf.vm.ChoiceGenerator;
 import gov.nasa.jpf.vm.ClassInfo;
@@ -214,13 +206,7 @@ public class BytecodeUtils {
 		Config conf = th.getVM().getConfig();
 
 		// Start string handling
-		/**** This is where we branch off to handle symbolic string variables *******/
-		SymbolicStringHandler a = new SymbolicStringHandler();
-		Instruction handled = a.handleSymbolicStrings(invInst, th);
-		if(handled != null){ // go to next instruction as symbolic string operation was done
-			System.out.println("Symbolic string analysis");	
-			return new InstructionOrSuper(false, handled);
-		}
+        // This part was removed for the future analysis
 		// End string handling
 		
 
@@ -235,12 +221,12 @@ public class BytecodeUtils {
 			ChoiceGenerator<?> cg = null;
 			if (invInst.getInvokedMethod().getAnnotation("gov.nasa.jpf.symbc.Preconditions") != null) {
 				if (!th.isFirstStepInsn()) { // first time around
-					cg = new PCChoiceGenerator(1);
+					cg = new JPCChoiceGenerator(1);
 					th.getVM().setNextChoiceGenerator(cg);
 					return new InstructionOrSuper(false, invInst);
 				} else { // this is what really returns results
 					cg = th.getVM().getChoiceGenerator();
-					if (!(cg instanceof PCChoiceGenerator)) // the choice comes from super
+					if (!(cg instanceof JPCChoiceGenerator)) // the choice comes from super
 						return new InstructionOrSuper(true, null);
 				}
 			}
@@ -260,7 +246,7 @@ public class BytecodeUtils {
 			}else{
 				throw new RuntimeException("ERROR: you need to turn debug option on");
 			}
-			Map<String, Expression> expressionMap = new HashMap<String, Expression>();
+			Map<String, Expression<?>> expressionMap = new HashMap<String, Expression<?>>();
 
 			//take care of the method arguments
 			StackFrame sf = th.getModifiableTopFrame();// get a hold of the stack frame of the caller
@@ -290,30 +276,37 @@ public class BytecodeUtils {
 					String name =  argsInfo[localVarsIdx].getName();
 					if (argTypes[j].equalsIgnoreCase("int")) {
 						Variable<?> sym_v = Variable.create(BuiltinTypes.SINT32, name);
-// TEMP. FIX IT			expressionMap.put(name, sym_v);
+                        expressionMap.put(name, sym_v);
 						sf.setOperandAttr(stackIdx, sym_v);
 						outputString = outputString.concat(" " + sym_v + ",");
                     } else if (argTypes[j].equalsIgnoreCase("long")) {
 						Variable<?> sym_v = Variable.create(BuiltinTypes.SINT64, name);
-// TEMP. FIX IT			expressionMap.put(name, sym_v);
+            			expressionMap.put(name, sym_v);
 						sf.setOperandAttr(stackIdx, sym_v);
 						outputString = outputString.concat(" " + sym_v + ",");
-					} else if (argTypes[j].equalsIgnoreCase("float") || argTypes[j].equalsIgnoreCase("double")) {
-						RealExpression sym_v = new SymbolicReal(varName(name, VarType.REAL));
+					} else if (argTypes[j].equalsIgnoreCase("float")) {
+						Variable<?> sym_v = Variable.create(BuiltinTypes.FLOAT, name);
+						expressionMap.put(name, sym_v);
+						sf.setOperandAttr(stackIdx, sym_v);
+						outputString = outputString.concat(" " + sym_v + ",");
+                    } else if (argTypes[j].equalsIgnoreCase("double")) {
+						Variable<?> sym_v = Variable.create(BuiltinTypes.DOUBLE, name);
 						expressionMap.put(name, sym_v);
 						sf.setOperandAttr(stackIdx, sym_v);
 						outputString = outputString.concat(" " + sym_v + ",");
 					} else if (argTypes[j].equalsIgnoreCase("boolean")) {
-						IntegerExpression sym_v = new SymbolicInteger(varName(name, VarType.INT),0,1);
-						// treat boolean as an integer with range [0,1]
+						Variable<?> sym_v = Variable.create(BuiltinTypes.BOOL, name);
 						expressionMap.put(name, sym_v);
 						sf.setOperandAttr(stackIdx, sym_v);
 						outputString = outputString.concat(" " + sym_v + ",");
 					} else if (argTypes[j].equalsIgnoreCase("java.lang.String")) {
-						StringExpression sym_v = new StringSymbolic(varName(name, VarType.STRING));
-						expressionMap.put(name, sym_v);
-						sf.setOperandAttr(stackIdx, sym_v);
-						outputString = outputString.concat(" " + sym_v + ",");
+                        throw new RuntimeException("String parameters not handled");
+						//StringExpression sym_v = new StringSymbolic(varName(name, VarType.STRING));
+						//expressionMap.put(name, sym_v);
+						//sf.setOperandAttr(stackIdx, sym_v);
+						//outputString = outputString.concat(" " + sym_v + ",");
+                    }
+/* Adapt to JConstraints
 					} else if(argTypes[j].equalsIgnoreCase("int[]") || argTypes[j].equalsIgnoreCase("long[]")){
                         Object[] argValues = invInst.getArgumentValues(th);
                         ElementInfo eiArray = (ElementInfo)argValues[j];
@@ -352,8 +345,8 @@ public class BytecodeUtils {
                         expressionMap.put(name, sym_v);
                         sf.setOperandAttr(stackIdx, sym_v);
                         outputString = outputString.concat(" " + sym_v + ",");
-
-					} else {
+*/
+/* adapt lazy init to jconstraints 					} else {
                         // the argument is of reference type and it is symbolic
 						if(lazy != null) {
 							if(lazy[0].equalsIgnoreCase("true")) {
@@ -362,8 +355,9 @@ public class BytecodeUtils {
 								sf.setOperandAttr(stackIdx, sym_v);
 								outputString = outputString.concat(" " + sym_v + ",");
 							}
-						}
-						//throw new RuntimeException("## Error: parameter type not yet handled: " + argTypes[j]);
+						}*/
+                    else {
+						throw new RuntimeException("## Error: parameter type not yet handled: " + argTypes[j]);
 					}
 
 				} else
@@ -429,7 +423,7 @@ public class BytecodeUtils {
 							value = "false";
 					}
 					if (value.equalsIgnoreCase("true")) {
-						Expression sym_v = Helper.initializeInstanceField(fields[i], ei, "input["+objRef+"]", "");
+						Expression<?> sym_v = Helper.initializeInstanceField(fields[i], ei, "input["+objRef+"]", "");
 						String name = fields[i].getName();
 						expressionMap.put(name, sym_v);
 						outputString = outputString.concat(" " + name + ",");
@@ -452,7 +446,7 @@ public class BytecodeUtils {
 							value = "false";
 					}
 					if (value.equalsIgnoreCase("true")) {
-						Expression sym_v = Helper.initializeStaticField(staticFields[i], ci, th, "");
+						Expression<?> sym_v = Helper.initializeStaticField(staticFields[i], ci, th, "");
 						String name = staticFields[i].getName();
 						expressionMap.put(name, sym_v);
 						outputString = outputString.concat(" " + name + ",");
@@ -482,19 +476,19 @@ public class BytecodeUtils {
 
 			if (invInst.getInvokedMethod().getAnnotation("gov.nasa.jpf.symbc.Preconditions") != null) {
 				AnnotationInfo ai;
-				PathCondition pc = null;
+				JPathCondition pc = null;
 				// TODO: should still look at prev pc if we want to generate test sequences
 				// here we should get the prev pc
-				assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
+				assert (cg instanceof JPCChoiceGenerator) : "expected JPCChoiceGenerator, got: " + cg;
 				ChoiceGenerator<?> prev_cg = cg.getPreviousChoiceGenerator();
-				while (!((prev_cg == null) || (prev_cg instanceof PCChoiceGenerator))) {
+				while (!((prev_cg == null) || (prev_cg instanceof JPCChoiceGenerator))) {
 					prev_cg = prev_cg.getPreviousChoiceGenerator();
 				}
 
 				if (prev_cg == null)
-					pc = new PathCondition();
+					pc = new JPathCondition();
 				else
-					pc = ((PCChoiceGenerator)prev_cg).getCurrentPC();
+					pc = ((JPCChoiceGenerator)prev_cg).getCurrentPC();
 
 				assert pc != null;
 
@@ -503,7 +497,7 @@ public class BytecodeUtils {
 				ai = invInst.getInvokedMethod().getAnnotation("gov.nasa.jpf.symbc.Preconditions");
 				String assumeString = (String) ai.getValue("value");
 
-				pc = (new PreCondition()).addConstraints(pc,assumeString, expressionMap);
+				pc = (new JPreCondition()).addConstraints(pc,assumeString, expressionMap);
 
 
 
@@ -514,7 +508,7 @@ public class BytecodeUtils {
 					th.getVM().getSystemState().setIgnored(true);
 				} else {
 					//pc.solve();
-					((PCChoiceGenerator) cg).setCurrentPC(pc);
+					((JPCChoiceGenerator) cg).setCurrentPC(pc);
 					//System.out.println(((PCChoiceGenerator) cg).getCurrentPC());
 				}
 			}
@@ -523,18 +517,18 @@ public class BytecodeUtils {
 	}
 
 	/**
-	 * Get the path condition of a SystemState's most recent PCChoiceGenerator.
+	 * Get the path condition of a SystemState's most recent JPCChoiceGenerator.
 	 */
-	public static PathCondition getPC(SystemState ss) {
+	public static JPathCondition getPC(SystemState ss) {
 		ChoiceGenerator<?> cg = ss.getChoiceGenerator();
-		while (cg != null && !(cg instanceof PCChoiceGenerator)) {
+		while (cg != null && !(cg instanceof JPCChoiceGenerator)) {
 			cg = cg.getPreviousChoiceGenerator();
 		}
 
 		if (cg == null) {
 			return null;
 		} else {
-			return ((PCChoiceGenerator) cg).getCurrentPC();
+			return ((JPCChoiceGenerator) cg).getCurrentPC();
 		}
 	}
 

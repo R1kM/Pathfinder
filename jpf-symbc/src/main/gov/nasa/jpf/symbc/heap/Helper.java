@@ -18,11 +18,13 @@
 
 package gov.nasa.jpf.symbc.heap;
 
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.api.Variable;
+import gov.nasa.jpf.constraints.types.BuiltinTypes;
 import gov.nasa.jpf.symbc.arrays.ArrayHeapNode;
 import gov.nasa.jpf.symbc.arrays.HelperResult;
 import gov.nasa.jpf.symbc.arrays.ObjectSymbolicArray;
 import gov.nasa.jpf.symbc.numeric.Comparator;
-import gov.nasa.jpf.symbc.numeric.Expression;
 import gov.nasa.jpf.symbc.numeric.IntegerConstant;
 import gov.nasa.jpf.symbc.numeric.IntegerExpression;
 import gov.nasa.jpf.symbc.numeric.PathCondition;
@@ -46,25 +48,29 @@ public class Helper {
 
 	//public static SymbolicInteger SymbolicNull = new SymbolicInteger("SymbolicNull"); // hack for handling static fields; may no longer need it
 
-	public static Expression initializeInstanceField(FieldInfo field, ElementInfo eiRef,
+	public static Expression<?> initializeInstanceField(FieldInfo field, ElementInfo eiRef,
 			String refChain, String suffix){
-		Expression sym_v = null;
+		Expression<?> sym_v = null;
 		String name ="";
 
 		name = field.getName();
 		String fullName = refChain + "." + name + suffix;
-		if (field instanceof IntegerFieldInfo || field instanceof LongFieldInfo) {
-				sym_v = new SymbolicInteger(fullName);
-		} else if (field instanceof FloatFieldInfo || field instanceof DoubleFieldInfo) {
-			sym_v = new SymbolicReal(fullName);
+		if (field instanceof IntegerFieldInfo) {
+			sym_v = Variable.create(BuiltinTypes.SINT32, fullName);
+        } else if (field instanceof LongFieldInfo) {
+            sym_v = Variable.create(BuiltinTypes.SINT64, fullName);
+		} else if (field instanceof FloatFieldInfo) {
+            sym_v = Variable.create(BuiltinTypes.FLOAT, fullName);
+        } else if (field instanceof DoubleFieldInfo) {
+			sym_v = Variable.create(BuiltinTypes.DOUBLE, fullName);
 		} else if (field instanceof ReferenceFieldInfo){
 			if (field.getType().equals("java.lang.String"))
-				sym_v = new StringSymbolic(fullName);
+				// sym_v = new StringSymbolic(fullName);
+                throw new RuntimeException("String types not supported yet"); // TODO StringHandler
 			else
-				sym_v = new SymbolicInteger(fullName);
+				sym_v = Variable.create(BuiltinTypes.SINT32, fullName);
 		} else if (field instanceof BooleanFieldInfo) {
-				//	treat boolean as an integer with range [0,1]
-				sym_v = new SymbolicInteger(fullName, 0, 1);
+				sym_v = Variable.create(BuiltinTypes.BOOL, fullName);
 		}
 		eiRef.setFieldAttr(field, sym_v);
 		return sym_v;
@@ -76,27 +82,30 @@ public class Helper {
 			initializeInstanceField(fields[i], eiRef, refChain, "");
 	}
 
-	public static Expression initializeStaticField(FieldInfo staticField, ClassInfo ci,
+	public static Expression<?> initializeStaticField(FieldInfo staticField, ClassInfo ci,
 			ThreadInfo ti, String suffix){
 
-		Expression sym_v = null;
+		Expression<?> sym_v = null;
 		String name ="";
 
 		name = staticField.getName();
 		String fullName = ci.getName() + "." + name + suffix;// + "_init";
-		if (staticField instanceof IntegerFieldInfo || staticField instanceof LongFieldInfo) {
-				sym_v = new SymbolicInteger(fullName);
-		} else if (staticField instanceof FloatFieldInfo
-				|| staticField instanceof DoubleFieldInfo) {
-			sym_v = new SymbolicReal(fullName);
+		if (staticField instanceof IntegerFieldInfo) {
+            sym_v = Variable.create(BuiltinTypes.SINT32, fullName);
+        } else if (staticField instanceof LongFieldInfo) {
+			sym_v = Variable.create(BuiltinTypes.SINT64, fullName);
+		} else if (staticField instanceof FloatFieldInfo) {
+            sym_v = Variable.create(BuiltinTypes.FLOAT, fullName);
+        } else if (staticField instanceof DoubleFieldInfo) {
+			sym_v = Variable.create(BuiltinTypes.DOUBLE, fullName);
 		}else if (staticField instanceof ReferenceFieldInfo){
 			if (staticField.getType().equals("java.lang.String"))
-				sym_v = new StringSymbolic(fullName);
+  			//	sym_v = new StringSymbolic(fullName);
+                throw new RuntimeException("strings parameters not handled");   // TODO StringHandler
 			else
-				sym_v = new SymbolicInteger(fullName);
+				sym_v = Variable.create(BuiltinTypes.SINT32, fullName);
 		} else if (staticField instanceof BooleanFieldInfo) {
-				//						treat boolean as an integer with range [0,1]
-				sym_v = new SymbolicInteger(fullName, 0, 1);
+				sym_v = Variable.create(BuiltinTypes.BOOL, fullName);
 		}
 		StaticElementInfo sei = ci.getModifiableStaticElementInfo();
 		if (sei == null) {
