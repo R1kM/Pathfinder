@@ -17,7 +17,10 @@
  */
 package gov.nasa.jpf.symbc.bytecode;
 
-import gov.nasa.jpf.symbc.numeric.RealExpression;
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.UnaryMinus;
+import gov.nasa.jpf.symbc.jconstraints.Translate;
+
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
 import gov.nasa.jpf.vm.ThreadInfo;
@@ -33,18 +36,19 @@ public class FNEG extends gov.nasa.jpf.jvm.bytecode.FNEG  {
   @Override
   public Instruction execute (ThreadInfo th) {
 	  
-	  StackFrame sf = th.getModifiableTopFrame();
-	  RealExpression sym_v1 = (RealExpression) sf.getOperandAttr(); 
-	  float v1 = Types.intToFloat(sf.pop());
-	  
-	  if (sym_v1 == null)
-		  sf.push(Types.floatToInt(-v1), false);
-	  else {
-		  sf.push(0, false);
-		  RealExpression result = sym_v1._neg();
-		  sf.setOperandAttr(result);
-	  }
-	  //	System.out.println("Execute FNEG: "+ result);
+    StackFrame sf = th.getModifiableTopFrame();
+    if (sf.getOperandAttr() == null) {
+        return super.execute(th);
+    }
+
+    Expression<?> sym_v1_ex = (Expression<?>) sf.getOperandAttr();
+    float v1 = sf.popFloat();
+    Expression<Float> sym_v1 = Translate.translateFloat(sym_v1_ex, v1);
+
+    sf.push(0);
+    UnaryMinus<Float> result = new UnaryMinus<Float>(sym_v1);
+    sf.setOperandAttr(result);
+
     return getNext(th);
   }
 
