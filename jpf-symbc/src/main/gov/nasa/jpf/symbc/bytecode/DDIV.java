@@ -37,10 +37,14 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 
-import gov.nasa.jpf.symbc.numeric.Comparator;
-import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
-import gov.nasa.jpf.symbc.numeric.PathCondition;
-import gov.nasa.jpf.symbc.numeric.RealExpression;
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.Constant;
+import gov.nasa.jpf.constraints.expressions.NumericBooleanExpression;
+import gov.nasa.jpf.constraints.expressions.NumericCompound;
+import gov.nasa.jpf.constraints.expressions.NumericComparator;
+import gov.nasa.jpf.constraints.expressions.NumericOperator;
+import gov.nasa.jpf.constraints.types.BuiltinTypes;
+import gov.nasa.jpf.symbc.jconstraints.*;
 import gov.nasa.jpf.vm.ChoiceGenerator;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
@@ -57,30 +61,25 @@ public class DDIV extends gov.nasa.jpf.jvm.bytecode.DDIV  {
 	public Instruction execute (ThreadInfo th) {
 		StackFrame sf = th.getModifiableTopFrame();
 
-		RealExpression sym_v1 = (RealExpression) sf.getOperandAttr(1);
-	    double v1;
-	    RealExpression sym_v2 = (RealExpression) sf.getOperandAttr(3);
-	    double v2;
+		Expression<?> sym_v1_ex = (Expression<?>) sf.getOperandAttr(1);
+	    Expression<?> sym_v2_ex = (Expression<?>) sf.getOperandAttr(3);
+      double v1;
+        double v2;
 
-
-	    if(sym_v1==null && sym_v2==null) {
-	    	v1 = Types.longToDouble(sf.popLong());
-	    	v2 = Types.longToDouble(sf.popLong());
-	    	if(v1==0)
-	    		return th.createAndThrowException("java.lang.ArithmeticException","division by 0");
-	    	double r = v2 / v1;
-	    	sf.pushLong(Types.doubleToLong(r));
-	    	return getNext(th);
+	    if(sym_v1_ex==null && sym_v2_ex==null) {
+            super.execute(th);
 	    }
 
 	    // result is symbolic expression
-	    if(sym_v1==null && sym_v2!=null) {
-	    	v1 = Types.longToDouble(sf.popLong());
-	    	v2 = Types.longToDouble(sf.popLong());
+	    if(sym_v1_ex==null && sym_v2_ex!=null) {
+	    	v1 = sf.popDouble();
+	    	v2 = sf.popDouble();
 	    	if(v1==0)
 				return th.createAndThrowException("java.lang.ArithmeticException","div by 0");
 	    	sf.pushLong(0);
-	    	RealExpression result = sym_v2._div(v1);
+            Expression<Double> sym_v1 = Translate.translateDouble(sym_v1_ex, v1);
+            Expression<Double> sym_v2 = Translate.translateDouble(sym_v2_ex, v2);
+	    	NumericCompound<Double> result = new NumericCompound<Double>(sym_v2, NumericOperator.DIV, sym_v1);
 			sf.setLongOperandAttr(result);
 		    return getNext(th);
 	    }
@@ -92,36 +91,41 @@ public class DDIV extends gov.nasa.jpf.jvm.bytecode.DDIV  {
 	    boolean condition;
 
 		if (!th.isFirstStepInsn()) { // first time around
-			cg = new PCChoiceGenerator(2);
-			((PCChoiceGenerator)cg).setOffset(this.position);
-			((PCChoiceGenerator)cg).setMethodName(this.getMethodInfo().getFullName());
+			cg = new JPCChoiceGenerator(2);
+			((JPCChoiceGenerator)cg).setOffset(this.position);
+			((JPCChoiceGenerator)cg).setMethodName(this.getMethodInfo().getFullName());
 			th.getVM().getSystemState().setNextChoiceGenerator(cg);
 			return this;
 		} else {  // this is what really returns results
 			cg = th.getVM().getSystemState().getChoiceGenerator();
-			assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
+			assert (cg instanceof JPCChoiceGenerator) : "expected JPCChoiceGenerator, got: " + cg;
 			condition = (Integer)cg.getNextChoice()==0 ? false: true;
 		}
 
-		v1 = Types.longToDouble(sf.popLong());
-    	v2 = Types.longToDouble(sf.popLong());
+		v1 = sf.popDouble();
+    	v2 = sf.popDouble();
 		sf.pushLong(0);
 
-		PathCondition pc;
-		ChoiceGenerator<?> prev_cg = cg.getPreviousChoiceGeneratorOfType(PCChoiceGenerator.class);
+        Expression<Double> sym_v1 = Translate.translateDouble(sym_v1_ex, v1);
+        Expression<Double> sym_v2 = Translate.translateDouble(sym_v2_ex, v2);
+        Constant<Double> zero = Constant.create(BuiltinTypes.DOUBLE, (double)0);
+        
+
+		JPathCondition pc;
+		ChoiceGenerator<?> prev_cg = cg.getPreviousChoiceGeneratorOfType(JPCChoiceGenerator.class);
 
 		
 		if (prev_cg == null)
-			pc = new PathCondition();
+			pc = new JPathCondition();
 		else
-			pc = ((PCChoiceGenerator)prev_cg).getCurrentPC();
+			pc = ((JPCChoiceGenerator)prev_cg).getCurrentPC();
 
 		assert pc != null;
 
 		if(condition) { // check div by zero
-			pc._addDet(Comparator.EQ, sym_v1, 0);
+			pc._addDet(new NumericBooleanExpression(sym_v1, NumericComparator.EQ, zero));
 			if(pc.simplify())  { // satisfiable
-				((PCChoiceGenerator) cg).setCurrentPC(pc);
+				((JPCChoiceGenerator) cg).setCurrentPC(pc);
 
 				return th.createAndThrowException("java.lang.ArithmeticException","div by 0");
 			}
@@ -131,16 +135,12 @@ public class DDIV extends gov.nasa.jpf.jvm.bytecode.DDIV  {
 			}
 		}
 		else {
-			pc._addDet(Comparator.NE, sym_v1, 0);
+			pc._addDet(new NumericBooleanExpression(sym_v1, NumericComparator.NE, zero));
 			if(pc.simplify())  { // satisfiable
-				((PCChoiceGenerator) cg).setCurrentPC(pc);
+				((JPCChoiceGenerator) cg).setCurrentPC(pc);
 
 				// set the result
-				RealExpression result;
-				if(sym_v2!=null)
-					result = sym_v2._div(sym_v1);
-				else
-					result = sym_v1._div_reverse(v2);
+				NumericCompound<Double> result = new NumericCompound(sym_v2, NumericOperator.DIV, sym_v1);
 
 				sf = th.getModifiableTopFrame();
 				sf.setLongOperandAttr(result);

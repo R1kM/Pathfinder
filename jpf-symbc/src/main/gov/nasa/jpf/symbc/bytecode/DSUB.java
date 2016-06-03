@@ -37,7 +37,11 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 
-import gov.nasa.jpf.symbc.numeric.RealExpression;
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.NumericCompound;
+import gov.nasa.jpf.constraints.expressions.NumericOperator;
+import gov.nasa.jpf.symbc.jconstraints.Translate;
+
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
 import gov.nasa.jpf.vm.ThreadInfo;
@@ -55,30 +59,23 @@ public class DSUB extends gov.nasa.jpf.jvm.bytecode.DSUB {
 	  
 	StackFrame sf = th.getModifiableTopFrame();
 	
-	RealExpression sym_v1 = (RealExpression) sf.getLongOperandAttr(); 
-    double v1 = Types.longToDouble(sf.popLong());
-    RealExpression sym_v2 = (RealExpression) sf.getLongOperandAttr();
-    double v2 = Types.longToDouble(sf.popLong());
-    
-    double r = v2 - v1;
-    if(sym_v1==null && sym_v2==null)
-    	sf.pushLong(Types.doubleToLong(r)); 
-    else
-    	sf.pushLong(0); 
+    if (sf.getOperandAttr(1) == null && sf.getOperandAttr(3) == null) {
+        return super.execute(th);
+    }
 
-    RealExpression result = null;
-	if(sym_v2!=null) {
-		if (sym_v1!=null)
-			result = sym_v2._minus(sym_v1);
-		else // v1 is concrete
-			result = sym_v2._minus(v1);
-	}else if (sym_v1!=null)
-		result = sym_v1._minus_reverse(v2);
-	
+	Expression<?> sym_v1_ex = (Expression<?>) sf.getLongOperandAttr();
+	double v1 = sf.popDouble();
+    Expression<Double> sym_v1 = Translate.translateDouble(sym_v1_ex, v1);
+
+	Expression<?> sym_v2_ex = (Expression<?>) sf.getLongOperandAttr();
+	double v2 = sf.popDouble();
+    Expression<Double> sym_v2 = Translate.translateDouble(sym_v2_ex, v2);
+
+	sf.pushDouble(0);
+
+    NumericCompound<Double> result = new NumericCompound<Double>(sym_v1, NumericOperator.MINUS, sym_v2);
+
 	sf.setLongOperandAttr(result);
-	
-	//System.out.println("Execute DSUB: "+ sf.getLongOperandAttr());
-
 
     return getNext(th);
   }

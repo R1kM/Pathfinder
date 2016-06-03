@@ -37,7 +37,15 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 
-import gov.nasa.jpf.symbc.numeric.RealExpression;
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.Constant;
+import gov.nasa.jpf.constraints.expressions.NumericBooleanExpression;
+import gov.nasa.jpf.constraints.expressions.NumericCompound;
+import gov.nasa.jpf.constraints.expressions.NumericComparator;
+import gov.nasa.jpf.constraints.expressions.NumericOperator;
+import gov.nasa.jpf.constraints.types.BuiltinTypes;
+import gov.nasa.jpf.symbc.jconstraints.*;
+import gov.nasa.jpf.vm.ChoiceGenerator;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
 import gov.nasa.jpf.vm.ThreadInfo;
@@ -53,23 +61,93 @@ public class DREM extends gov.nasa.jpf.jvm.bytecode.DREM  {
   public Instruction execute (ThreadInfo th) {
    
     StackFrame sf = th.getModifiableTopFrame();
-
-	RealExpression sym_v1 = (RealExpression) sf.getLongOperandAttr(); 
-	double v1 = Types.longToDouble(sf.popLong());
-		
-	RealExpression sym_v2 = (RealExpression) sf.getLongOperandAttr();
-	double v2 = Types.longToDouble(sf.popLong());
-	    
-    if(sym_v1==null && sym_v2==null){
-        if (v1 == 0){
-            return th.createAndThrowException("java.lang.ArithmeticException","division by zero");
-        } 
-        sf.pushLong(Types.doubleToLong(v2 % v1));
-    }else {
-    	sf.pushLong(0);
-        throw new RuntimeException("## Error: SYMBOLIC DREM not supported");
+    if (sf.getOperandAttr(1) == null && sf.getOperandAttr(3) == null) {
+        return super.execute(th);
     }
-    return getNext(th);
+
+	Expression<?> sym_v1_ex = (Expression<?>) sf.getOperandAttr(1); 
+	Expression<?> sym_v2_ex = (Expression<?>) sf.getOperandAttr(3);
+    double v1;
+    double v2;
+
+	// result is symbolic expression
+	if(sym_v1_ex==null && sym_v2_ex!=null) {
+		v1 = sf.popDouble();
+		v2 = sf.popDouble();
+		if(v1==0)
+			return th.createAndThrowException("java.lang.ArithmeticException","div by 0");
+		sf.pushLong(0);
+        Expression<Double> sym_v1 = Translate.translateDouble(sym_v1_ex, v1);
+        Expression<Double> sym_v2 = Translate.translateDouble(sym_v2_ex, v2);
+		NumericCompound<Double> result = new NumericCompound<Double>(sym_v2, NumericOperator.REM, sym_v1);
+		sf.setLongOperandAttr(result);
+	    return getNext(th);
+	}
+
+    ChoiceGenerator<?> cg;
+    boolean condition;
+
+    if (!th.isFirstStepInsn()) { // first time around
+        cg = new JPCChoiceGenerator(2);
+        ((JPCChoiceGenerator)cg).setOffset(this.position);
+		((JPCChoiceGenerator)cg).setMethodName(this.getMethodInfo().getFullName());
+		th.getVM().getSystemState().setNextChoiceGenerator(cg);
+		return this;
+	} else {  // this is what really returns results
+		cg = th.getVM().getSystemState().getChoiceGenerator();
+		assert (cg instanceof JPCChoiceGenerator) : "expected JPCChoiceGenerator, got: " + cg;
+		condition = (Integer)cg.getNextChoice()==0 ? false: true;
+	}
+	
+    v1 = sf.popDouble();
+	v2 = sf.popDouble();
+	sf.pushLong(0);
+
+    Expression<Double> sym_v1 = Translate.translateDouble(sym_v1_ex, v1);
+    Expression<Double> sym_v2 = Translate.translateDouble(sym_v2_ex, v2);
+    Constant<Double> zero = Constant.create(BuiltinTypes.DOUBLE, (double)0);
+
+	JPathCondition pc;
+	ChoiceGenerator<?> prev_cg = cg.getPreviousChoiceGeneratorOfType(JPCChoiceGenerator.class);
+
+	
+	if (prev_cg == null)
+		pc = new JPathCondition();
+	else
+		pc = ((JPCChoiceGenerator)prev_cg).getCurrentPC();
+
+	assert pc != null;
+
+	if(condition) { // check div by zero
+		pc._addDet(new NumericBooleanExpression(sym_v1, NumericComparator.EQ, zero));
+		if(pc.simplify())  { // satisfiable
+			((JPCChoiceGenerator) cg).setCurrentPC(pc);
+
+			return th.createAndThrowException("java.lang.ArithmeticException","div by 0");
+		}
+		else {
+			th.getVM().getSystemState().setIgnored(true);
+			return getNext(th);
+		}
+	} else {
+		pc._addDet(new NumericBooleanExpression(sym_v1, NumericComparator.NE, zero));
+		if(pc.simplify())  { // satisfiable
+			((JPCChoiceGenerator) cg).setCurrentPC(pc);
+
+			// set the result
+			NumericCompound<Double> result = new NumericCompound(sym_v2, NumericOperator.REM, sym_v1);
+
+			sf = th.getModifiableTopFrame();
+			sf.setLongOperandAttr(result);
+		    return getNext(th);
+
+		}
+		else {
+			th.getVM().getSystemState().setIgnored(true);
+			return getNext(th);
+		}
+	}
+    
   }
 
 }

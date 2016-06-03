@@ -37,7 +37,9 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 
-import gov.nasa.jpf.symbc.numeric.RealExpression;
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.UnaryMinus;
+import gov.nasa.jpf.symbc.jconstraints.Translate;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
 import gov.nasa.jpf.vm.ThreadInfo;
@@ -52,18 +54,18 @@ public class DNEG extends gov.nasa.jpf.jvm.bytecode.DNEG {
 	public Instruction execute(ThreadInfo th) {
 
 		StackFrame sf = th.getModifiableTopFrame();
-		RealExpression sym_v1 = (RealExpression) sf.getLongOperandAttr();
-		double v1 = Types.longToDouble(sf.popLong());
+        if (sf.getLongOperandAttr() == null) {
+            return super.execute(th);
+        }
 
-		if (sym_v1 == null)
-			sf.pushLong(Types.doubleToLong(-v1));
-		else {
-			sf.pushLong(0);
-			RealExpression result = sym_v1._neg();
-			sf.setLongOperandAttr(result);
-		}
-		//System.out.println("Execute DNEG: " + sf.getLongOperandAttr());
+		Expression<?> sym_v1_ex = (Expression<?>) sf.getLongOperandAttr();
+		double v1 = sf.popDouble();
+        Expression<Double> sym_v1 = Translate.translateDouble(sym_v1_ex, v1);
 
+		sf.pushLong(0);
+		UnaryMinus<Double> result = new UnaryMinus<Double>(sym_v1);
+		sf.setLongOperandAttr(result);
+		
 		return getNext(th);
 	}
 
