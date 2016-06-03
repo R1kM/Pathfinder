@@ -17,7 +17,10 @@
  */
 package gov.nasa.jpf.symbc.bytecode;
 
-import gov.nasa.jpf.symbc.numeric.*;
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.CastExpression;
+import gov.nasa.jpf.constraints.types.BuiltinTypes;
+import gov.nasa.jpf.symbc.jconstraints.Translate;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
 import gov.nasa.jpf.vm.ThreadInfo;
@@ -32,15 +35,17 @@ public class I2B extends gov.nasa.jpf.jvm.bytecode.I2B {
   @Override
   public Instruction execute (ThreadInfo th) {
 	  StackFrame sf = th.getModifiableTopFrame();
-	  Expression sym_val = (Expression) sf.getOperandAttr();
+	  Expression<?> sym_val = (Expression<?>) sf.getOperandAttr();
 		
 	  if(sym_val == null) {
 		  return super.execute(th); 
 	  }
 	  else {//symbolic
-		  Instruction result = super.execute(th);
-		  sf.setOperandAttr(sym_val);
-		  return result;
+          Expression<Byte> symb = Translate.translateIntType(sym_val, BuiltinTypes.SINT8);
+          sf.pop();
+          sf.push(0, false);
+		  sf.setOperandAttr(symb);
+		  return getNext(th);
 	  }
   }
 

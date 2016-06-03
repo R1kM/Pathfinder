@@ -19,7 +19,10 @@ package gov.nasa.jpf.symbc.bytecode;
 
 
 
-import gov.nasa.jpf.symbc.numeric.*;
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.CastExpression;
+import gov.nasa.jpf.constraints.types.BuiltinTypes;
+
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
 import gov.nasa.jpf.vm.ThreadInfo;
@@ -34,15 +37,19 @@ public class D2F extends gov.nasa.jpf.jvm.bytecode.D2F {
   @Override
   public Instruction execute (ThreadInfo th) {
 	  StackFrame sf = th.getModifiableTopFrame();
-	  Expression sym_val = (Expression) sf.getLongOperandAttr();
+	  Expression<?> sym_val = (Expression<?>) sf.getLongOperandAttr();
 		
 	  if(sym_val == null) {
 		  return super.execute(th); 
 	  }
 	  else {//symbolic
-		  Instruction result = super.execute(th);
-		  sf.setOperandAttr(sym_val);
-		  return result;
+          Expression<Double> sym_d = sym_val.requireAs(BuiltinTypes.DOUBLE);
+          CastExpression<Double, Float> cast = CastExpression.create(sym_d, BuiltinTypes.FLOAT);
+
+          sf.popLong();
+          sf.pushFloat(0);
+		  sf.setOperandAttr(cast);
+		  return getNext(th);
 	  }
   }
 

@@ -4,6 +4,7 @@ import gov.nasa.jpf.constraints.api.Expression;
 import gov.nasa.jpf.constraints.expressions.CastExpression;
 import gov.nasa.jpf.constraints.expressions.Constant;
 import gov.nasa.jpf.constraints.types.BuiltinTypes;
+import gov.nasa.jpf.constraints.types.Type;
 
 public class Translate {
     public static Expression<Integer> translateInt(Expression<?> symb, int value) {
@@ -56,5 +57,22 @@ public class Translate {
             isymb = symb.requireAs(BuiltinTypes.DOUBLE);
         }
         return isymb;
+    }
+
+    public static <T> Expression<T> translateIntType(Expression<?> symb, Type<T> type) {
+        Expression<T> tsymb = null;
+        if (type.equals(symb.getType())) {
+            tsymb = symb.requireAs(type);
+        } else if (symb instanceof CastExpression) {
+            // check for widening/narrowing
+            // note that the revers, narrowing/widening is NOT value-preserving!
+            CastExpression<?, ?> ce = (CastExpression<?,?>)symb;
+            if (ce.getType().equals(BuiltinTypes.SINT32) && ce.getCasted().getType().equals(type))
+                tsymb = ce.getCasted().requireAs(type);
+        }
+        if (tsymb == null) {
+            tsymb = CastExpression.create(symb, type);
+        }
+        return tsymb;
     }
 }

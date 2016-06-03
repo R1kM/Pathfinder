@@ -17,8 +17,10 @@
  */
 package gov.nasa.jpf.symbc.bytecode;
 
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.CastExpression;
+import gov.nasa.jpf.constraints.types.BuiltinTypes;
 
-import gov.nasa.jpf.symbc.numeric.*;
 import gov.nasa.jpf.vm.ChoiceGenerator;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
@@ -32,49 +34,21 @@ public class F2I extends gov.nasa.jpf.jvm.bytecode.F2I {
 	
   @Override
   public Instruction execute (ThreadInfo th) {
-	RealExpression sym_fval = (RealExpression) th.getModifiableTopFrame().getOperandAttr(); 
+	StackFrame sf = th.getModifiableTopFrame();
+	Expression<?> sym_val = (Expression<?>) sf.getOperandAttr(); 
 	
-	if(sym_fval == null) {
+	if(sym_val == null) {
 		  return super.execute(th); 
 	  }
 	else {
-		 
+        Expression<Float> sym_f = sym_val.requireAs(BuiltinTypes.FLOAT);
+        CastExpression<Float, Integer> cast = CastExpression.create(sym_f, BuiltinTypes.SINT32);
 
-		    ChoiceGenerator<?> cg; 
-			if (!th.isFirstStepInsn()) { // first time around
-				cg = new PCChoiceGenerator(1); // only one choice 
-				th.getVM().getSystemState().setNextChoiceGenerator(cg);
-				return this;  	      
-			} else {  // this is what really returns results
-				cg = th.getVM().getSystemState().getChoiceGenerator();
-				assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
-			}	
-			
-			// get the path condition from the 
-			// previous choice generator of the same type 
-
-		    PathCondition pc;
-			ChoiceGenerator<?> prev_cg = cg.getPreviousChoiceGeneratorOfType(PCChoiceGenerator.class);
-			if (prev_cg == null)
-				pc = new PathCondition(); // TODO: handling of preconditions needs to be changed
-			else 
-				pc = ((PCChoiceGenerator)prev_cg).getCurrentPC();
-			assert pc != null;
-			
-			StackFrame sf = th.getModifiableTopFrame();
-			sf.pop();
-			sf.push(0,false); // for symbolic expressions, the concrete value does not matter
-			SymbolicInteger sym_ival = new SymbolicInteger();
-			sf.setOperandAttr(sym_ival);
-			
-			pc._addDet(Comparator.EQ, sym_fval, sym_ival);
-			
-			if(!pc.simplify())  { // not satisfiable
-				th.getVM().getSystemState().setIgnored(true);
-			} else {
-				((PCChoiceGenerator) cg).setCurrentPC(pc);
-			}
-			return getNext(th);
+		sf.pop();
+		sf.push(0,false); // for symbolic expressions, the concrete value does not matter
+		sf.setOperandAttr(cast);
+		
+		return getNext(th);
 	  }
   }
   

@@ -18,8 +18,10 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.CastExpression;
+import gov.nasa.jpf.constraints.types.BuiltinTypes;
 
-import gov.nasa.jpf.symbc.numeric.*;
 import gov.nasa.jpf.vm.ChoiceGenerator;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
@@ -35,58 +37,20 @@ import gov.nasa.jpf.vm.ThreadInfo;
 public class L2D extends gov.nasa.jpf.jvm.bytecode.L2D {
 	@Override
   public Instruction execute (ThreadInfo th) {
-	  IntegerExpression sym_lval = (IntegerExpression) th.getModifiableTopFrame().getLongOperandAttr();
+	  StackFrame sf = th.getModifiableTopFrame();
+	  Expression<?> sym_lval = (Expression<?>) sf.getLongOperandAttr();
 	  if(sym_lval == null) {
 		  return super.execute(th); 
 	  }
 	  else {
-			//  System.out.println("Execute symbolic L2D");
-			  
-			  // here we get a hold of the current path condition and 
-			  // add an extra mixed constraint sym_dval==sym_ival
+        Expression<Long> sym_l = sym_lval.requireAs(BuiltinTypes.SINT64);
+        CastExpression<Long, Double> cast = CastExpression.create(sym_l, BuiltinTypes.DOUBLE);
 
-			    ChoiceGenerator<?> cg; 
-				if (!th.isFirstStepInsn()) { // first time around
-					cg = new PCChoiceGenerator(1); // only one choice 
-					th.getVM().getSystemState().setNextChoiceGenerator(cg);
-					return this;  	      
-				} else {  // this is what really returns results
-					cg = th.getVM().getSystemState().getChoiceGenerator();
-					assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
-				}	
-				
-				// get the path condition from the 
-				// previous choice generator of the same type 
+	    sf.popLong();
+	    sf.pushLong(0); // for symbolic expressions, the concrete value does not matter
+	    sf.setLongOperandAttr(cast);
 
-			    PathCondition pc;
-				ChoiceGenerator<?> prev_cg = cg.getPreviousChoiceGenerator();
-				while (!((prev_cg == null) || (prev_cg instanceof PCChoiceGenerator))) {
-					prev_cg = prev_cg.getPreviousChoiceGenerator();
-				}
-
-				if (prev_cg == null)
-					pc = new PathCondition(); // TODO: handling of preconditions needs to be changed
-				else 
-					pc = ((PCChoiceGenerator)prev_cg).getCurrentPC();
-				assert pc != null;
-				StackFrame sf = th.getModifiableTopFrame();
-				sf.popLong();
-				sf.pushLong(0); // for symbolic expressions, the concrete value does not matter
-				SymbolicReal sym_dval = new SymbolicReal();
-				sf.setLongOperandAttr(sym_dval);
-				
-				pc._addDet(Comparator.EQ, sym_dval, sym_lval);
-				
-				if(!pc.simplify())  { // not satisfiable
-					th.getVM().getSystemState().setIgnored(true);
-				} else {
-					//pc.solve();
-					((PCChoiceGenerator) cg).setCurrentPC(pc);
-					//System.out.println(((PCChoiceGenerator) cg).getCurrentPC());
-				}
-				
-				//System.out.println("Execute L2D: " + sf.getLongOperandAttr());
-				return getNext(th);
+	    return getNext(th);
 	  }
   }
 }

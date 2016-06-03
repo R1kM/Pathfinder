@@ -18,8 +18,10 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.CastExpression;
+import gov.nasa.jpf.constraints.types.BuiltinTypes;
 
-import gov.nasa.jpf.symbc.numeric.*;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
 import gov.nasa.jpf.vm.ThreadInfo;
@@ -34,15 +36,20 @@ public class L2I extends gov.nasa.jpf.jvm.bytecode.L2I {
 	@Override
   public Instruction execute (ThreadInfo th) {
 	  StackFrame sf = th.getModifiableTopFrame();
-	  Expression sym_val = (Expression) sf.getLongOperandAttr();
+	  Expression<?> sym_val = (Expression<?>) sf.getLongOperandAttr();
 		
 	  if(sym_val == null) {
 		  return super.execute(th); 
 	  }
 	  else {//symbolic
-		  Instruction result = super.execute(th);
-		  sf.setOperandAttr(sym_val);
-		  return result;
+          Expression<Long> sym_l = sym_val.requireAs(BuiltinTypes.SINT64);
+          CastExpression<Long, Integer> cast = CastExpression.create(sym_l, BuiltinTypes.SINT32);
+
+          sf.popLong();
+          sf.push(0, false);
+		  sf.setOperandAttr(cast);
+
+		  return getNext(th);
 	  }
   }
 

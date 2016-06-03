@@ -19,8 +19,10 @@ package gov.nasa.jpf.symbc.bytecode;
 
 
 
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.CastExpression;
+import gov.nasa.jpf.constraints.types.BuiltinTypes;
 
-import gov.nasa.jpf.symbc.numeric.*;
 import gov.nasa.jpf.vm.ChoiceGenerator;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
@@ -36,58 +38,20 @@ public class D2L extends gov.nasa.jpf.jvm.bytecode.D2L {
 
   @Override
   public Instruction execute (ThreadInfo th) {
-	  RealExpression sym_dval = (RealExpression) th.getModifiableTopFrame().getLongOperandAttr();
+	  StackFrame sf = th.getModifiableTopFrame();
+	  Expression<?> sym_dval = (Expression<?>) sf.getLongOperandAttr();
 		
 	  if(sym_dval == null) {
 		  return super.execute(th); 
 	  }
 	  else {
-		  //throw new RuntimeException("## Error: symbolic D2L not yet hanled ");
-
-		  //System.out.println("Execute symbolic D2L");
-		 
-		  // here we get a hold of the current path condition and 
-		  // add an extra mixed constraint sym_dval==sym_ival
-
-		    ChoiceGenerator cg; 
-			if (!th.isFirstStepInsn()) { // first time around
-				cg = new PCChoiceGenerator(1); // only one choice 
-				th.getVM().getSystemState().setNextChoiceGenerator(cg);
-				return this;  	      
-			} else {  // this is what really returns results
-				cg = th.getVM().getSystemState().getChoiceGenerator();
-				assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
-			}	
-			
-			// get the path condition from the 
-			// previous choice generator of the same type 
-
-		    PathCondition pc;
-			ChoiceGenerator<?> prev_cg = cg.getPreviousChoiceGeneratorOfType(PCChoiceGenerator.class);
-
-			if (prev_cg == null)
-				pc = new PathCondition(); // TODO: handling of preconditions needs to be changed
-			else 
-				pc = ((PCChoiceGenerator)prev_cg).getCurrentPC();
-			assert pc != null;
-			
-			StackFrame sf = th.getModifiableTopFrame();
+		    Expression<Double> sym_d = sym_dval.requireAs(BuiltinTypes.DOUBLE);
+            CastExpression<Double, Long> cast = CastExpression.create(sym_d, BuiltinTypes.SINT64);
+        	
 			sf.popLong();
 			sf.pushLong(0); // for symbolic expressions, the concrete value does not matter
-			SymbolicInteger sym_ival = new SymbolicInteger();
-			sf.setLongOperandAttr(sym_ival);
+			sf.setLongOperandAttr(cast);
 			
-			pc._addDet(Comparator.EQ, sym_dval, sym_ival);
-			
-			if(!pc.simplify())  { // not satisfiable
-				th.getVM().getSystemState().setIgnored(true);
-			} else {
-				//pc.solve();
-				((PCChoiceGenerator) cg).setCurrentPC(pc);
-				//System.out.println(((PCChoiceGenerator) cg).getCurrentPC());
-			}
-			
-			//System.out.println("Execute D2L: " + sf.getLongOperandAttr());
 			return getNext(th);
 	  }
   }

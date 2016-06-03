@@ -17,7 +17,10 @@
  */
 package gov.nasa.jpf.symbc.bytecode;
 
-import gov.nasa.jpf.symbc.numeric.*;
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.CastExpression;
+import gov.nasa.jpf.constraints.types.BuiltinTypes;
+import gov.nasa.jpf.symbc.jconstraints.Translate;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
 import gov.nasa.jpf.vm.ThreadInfo;
@@ -32,15 +35,19 @@ public class I2L extends gov.nasa.jpf.jvm.bytecode.I2L {
 
   public Instruction execute (ThreadInfo th) {
 	  StackFrame sf = th.getModifiableTopFrame();
-	  Expression sym_val = (Expression) sf.getOperandAttr();
+	  Expression<?> sym_val = (Expression<?>) sf.getOperandAttr();
 		
 	  if(sym_val == null) {
 		  return super.execute(th); 
 	  }
 	  else {//symbolic
-		  Instruction result = super.execute(th);
-		  sf.setLongOperandAttr(sym_val);
-		  return result;
+          Expression<Integer> sym_i = Translate.translateInt(sym_val);
+          CastExpression<Integer, Long> cast = CastExpression.create(sym_i, BuiltinTypes.SINT64);
+
+          sf.pop();
+          sf.pushLong(0);
+		  sf.setLongOperandAttr(cast);
+		  return getNext(th);
 	  }
   }
 
