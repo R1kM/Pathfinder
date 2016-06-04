@@ -38,7 +38,7 @@
 package gov.nasa.jpf.symbc.heap;
 
 
-import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
+import gov.nasa.jpf.constraints.api.Variable;
 import gov.nasa.jpf.vm.ClassInfo;
 
 
@@ -47,7 +47,7 @@ public class HeapNode {
   private int index; // index in JPF's dynamic area
   //private String type; // here we should store the type (fully qualified) of the object represented by this heap cell
   private ClassInfo typeClassInfo;
-  private SymbolicInteger  sym_v;
+  private Variable<Integer>  sym_v;
 
   private HeapNode and; // ref to next HeapNode
 
@@ -69,15 +69,15 @@ public class HeapNode {
 	  this.and = next;
   }
 
-  public SymbolicInteger getSymbolic(){
+  public Variable<Integer> getSymbolic(){
 	  return this.sym_v;
   }
 
-  public void setSymbolic(SymbolicInteger sym){
+  public void setSymbolic(Variable<Integer> sym){
 	  this.sym_v = sym;
   }
 
-  public HeapNode(int idx, ClassInfo tClassInfo, SymbolicInteger sym) {
+  public HeapNode(int idx, ClassInfo tClassInfo, Variable<Integer> sym) {
 	  index = idx;
 	  typeClassInfo = tClassInfo;
 	  sym_v = sym;

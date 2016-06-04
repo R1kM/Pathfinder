@@ -18,6 +18,12 @@
 
 package gov.nasa.jpf.symbc.bytecode;
 
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.Constant;
+import gov.nasa.jpf.constraints.expressions.NumericBooleanExpression;
+import gov.nasa.jpf.constraints.expressions.NumericComparator;
+import gov.nasa.jpf.constraints.types.BuiltinTypes;
+
 import gov.nasa.jpf.Config;
 import gov.nasa.jpf.symbc.arrays.ArrayExpression;
 import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
@@ -25,11 +31,6 @@ import gov.nasa.jpf.symbc.heap.HeapChoiceGenerator;
 import gov.nasa.jpf.symbc.heap.HeapNode;
 import gov.nasa.jpf.symbc.heap.Helper;
 import gov.nasa.jpf.symbc.heap.SymbolicInputHeap;
-import gov.nasa.jpf.symbc.numeric.Comparator;
-import gov.nasa.jpf.symbc.numeric.IntegerConstant;
-import gov.nasa.jpf.symbc.numeric.IntegerExpression;
-import gov.nasa.jpf.symbc.numeric.PathCondition;
-import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
 import gov.nasa.jpf.symbc.jconstraints.*;
 import gov.nasa.jpf.vm.ChoiceGenerator;
 import gov.nasa.jpf.vm.ClassInfo;
@@ -104,7 +105,7 @@ public class ALOAD extends gov.nasa.jpf.jvm.bytecode.ALOAD {
 
 			}
 			int increment = 2;
-			if(typeClassInfo.isAbstract() || (((IntegerExpression)attr).toString()).contains("this")) {
+			if(typeClassInfo.isAbstract() || (((Expression<Integer>)attr).toString()).contains("this")) {
 				 abstractClass = true;
 				 increment = 1; // only null for abstract, non null for this
 			}
@@ -123,14 +124,14 @@ public class ALOAD extends gov.nasa.jpf.jvm.bytecode.ALOAD {
 			currentChoice = ((HeapChoiceGenerator) thisHeapCG).getNextChoice();
 		}
 
-		PathCondition pcHeap;
+		JPathCondition pcHeap;
 		SymbolicInputHeap symInputHeap;
 
         prevHeapCG = thisHeapCG.getPreviousChoiceGeneratorOfType(HeapChoiceGenerator.class);
 
 		
 		if(prevHeapCG == null) {
-			pcHeap = new PathCondition();
+			pcHeap = new JPathCondition();
 			symInputHeap = new SymbolicInputHeap();
 		} else {
 			pcHeap =  ((HeapChoiceGenerator) prevHeapCG).getCurrentPCheap();
@@ -148,14 +149,14 @@ public class ALOAD extends gov.nasa.jpf.jvm.bytecode.ALOAD {
 		if (currentChoice < numSymRefs) { // lazy initialization using a previously lazily initialized object
 			HeapNode candidateNode = prevSymRefs[currentChoice];
 			// here we should update pcHeap with the constraint attr == candidateNode.sym_v
-			pcHeap._addDet(Comparator.EQ, (SymbolicInteger) attr, candidateNode.getSymbolic());
+			pcHeap._addDet(NumericBooleanExpression.create((Expression<Integer>) attr, NumericComparator.EQ, candidateNode.getSymbolic()));
 			daIndex = candidateNode.getIndex();
 		}
-		else if (currentChoice == numSymRefs && !(((IntegerExpression)attr).toString()).contains("this")){ //null object
-			pcHeap._addDet(Comparator.EQ, (SymbolicInteger) attr, new IntegerConstant(-1));
+		else if (currentChoice == numSymRefs && !(((Expression<Integer>)attr).toString()).contains("this")){ //null object
+			pcHeap._addDet(NumericBooleanExpression.create((Expression<Integer>)attr, NumericComparator.EQ, Constant.create(BuiltinTypes.SINT32, -1)));
 			daIndex = MJIEnv.NULL;
 		}
-		else if ((currentChoice == (numSymRefs + 1) && !abstractClass) | (currentChoice == numSymRefs && (((IntegerExpression)attr).toString()).contains("this"))) {
+		else if ((currentChoice == (numSymRefs + 1) && !abstractClass) | (currentChoice == numSymRefs && (((Expression<Integer>)attr).toString()).contains("this"))) {
 			//creates a new object with all fields symbolic
 			boolean shared = (ei == null? false: ei.isShared());
 			daIndex = Helper.addNewHeapNode(typeClassInfo, th, attr, pcHeap,

@@ -20,17 +20,14 @@ package gov.nasa.jpf.symbc.heap;
 
 import gov.nasa.jpf.constraints.api.Expression;
 import gov.nasa.jpf.constraints.api.Variable;
+import gov.nasa.jpf.constraints.expressions.Constant;
+import gov.nasa.jpf.constraints.expressions.NumericBooleanExpression;
+import gov.nasa.jpf.constraints.expressions.NumericComparator;
 import gov.nasa.jpf.constraints.types.BuiltinTypes;
 import gov.nasa.jpf.symbc.arrays.ArrayHeapNode;
 import gov.nasa.jpf.symbc.arrays.HelperResult;
 import gov.nasa.jpf.symbc.arrays.ObjectSymbolicArray;
-import gov.nasa.jpf.symbc.numeric.Comparator;
-import gov.nasa.jpf.symbc.numeric.IntegerConstant;
-import gov.nasa.jpf.symbc.numeric.IntegerExpression;
-import gov.nasa.jpf.symbc.numeric.PathCondition;
-import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
-import gov.nasa.jpf.symbc.numeric.SymbolicReal;
-import gov.nasa.jpf.symbc.string.StringSymbolic;
+import gov.nasa.jpf.symbc.jconstraints.*;
 import gov.nasa.jpf.vm.BooleanFieldInfo;
 import gov.nasa.jpf.vm.ClassInfo;
 import gov.nasa.jpf.vm.DoubleFieldInfo;
@@ -129,12 +126,12 @@ public class Helper {
 
 
 	  public static int addNewHeapNode(ClassInfo typeClassInfo, ThreadInfo ti, Object attr,
-			  PathCondition pcHeap, SymbolicInputHeap symInputHeap,
+			  JPathCondition pcHeap, SymbolicInputHeap symInputHeap,
 			  int numSymRefs, HeapNode[] prevSymRefs, boolean setShared) {
 		  int daIndex = ti.getHeap().newObject(typeClassInfo, ti).getObjectRef();
 		  ti.getHeap().registerPinDown(daIndex);
-		  String refChain = ((SymbolicInteger) attr).getName() + "[" + daIndex + "]"; // do we really need to add daIndex here?
-		  SymbolicInteger newSymRef = new SymbolicInteger( refChain);
+		  String refChain = ((Variable<Integer>) attr).getName() + "[" + daIndex + "]"; // do we really need to add daIndex here?
+		  Variable<Integer> newSymRef = Variable.create(BuiltinTypes.SINT32, refChain);
 		  ElementInfo eiRef =  ti.getModifiableElementInfo(daIndex);//ti.getElementInfo(daIndex); // TODO to review!
 		  if(setShared) {
 			  eiRef.setShared(ti,true);//??
@@ -166,21 +163,21 @@ public class Helper {
 		  // update associated symbolic input heap
 		  HeapNode n= new HeapNode(daIndex,typeClassInfo,newSymRef);
 		  symInputHeap._add(n);
-		  pcHeap._addDet(Comparator.NE, newSymRef, new IntegerConstant(-1));
+		  pcHeap._addDet(NumericBooleanExpression.create(newSymRef, NumericComparator.NE, Constant.create(BuiltinTypes.SINT32, -1)));
 		  //pcHeap._addDet(Comparator.EQ, newSymRef, (SymbolicInteger) attr);
 		  for (int i=0; i< numSymRefs; i++)
-			  pcHeap._addDet(Comparator.NE, n.getSymbolic(), prevSymRefs[i].getSymbolic());
+			  pcHeap._addDet(NumericBooleanExpression.create(n.getSymbolic(), NumericComparator.NE, prevSymRefs[i].getSymbolic()));
 		  return daIndex;
 	  }
 
 
 	  public static HelperResult addNewArrayHeapNode(ClassInfo typeClassInfo, ThreadInfo ti, Object attr,
-			  PathCondition pcHeap, SymbolicInputHeap symInputHeap,
-			  int numSymRefs, HeapNode[] prevSymRefs, boolean setShared, IntegerExpression indexAttr, int arrayRef) {
+			  JPathCondition pcHeap, SymbolicInputHeap symInputHeap,
+			  int numSymRefs, HeapNode[] prevSymRefs, boolean setShared, Expression<Integer> indexAttr, int arrayRef) {
 		  int daIndex = ti.getHeap().newObject(typeClassInfo, ti).getObjectRef();
 		  ti.getHeap().registerPinDown(daIndex);
 		  String refChain = ((ObjectSymbolicArray) attr).getName() + "[" + daIndex + "]"; // do we really need to add daIndex here?
-		  SymbolicInteger newSymRef = new SymbolicInteger( refChain);
+		  Variable<Integer> newSymRef = Variable.create(BuiltinTypes.SINT32, refChain);
 		  ElementInfo eiRef =  ti.getModifiableElementInfo(daIndex);//ti.getElementInfo(daIndex); // TODO to review!
 		  if(setShared) {
 			  eiRef.setShared(ti,true);//??
@@ -212,10 +209,10 @@ public class Helper {
 		  // update associated symbolic input heap
 		  ArrayHeapNode n= new ArrayHeapNode(daIndex,typeClassInfo,newSymRef, indexAttr, arrayRef);
 		  symInputHeap._add(n);
-		  pcHeap._addDet(Comparator.NE, newSymRef, new IntegerConstant(-1));
+		  pcHeap._addDet(NumericBooleanExpression.create(newSymRef, NumericComparator.NE, Constant.create(BuiltinTypes.SINT32, -1)));
 		  //pcHeap._addDet(Comparator.EQ, newSymRef, (SymbolicInteger) attr);
 		  for (int i=0; i< numSymRefs; i++)
-			  pcHeap._addDet(Comparator.NE, n.getSymbolic(), prevSymRefs[i].getSymbolic());
+			  pcHeap._addDet(NumericBooleanExpression.create(n.getSymbolic(), NumericComparator.NE, prevSymRefs[i].getSymbolic()));
 		  HelperResult result = new HelperResult(n, daIndex);
           return result;
 	  }

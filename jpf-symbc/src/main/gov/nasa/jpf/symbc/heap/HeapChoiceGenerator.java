@@ -37,31 +37,31 @@
 package gov.nasa.jpf.symbc.heap;
 
 
-import gov.nasa.jpf.symbc.numeric.PathCondition;
+import gov.nasa.jpf.symbc.jconstraints.JPathCondition;
 import gov.nasa.jpf.vm.choice.IntIntervalGenerator;
 
 
 public class HeapChoiceGenerator extends IntIntervalGenerator {
 
-	protected PathCondition [] PCheap; // maintains constraints on the heap: one PC per choice
+	protected JPathCondition [] PCheap; // maintains constraints on the heap: one PC per choice
     protected SymbolicInputHeap [] symInputHeap; // maintains list of input symbolic nodes; one list per choice
 
 	@SuppressWarnings("deprecation")
 	public HeapChoiceGenerator(int size) {
 		super(0, size - 1);
-		PCheap = new PathCondition[size];
+		PCheap = new JPathCondition[size];
 		symInputHeap = new SymbolicInputHeap[size];
 	}
 
 	// sets the heap constraints for the current choice
-	public void setCurrentPCheap(PathCondition pc) {
+	public void setCurrentPCheap(JPathCondition pc) {
 		PCheap[getNextChoice()] = pc;
 
 	}
 
 	// returns the heap constraints for the current choice
-	public PathCondition getCurrentPCheap() {
-		PathCondition pc;
+	public JPathCondition getCurrentPCheap() {
+		JPathCondition pc;
 
 		pc = PCheap[getNextChoice()];
 		if (pc != null) {

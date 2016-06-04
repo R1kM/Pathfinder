@@ -17,6 +17,12 @@
  */
 package gov.nasa.jpf.symbc.bytecode;
 
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.api.Variable;
+import gov.nasa.jpf.constraints.expressions.Constant;
+import gov.nasa.jpf.constraints.expressions.NumericBooleanExpression;
+import gov.nasa.jpf.constraints.expressions.NumericComparator;
+import gov.nasa.jpf.constraints.types.BuiltinTypes;
 
 import gov.nasa.jpf.Config;
 import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
@@ -24,12 +30,7 @@ import gov.nasa.jpf.symbc.heap.HeapChoiceGenerator;
 import gov.nasa.jpf.symbc.heap.HeapNode;
 import gov.nasa.jpf.symbc.heap.Helper;
 import gov.nasa.jpf.symbc.heap.SymbolicInputHeap;
-import gov.nasa.jpf.symbc.numeric.Comparator;
-import gov.nasa.jpf.symbc.numeric.IntegerConstant;
-import gov.nasa.jpf.symbc.numeric.PathCondition;
-import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
-import gov.nasa.jpf.symbc.string.StringExpression;
-import gov.nasa.jpf.symbc.string.SymbolicStringBuilder;
+import gov.nasa.jpf.symbc.jconstraints.*;
 import gov.nasa.jpf.vm.ChoiceGenerator;
 import gov.nasa.jpf.vm.ClassInfo;
 import gov.nasa.jpf.vm.ElementInfo;
@@ -90,8 +91,7 @@ public class GETFIELD extends gov.nasa.jpf.jvm.bytecode.GETFIELD {
 		  return super.execute(ti);
 	  }
 
-	  if(attr instanceof StringExpression || attr instanceof SymbolicStringBuilder)
-			return super.execute(ti); // Strings are handled specially
+      // TODO Strings
 
 	  if (SymbolicInstructionFactory.debugMode)
 		  System.out.println("lazy initialization");
@@ -151,7 +151,7 @@ public class GETFIELD extends gov.nasa.jpf.jvm.bytecode.GETFIELD {
 		  currentChoice = ((HeapChoiceGenerator) thisHeapCG).getNextChoice();
 	  }
 
-	  PathCondition pcHeap; //this pc contains only the constraints on the heap
+	  JPathCondition pcHeap; //this pc contains only the constraints on the heap
 	  SymbolicInputHeap symInputHeap;
 
 	  // depending on the currentChoice, we set the current field to an object that was already created
@@ -162,7 +162,7 @@ public class GETFIELD extends gov.nasa.jpf.jvm.bytecode.GETFIELD {
 	  
 	  
 	  if (prevHeapCG == null){ 
-		  pcHeap = new PathCondition();
+		  pcHeap = new JPathCondition();
 		  symInputHeap = new SymbolicInputHeap();
 	  }
 	  else {
@@ -180,11 +180,11 @@ public class GETFIELD extends gov.nasa.jpf.jvm.bytecode.GETFIELD {
 	  if (currentChoice < numSymRefs) { // lazy initialization using a previously lazily initialized object
 		  HeapNode candidateNode = prevSymRefs[currentChoice];
 		  // here we should update pcHeap with the constraint attr == candidateNode.sym_v
-		  pcHeap._addDet(Comparator.EQ, (SymbolicInteger) attr, candidateNode.getSymbolic());
+		  pcHeap._addDet(NumericBooleanExpression.create((Expression<Integer>) attr, NumericComparator.EQ, candidateNode.getSymbolic()));
           daIndex = candidateNode.getIndex();
 	  }
 	  else if (currentChoice == numSymRefs){ //null object
-		  pcHeap._addDet(Comparator.EQ, (SymbolicInteger) attr, new IntegerConstant(-1));
+		  pcHeap._addDet(NumericBooleanExpression.create((Expression<Integer>) attr, NumericComparator.EQ, Constant.create(BuiltinTypes.SINT32, -1)));
 		  daIndex = MJIEnv.NULL;//-1;
 	  }
 	  else if (currentChoice == (numSymRefs + 1) && !abstractClass) {

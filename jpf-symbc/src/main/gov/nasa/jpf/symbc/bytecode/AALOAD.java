@@ -56,7 +56,8 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
 	
   @Override
   public Instruction execute (ThreadInfo ti) {
-
+        return super.execute(ti);
+/* TODO
       boolean abstractClass = false;
       ObjectSymbolicArray arrayAttr = null;
       ArrayHeapNode[] prevSymRefs = null; // previously initialized objects of same type
@@ -318,5 +319,5 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
               }
           }   
       }
-    }
+   */ }
 }

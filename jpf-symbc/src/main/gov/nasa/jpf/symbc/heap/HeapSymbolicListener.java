@@ -73,17 +73,15 @@ import gov.nasa.jpf.report.PublisherExtension;
 import gov.nasa.jpf.search.Search;
 import gov.nasa.jpf.symbc.bytecode.BytecodeUtils;
 import gov.nasa.jpf.symbc.bytecode.INVOKESTATIC;
-import gov.nasa.jpf.symbc.numeric.Comparator;
-import gov.nasa.jpf.symbc.numeric.Expression;
-import gov.nasa.jpf.symbc.numeric.IntegerConstant;
-import gov.nasa.jpf.symbc.numeric.IntegerExpression;
-import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
-import gov.nasa.jpf.symbc.numeric.PathCondition;
-import gov.nasa.jpf.symbc.numeric.RealConstant;
-import gov.nasa.jpf.symbc.numeric.RealExpression;
-import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
-import gov.nasa.jpf.symbc.numeric.SymbolicReal;
+import gov.nasa.jpf.symbc.jconstraints.*;
 import gov.nasa.jpf.util.Pair;
+
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.api.Variable;
+import gov.nasa.jpf.constraints.expressions.Constant;
+import gov.nasa.jpf.constraints.expressions.NumericBooleanExpression;
+import gov.nasa.jpf.constraints.expressions.NumericComparator;
+import gov.nasa.jpf.constraints.types.BuiltinTypes;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -109,8 +107,8 @@ public class HeapSymbolicListener extends PropertyListenerAdapter implements Pub
 
 
 	// probably we do not need this!
-	private Map<Integer, SymbolicInteger> nameMap =
-											new HashMap<Integer,SymbolicInteger>();
+	private Map<Integer, Variable<Integer>> nameMap =
+											new HashMap<Integer,Variable<Integer>>();
 
 	// what are these fields?
 	private Set<String> definedFields = new HashSet<String>();
@@ -168,7 +166,7 @@ public class HeapSymbolicListener extends PropertyListenerAdapter implements Pub
 	Set<Integer> seenSet;
 	int currentDepth=0;
 
-	private void expandReferenceObject(PathCondition pc,ThreadInfo ti,
+	private void expandReferenceObject(JPathCondition pc,ThreadInfo ti,
 										ClassInfo ci,  int objNum){
 
 		if ((currentDepth<=refDepth || refDepth == -1) &&
@@ -182,7 +180,7 @@ public class HeapSymbolicListener extends PropertyListenerAdapter implements Pub
 			if (null != ei && fields.length >0){
 				for (int i = 0; i < fields.length; i++) {
 					if (!fields[i].getName().contains("this")){
-						SymbolicInteger temp = nameMap.get(ref);
+						Variable<Integer> temp = nameMap.get(ref);
 						String fullType = fields[i].getType();
 						String type = "";
 						// C: why is this done???
@@ -199,53 +197,61 @@ public class HeapSymbolicListener extends PropertyListenerAdapter implements Pub
 						if (!definedFields.contains(name)){
 							definedFields.add(name);
 							Object attr = ei.getFieldAttr(fields[i]);
-							if (fields[i] instanceof IntegerFieldInfo ||
-														fields[i] instanceof LongFieldInfo) {
-								IntegerExpression symField = new SymbolicInteger(name);
+							if (fields[i] instanceof IntegerFieldInfo) {
+								Expression<Integer> symField = Variable.create(BuiltinTypes.SINT32, name);
 								if (null != attr)
-									pc._addDet(Comparator.EQ, symField, (IntegerExpression)attr);
+									pc._addDet(NumericBooleanExpression.create(symField, NumericComparator.EQ, (Expression<Integer>)attr));
 								else{
 									int val;
-									if (fields[i] instanceof IntegerFieldInfo)
-										val = ei.getFields().getIntValue(i);
-									else  //WARNING: downcasting to an int
-										val = (int)ei.getFields().getLongValue(i);
-									pc._addDet(Comparator.EQ, symField, new IntegerConstant(val));
+									val = ei.getFields().getIntValue(i);
+									pc._addDet(NumericBooleanExpression.create(symField, NumericComparator.EQ, Constant.create(BuiltinTypes.SINT32, val)));
 								}
-							} else if (fields[i] instanceof FloatFieldInfo ||
-										fields[i] instanceof DoubleFieldInfo) {
-								RealExpression symField = new SymbolicReal(name);
+							} else if (fields[i] instanceof LongFieldInfo) {
+								Expression<Long> symField = Variable.create(BuiltinTypes.SINT64, name);
 								if (null != attr)
-									pc._addDet(Comparator.EQ, symField, (RealExpression)attr);
+									pc._addDet(NumericBooleanExpression.create(symField, NumericComparator.EQ, (Expression<Long>)attr));
 								else{
-									double val;
-									if (fields[i] instanceof FloatFieldInfo)
-										val = ei.getFields().getFloatValue(i);
-									else
-										val = ei.getFields().getDoubleValue(i);
-									pc._addDet(Comparator.EQ, symField, new RealConstant(val));
+									long val = ei.getFields().getLongValue(i);
+									pc._addDet(NumericBooleanExpression.create(symField, NumericComparator.EQ, Constant.create(BuiltinTypes.SINT64, val)));
 								}
-							}else if (fields[i] instanceof ReferenceFieldInfo){
-								IntegerExpression symField= new SymbolicInteger(name);
+                            } else if (fields[i] instanceof FloatFieldInfo) {
+								Expression<Float> symField = Variable.create(BuiltinTypes.FLOAT, name);
+								if (null != attr)
+									pc._addDet(NumericBooleanExpression.create(symField, NumericComparator.EQ, (Expression<Float>)attr));
+								else{
+									float val = ei.getFields().getFloatValue(i);
+									pc._addDet(NumericBooleanExpression.create(symField, NumericComparator.EQ, Constant.create(BuiltinTypes.FLOAT, val)));
+								}
+							} else if (fields[i] instanceof DoubleFieldInfo) {
+								Expression<Double> symField = Variable.create(BuiltinTypes.DOUBLE, name);
+								if (null != attr)
+									pc._addDet(NumericBooleanExpression.create(symField, NumericComparator.EQ, (Expression<Double>)attr));
+								else{
+									double val = ei.getFields().getDoubleValue(i);
+									pc._addDet(NumericBooleanExpression.create(symField, NumericComparator.EQ, Constant.create(BuiltinTypes.DOUBLE, val)));
+								}
+                            
+                            } else if (fields[i] instanceof ReferenceFieldInfo){
+								Expression<Integer> symField= Variable.create(BuiltinTypes.SINT32, name);
 								Fields f = ei.getFields();
 								Object val = f.getFieldAttr(i);
 								int objIndex = f.getReferenceValue(i);
 								if (null == val){
-									IntegerExpression exp = null;
+									Expression<Integer> exp = null;
 									if (objIndex == MJIEnv.NULL){
-										exp = new IntegerConstant(objIndex);
-										pc._addDet(Comparator.EQ, symField, exp);
+										exp = Constant.create(BuiltinTypes.SINT32, objIndex);
+										pc._addDet(NumericBooleanExpression.create(symField, NumericComparator.EQ, exp));
 									}else{
 										exp = nameMap.get(new Integer(objIndex));
 										if (null == exp)
-											exp = new IntegerConstant(objIndex);
-										pc._addDet(Comparator.EQ, symField, exp);
+											exp = Constant.create(BuiltinTypes.SINT32, objIndex);
+										pc._addDet(NumericBooleanExpression.create(symField, NumericComparator.EQ, exp));
 										if (objIndex != objNum && !seenSet.contains(objIndex) && objIndex != MJIEnv.NULL)
 											expandReferenceObject(pc,ti,ci,objIndex);
 									}
 								}else{
 									//pc._addDet(Comparator.EQ, symField, new IntegerConstant(objIndex));
-									pc._addDet(Comparator.EQ, symField, (SymbolicInteger)val);
+									pc._addDet(NumericBooleanExpression.create(symField, NumericComparator.EQ, (Variable<Integer>)val));
 									if (objIndex != objNum && !seenSet.contains(objIndex) && objIndex != MJIEnv.NULL)
 										expandReferenceObject(pc,ti,ci,objIndex);
 								}
@@ -258,7 +264,7 @@ public class HeapSymbolicListener extends PropertyListenerAdapter implements Pub
 			if (staticFields.length > 0 ) {
 				for (int i = 0; i < staticFields.length; i++) {
 					String type = "";
-					SymbolicInteger tmp = nameMap.get(ref);
+					Variable<Integer> tmp = nameMap.get(ref);
 					if (null != tmp)
 						type = nameMap.get(ref).toString();
 					else{
@@ -272,52 +278,59 @@ public class HeapSymbolicListener extends PropertyListenerAdapter implements Pub
 					if (!definedFields.contains(name)){
 						definedFields.add(name);
 						Object attr = ci.getStaticElementInfo().getElementAttr(i);
-						if (staticFields[i] instanceof IntegerFieldInfo ||
-								staticFields[i] instanceof LongFieldInfo) {
-							IntegerExpression symStatic = new SymbolicInteger(name);
+						if (staticFields[i] instanceof IntegerFieldInfo) {
+						    Expression<Integer> symStatic = Variable.create(BuiltinTypes.SINT32, name);
 							if (null != attr)
-								pc._addDet(Comparator.EQ, symStatic, (IntegerExpression)attr);
+								pc._addDet(NumericBooleanExpression.create(symStatic, NumericComparator.EQ, (Expression<Integer>)attr));
 							else{
-								int val;
-								if (staticFields[i] instanceof IntegerFieldInfo){
-									val = ci.getStaticElementInfo().getIntField(staticFields[i]);
-								}else  //WARNING: downcasting to an int
-									val = (int)ci.getStaticElementInfo().getLongField(staticFields[i]);;
+								int val = ci.getStaticElementInfo().getIntField(staticFields[i]);
 								//System.out.println("intVal: " + val);
-								pc._addDet(Comparator.EQ, symStatic, new IntegerConstant(val));
+								pc._addDet(NumericBooleanExpression.create(symStatic, NumericComparator.EQ, Constant.create(BuiltinTypes.SINT32, val)));
 							}
-						} else if (staticFields[i] instanceof FloatFieldInfo
-								|| staticFields[i] instanceof DoubleFieldInfo) {
-							RealExpression symStatic = new SymbolicReal(name);
+						} else if (staticFields[i] instanceof LongFieldInfo) {
+						    Expression<Long> symStatic = Variable.create(BuiltinTypes.SINT64, name);
 							if (null != attr)
-								pc._addDet(Comparator.EQ, symStatic, (RealExpression)attr);
+								pc._addDet(NumericBooleanExpression.create(symStatic, NumericComparator.EQ, (Expression<Long>)attr));
 							else{
-								double val;
-								if (fields[i] instanceof FloatFieldInfo)
-									val = ci.getStaticElementInfo().getFloatField(staticFields[i]);
-								else
-									val = ci.getStaticElementInfo().getDoubleField(staticFields[i]);;
-								pc._addDet(Comparator.EQ, symStatic, new RealConstant(val));
+								long val = ci.getStaticElementInfo().getLongField(staticFields[i]);;
+								//System.out.println("intVal: " + val);
+								pc._addDet(NumericBooleanExpression.create(symStatic, NumericComparator.EQ, Constant.create(BuiltinTypes.SINT64, val)));
 							}
-						}else if (staticFields[i] instanceof ReferenceFieldInfo){
-							IntegerExpression symStatic = new SymbolicInteger(name);
+                        } else if (staticFields[i] instanceof FloatFieldInfo) {
+							Expression<Float> symStatic = Variable.create(BuiltinTypes.FLOAT, name);
+							if (null != attr)
+								pc._addDet(NumericBooleanExpression.create(symStatic, NumericComparator.EQ, (Expression<Float>)attr));
+							else{
+								float val = ci.getStaticElementInfo().getFloatField(staticFields[i]);
+								pc._addDet(NumericBooleanExpression.create(symStatic, NumericComparator.EQ, Constant.create(BuiltinTypes.FLOAT, val)));
+							}
+						} else if (staticFields[i] instanceof DoubleFieldInfo) {
+							Expression<Double> symStatic = Variable.create(BuiltinTypes.DOUBLE, name);
+							if (null != attr)
+								pc._addDet(NumericBooleanExpression.create(symStatic, NumericComparator.EQ, (Expression<Double>)attr));
+							else{
+								double val = ci.getStaticElementInfo().getDoubleField(staticFields[i]);
+								pc._addDet(NumericBooleanExpression.create(symStatic, NumericComparator.EQ, Constant.create(BuiltinTypes.DOUBLE, val)));
+							}
+                        } else if (staticFields[i] instanceof ReferenceFieldInfo){
+							Expression<Integer> symStatic = Variable.create(BuiltinTypes.SINT32, name);
 							if (null != attr){
-								pc._addDet(Comparator.EQ, symStatic, (IntegerExpression)attr);
+								pc._addDet(NumericBooleanExpression.create(symStatic, NumericComparator.EQ, (Expression<Integer>)attr));
 							}else{
 								ReferenceFieldInfo rfi = (ReferenceFieldInfo)staticFields[i];
 								Integer objIndex = ci.getStaticElementInfo().getReferenceField(rfi);
-								IntegerExpression exp = null;
+								Expression<Integer> exp = null;
 								if (objIndex == MJIEnv.NULL){
-									exp = new IntegerConstant(objIndex);
-									pc._addDet(Comparator.EQ, symStatic,exp);
+									exp = Constant.create(BuiltinTypes.SINT32, objIndex);
+									pc._addDet(NumericBooleanExpression.create(symStatic, NumericComparator.EQ, exp));
 								}else{
 									exp = nameMap.get(new Integer(objIndex));
 									if (null == exp){
 										String nm = ci.getName();
 									    nm = name.substring(name.lastIndexOf('.')+1) + "@" + objNum ;
-										exp = new SymbolicInteger(nm);
+										exp = Variable.create(BuiltinTypes.SINT32, nm);
 									}
-									pc._addDet(Comparator.EQ, symStatic,exp);
+									pc._addDet(NumericBooleanExpression.create(symStatic, NumericComparator.EQ, exp));
 									if (objIndex != objNum && !seenSet.contains(objIndex))
 											expandReferenceObject(pc, ti, ci, objNum);
 								}
@@ -335,7 +348,7 @@ public class HeapSymbolicListener extends PropertyListenerAdapter implements Pub
 	 * use refDepth configuration value to determine how far to "unwind" -- why is this necessary?
 	 * object references
 	 */
-	private void getFieldValues(PathCondition returnPC, ThreadInfo ti,
+	private void getFieldValues(JPathCondition returnPC, ThreadInfo ti,
 										MethodInfo mi, Instruction insn){
 		ClassInfo ci = mi.getClassInfo();
 		JVMReturnInstruction ret = (JVMReturnInstruction)insn;
@@ -349,12 +362,11 @@ public class HeapSymbolicListener extends PropertyListenerAdapter implements Pub
 		  else
 			  name = name.substring(name.lastIndexOf('.')+1);
 		  String tmpName = name.substring(0,name.lastIndexOf('#')-1) + ":this";
-		  returnPC._addDet(Comparator.EQ, new SymbolicInteger(tmpName),
-				  new SymbolicInteger(name));
+		  returnPC._addDet(NumericBooleanExpression.create(Variable.create(BuiltinTypes.SINT32, tmpName), NumericComparator.EQ, Variable.create(BuiltinTypes.SINT32, name)));
 		seenSet = new HashSet<Integer>();
 		definedFields = new HashSet<String>();
 
-		nameMap.put(new Integer(thisRef), new SymbolicInteger(name)); // why is this necessary
+		nameMap.put(new Integer(thisRef), Variable.create(BuiltinTypes.SINT32, name)); // why is this necessary
 
 		// adds constraints representing this
 
@@ -374,14 +386,14 @@ public class HeapSymbolicListener extends PropertyListenerAdapter implements Pub
 		//System.out.println("--------->property violated");
 		VM vm = search.getVM();
 		HeapChoiceGenerator heapCG = vm.getLastChoiceGeneratorOfType(HeapChoiceGenerator.class);
-		PCChoiceGenerator pcCG = vm.getLastChoiceGeneratorOfType(PCChoiceGenerator.class);
-		PathCondition pc = (pcCG==null ? null : pcCG.getCurrentPC());
-		PathCondition heapPC = (heapCG==null ? null : heapCG.getCurrentPCheap());
+		JPCChoiceGenerator pcCG = vm.getLastChoiceGeneratorOfType(JPCChoiceGenerator.class);
+		JPathCondition pc = (pcCG==null ? null : pcCG.getCurrentPC());
+		JPathCondition heapPC = (heapCG==null ? null : heapCG.getCurrentPCheap());
 		
 		String error = search.getLastError().getDetails();
 		error = "\"" + error.substring(0,error.indexOf("\n")) + "...\"";
-		PathCondition result = new PathCondition();
-		nameMap = new HashMap<Integer,SymbolicInteger>();
+		JPathCondition result = new JPathCondition();
+		nameMap = new HashMap<Integer,Variable<Integer>>();
 		if (null != heapCG){
 			SymbolicInputHeap symInputHeap =
 			((HeapChoiceGenerator)heapCG).getCurrentSymInputHeap();
@@ -392,9 +404,9 @@ public class HeapSymbolicListener extends PropertyListenerAdapter implements Pub
 			}
 		}
 		//getFieldValues(result,vm.getLastThreadInfo(),vm.getLastMethodInfo(), vm.getNextInstruction());
-		IntegerExpression sym_err = new SymbolicInteger("ERROR");
-		IntegerExpression sym_value = new SymbolicInteger(error);
-		result._addDet(Comparator.EQ, sym_err, sym_value);
+		Expression<Integer> sym_err = Variable.create(BuiltinTypes.SINT32, "ERROR");
+		Expression<Integer> sym_value = Variable.create(BuiltinTypes.SINT32, error);
+		result._addDet(NumericBooleanExpression.create(sym_err, NumericComparator.EQ, sym_value));
 		//solve the path condition, then print it
 		if(pc!=null) {
 			pc.solve();
@@ -499,7 +511,7 @@ public class HeapSymbolicListener extends PropertyListenerAdapter implements Pub
 					}
 // TODO: fix names
 					for (int i=0; i< numberOfArgs; i++){
-						Expression expLocal = (Expression)sf.getLocalAttr(sfIndex);
+						Expression<?> expLocal = (Expression<?>)sf.getLocalAttr(sfIndex);
 						if (expLocal != null){ // symbolic
 							symVarNameStr = expLocal.toString();
 
@@ -541,16 +553,16 @@ public class HeapSymbolicListener extends PropertyListenerAdapter implements Pub
 
 
 						HeapChoiceGenerator heapCG = vm.getLastChoiceGeneratorOfType(HeapChoiceGenerator.class);
-						PCChoiceGenerator pcCG = vm.getLastChoiceGeneratorOfType(PCChoiceGenerator.class);
-						PathCondition pc = (pcCG==null ? null : pcCG.getCurrentPC());
-						PathCondition heapPC = (heapCG==null ? null : heapCG.getCurrentPCheap());
+						JPCChoiceGenerator pcCG = vm.getLastChoiceGeneratorOfType(JPCChoiceGenerator.class);
+						JPathCondition pc = (pcCG==null ? null : pcCG.getCurrentPC());
+						JPathCondition heapPC = (heapCG==null ? null : heapCG.getCurrentPCheap());
 
 						if(pc!=null) {
 							pc.solve(); //we only solve the pc
-							PathCondition result = new PathCondition();
+							JPathCondition result = new JPathCondition();
 							//after the following statement is executed, the pc loses its solution
-							IntegerExpression sym_result = new SymbolicInteger("RETURN");
-							nameMap = new HashMap<Integer,SymbolicInteger>();
+							Expression<Integer> sym_result = Variable.create(BuiltinTypes.SINT32, "RETURN");
+							nameMap = new HashMap<Integer,Variable<Integer>>();
 							if (null != heapCG){
 								SymbolicInputHeap symInputHeap =
 								 ((HeapChoiceGenerator)heapCG).getCurrentSymInputHeap();

@@ -22,22 +22,19 @@ import java.util.HashSet;
 import java.util.Set;
 
 
+import gov.nasa.jpf.constraints.api.Variable;
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.Constant;
+import gov.nasa.jpf.constraints.expressions.NumericBooleanExpression;
+import gov.nasa.jpf.constraints.expressions.NumericComparator;
+import gov.nasa.jpf.constraints.types.BuiltinTypes;
+
 import gov.nasa.jpf.annotation.MJI;
 import gov.nasa.jpf.symbc.heap.HeapChoiceGenerator;
 import gov.nasa.jpf.symbc.heap.HeapNode;
 import gov.nasa.jpf.symbc.heap.Helper;
 import gov.nasa.jpf.symbc.heap.SymbolicInputHeap;
-import gov.nasa.jpf.symbc.numeric.Comparator;
-import gov.nasa.jpf.symbc.numeric.Expression;
-import gov.nasa.jpf.symbc.numeric.IntegerConstant;
-import gov.nasa.jpf.symbc.numeric.IntegerExpression;
-import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
-import gov.nasa.jpf.symbc.numeric.PathCondition;
-import gov.nasa.jpf.symbc.numeric.RealExpression;
-import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
-import gov.nasa.jpf.symbc.numeric.SymbolicReal;
-import gov.nasa.jpf.symbc.string.StringExpression;
-import gov.nasa.jpf.symbc.string.StringSymbolic;
+import gov.nasa.jpf.symbc.jconstraints.*;
 import gov.nasa.jpf.vm.ChoiceGenerator;
 import gov.nasa.jpf.vm.ClassInfo;
 import gov.nasa.jpf.vm.ElementInfo;
@@ -52,21 +49,21 @@ import gov.nasa.jpf.vm.VM;
 
 public class JPF_gov_nasa_jpf_symbc_Debug extends NativePeer {
 	
-	static PathCondition getPC(MJIEnv env) {
+	static JPathCondition getPC(MJIEnv env) {
 		VM vm = env.getVM();
 		ChoiceGenerator<?> cg = vm.getChoiceGenerator();
-		PathCondition pc = null;
+		JPathCondition pc = null;
 
-		if (!(cg instanceof PCChoiceGenerator)) {
+		if (!(cg instanceof JPCChoiceGenerator)) {
 			ChoiceGenerator<?> prev_cg = cg.getPreviousChoiceGenerator();
-			while (!((prev_cg == null) || (prev_cg instanceof PCChoiceGenerator))) {
+			while (!((prev_cg == null) || (prev_cg instanceof JPCChoiceGenerator))) {
 				prev_cg = prev_cg.getPreviousChoiceGenerator();
 			}
 			cg = prev_cg;
 		}
 
-		if ((cg instanceof PCChoiceGenerator) && cg != null) {
-			pc = ((PCChoiceGenerator) cg).getCurrentPC();
+		if ((cg instanceof JPCChoiceGenerator) && cg != null) {
+			pc = ((JPCChoiceGenerator) cg).getCurrentPC();
 		}
 		return pc;
 	}
@@ -74,7 +71,7 @@ public class JPF_gov_nasa_jpf_symbc_Debug extends NativePeer {
 	
 	@MJI
 	public static void printPC(MJIEnv env, int objRef, int msgRef) {
-		PathCondition pc = getPC(env);
+		JPathCondition pc = getPC(env);
 		if (pc != null) {
 			//pc.solve();
 			System.out.println(env.getStringObject(msgRef) + pc);
@@ -84,7 +81,7 @@ public class JPF_gov_nasa_jpf_symbc_Debug extends NativePeer {
 	}
 	@MJI
 	public static int getSolvedPC(MJIEnv env, int objRef) {
-		PathCondition pc = getPC(env);
+		JPathCondition pc = getPC(env);
 		if (pc != null) {
 			pc.solve();
 			return env.newString(pc.toString());
@@ -97,7 +94,7 @@ public class JPF_gov_nasa_jpf_symbc_Debug extends NativePeer {
 	public static int getSymbolicIntegerValue(MJIEnv env, int objRef, int v) {
 		Object [] attrs = env.getArgAttributes();
 		
-		IntegerExpression sym_arg = (IntegerExpression)attrs[0];
+		Expression<Integer> sym_arg = (Expression<Integer>)attrs[0];
 		if (sym_arg !=null)
 			return env.newString(sym_arg.toString());
 		else
@@ -107,22 +104,22 @@ public class JPF_gov_nasa_jpf_symbc_Debug extends NativePeer {
 	
 	@MJI
 	public static void freshPCcopy(MJIEnv env, int objRef) {
-		PathCondition pc = getPC(env);
+		JPathCondition pc = getPC(env);
 		if(pc!=null)
 			pcLocal = pc.make_copy();
 		else
-			pcLocal = new PathCondition();
+			pcLocal = new JPathCondition();
 	}
 	
-	static PathCondition pcLocal;
+	static JPathCondition pcLocal;
 			
 	@MJI
 	public static boolean addEQ0(MJIEnv env, int objRef, int v) {
 		Object [] attrs = env.getArgAttributes();
 		
-		IntegerExpression sym_arg = (IntegerExpression)attrs[0];
+		Expression<Integer> sym_arg = (Expression<Integer>)attrs[0];
 		if (sym_arg !=null) {
-			pcLocal._addDet(Comparator.EQ, sym_arg, 0);
+			pcLocal._addDet(NumericBooleanExpression.create(sym_arg, NumericComparator.EQ, Constant.create(BuiltinTypes.SINT32, 0)));
 			return true;
 		}
 		else
@@ -133,9 +130,9 @@ public class JPF_gov_nasa_jpf_symbc_Debug extends NativePeer {
 	public static boolean addGT0(MJIEnv env, int objRef, int v) {
 		Object [] attrs = env.getArgAttributes();
 		
-		IntegerExpression sym_arg = (IntegerExpression)attrs[0];
+		Expression<Integer> sym_arg = (Expression<Integer>)attrs[0];
 		if (sym_arg !=null) {
-			pcLocal._addDet(Comparator.GT, sym_arg, 0);
+			pcLocal._addDet(NumericBooleanExpression.create(sym_arg, NumericComparator.GT, Constant.create(BuiltinTypes.SINT32, 0)));
 			return true;
 		}
 		else
@@ -152,7 +149,7 @@ public class JPF_gov_nasa_jpf_symbc_Debug extends NativePeer {
 	@MJI
     public static int getSymbolicRealValue(MJIEnv env, int objRef, double v) {
     	Object [] attrs = env.getArgAttributes();
-		RealExpression sym_arg = (RealExpression)attrs[0];
+		Expression<Float> sym_arg = (Expression<Float>)attrs[0];
 		if (sym_arg !=null)
 			return env.newString(sym_arg.toString());
 		else
@@ -161,7 +158,7 @@ public class JPF_gov_nasa_jpf_symbc_Debug extends NativePeer {
 	@MJI
     public static int getSymbolicBooleanValue(MJIEnv env, int objRef, boolean v) {
     	Object [] attrs = env.getArgAttributes();
-		IntegerExpression sym_arg = (IntegerExpression)attrs[0];
+		Expression<Integer> sym_arg = (Expression<Integer>)attrs[0];
 		if (sym_arg !=null)
 			return env.newString(sym_arg.toString());
 		else
@@ -169,18 +166,19 @@ public class JPF_gov_nasa_jpf_symbc_Debug extends NativePeer {
     }
 	@MJI
     public static int getSymbolicStringValue(MJIEnv env, int objRef, int stringRef) {
+    // TODO Symbolic Strings
     	Object [] attrs = env.getArgAttributes();
-		StringExpression sym_arg = (StringExpression)attrs[0];
+		// StringExpression sym_arg = (StringExpression)attrs[0];
 		String string_concrete = env.getStringObject(stringRef);
-		if (sym_arg !=null)
-			return env.newString(sym_arg.toString());
-		else
+	//	if (sym_arg !=null)
+	//		return env.newString(sym_arg.toString());
+	//	else
 			return env.newString(string_concrete);
     }
 	@MJI
     public static void assume(MJIEnv env, int objRef, boolean c) {
     	Object [] attrs = env.getArgAttributes();
-		IntegerExpression sym_arg = (IntegerExpression)attrs[0];
+		Expression<Integer> sym_arg = (Expression<Integer>)attrs[0];
 		assert(sym_arg==null);
 		if(!c) {// instruct JPF to backtrack
 			SystemState ss = env.getSystemState();
@@ -190,25 +188,26 @@ public class JPF_gov_nasa_jpf_symbc_Debug extends NativePeer {
 	@MJI
 	public static int makeSymbolicInteger(MJIEnv env, int objRef, int stringRef) {
 		String name = env.getStringObject(stringRef);
-		env.setReturnAttribute(new SymbolicInteger(name));
+		env.setReturnAttribute(Variable.create(BuiltinTypes.SINT32, name));
 		return 0;
 	}
 	@MJI
 	public static double makeSymbolicReal(MJIEnv env, int objRef, int stringRef) {
 		String name = env.getStringObject(stringRef);
-		env.setReturnAttribute(new SymbolicReal(name));
+		env.setReturnAttribute(Variable.create(BuiltinTypes.FLOAT, name));
 		return 0.0;
 	}
 	@MJI
 	public static boolean makeSymbolicBoolean(MJIEnv env, int objRef, int stringRef) {
 		String name = env.getStringObject(stringRef);
-		env.setReturnAttribute(new SymbolicInteger(name,0,1));
+		env.setReturnAttribute(Variable.create(BuiltinTypes.BOOL, name));
 		return false;
 	}
 	@MJI
 	public static int makeSymbolicString(MJIEnv env, int objRef, int stringRef) {
 		String name = env.getStringObject(stringRef);
-		env.setReturnAttribute(new StringSymbolic(name));
+        // TODO Symbolic Strings
+		// env.setReturnAttribute(new StringSymbolic(name));
 		return env.newString("");
 	}
 	
@@ -245,11 +244,11 @@ public class JPF_gov_nasa_jpf_symbc_Debug extends NativePeer {
 			  prevHeapCG = prevHeapCG.getPreviousChoiceGenerator();
 		  }
 
-		  PathCondition pcHeap;
+		  JPathCondition pcHeap;
 		  SymbolicInputHeap symInputHeap;
 		  if (prevHeapCG == null){
 
-			  pcHeap = new PathCondition();
+			  pcHeap = new JPathCondition();
 			  symInputHeap = new SymbolicInputHeap();
 		  }
 		  else {
@@ -260,13 +259,13 @@ public class JPF_gov_nasa_jpf_symbc_Debug extends NativePeer {
 		String name = env.getStringObject(stringRef);
 		String refChain = name + "[-1]"; // why is the type used here? should use the name of the field instead
 
-		SymbolicInteger newSymRef = new SymbolicInteger( refChain);
+		Expression<Integer> newSymRef = Variable.create(BuiltinTypes.SINT32, refChain);
 
 
 		// create new HeapNode based on above info
 		 // update associated symbolic input heap
 
-		pcHeap._addDet(Comparator.EQ, newSymRef, new IntegerConstant(-1));
+		pcHeap._addDet(NumericBooleanExpression.create(newSymRef, NumericComparator.EQ, Constant.create(BuiltinTypes.SINT32, -1)));
 	    ((HeapChoiceGenerator)cg).setCurrentPCheap(pcHeap);
 	    ((HeapChoiceGenerator)cg).setCurrentSymInputHeap(symInputHeap);
 	    //System.out.println(">>>>>>>>>>>> initial pcHeap: " + pcHeap.toString());
@@ -307,11 +306,11 @@ public class JPF_gov_nasa_jpf_symbc_Debug extends NativePeer {
 			  prevHeapCG = prevHeapCG.getPreviousChoiceGenerator();
 		  }
 
-		  PathCondition pcHeap;
+		  JPathCondition pcHeap;
 		  SymbolicInputHeap symInputHeap;
 		  if (prevHeapCG == null){
 
-			  pcHeap = new PathCondition();
+			  pcHeap = new JPathCondition();
 			  symInputHeap = new SymbolicInputHeap();
 		  }
 		  else {
@@ -328,7 +327,7 @@ public class JPF_gov_nasa_jpf_symbc_Debug extends NativePeer {
 		String name = env.getStringObject(stringRef);
 		String refChain = name + "["+objvRef+"]"; // why is the type used here? should use the name of the field instead
 
-		SymbolicInteger newSymRef = new SymbolicInteger( refChain);
+		Variable<Integer> newSymRef = Variable.create(BuiltinTypes.SINT32, refChain);
 		//ElementInfo eiRef = DynamicArea.getHeap().get(objvRef);
 		ElementInfo eiRef = VM.getVM().getHeap().getModifiable(objvRef);
 		Helper.initializeInstanceFields(fields, eiRef, refChain);
@@ -342,7 +341,7 @@ public class JPF_gov_nasa_jpf_symbc_Debug extends NativePeer {
 
 		HeapNode n= new HeapNode(objvRef,typeClassInfo,newSymRef);
 		symInputHeap._add(n);
-		pcHeap._addDet(Comparator.NE, newSymRef, new IntegerConstant(-1));
+		pcHeap._addDet(NumericBooleanExpression.create(newSymRef, NumericComparator.NE, Constant.create(BuiltinTypes.SINT32, -1)));
 	    ((HeapChoiceGenerator)cg).setCurrentPCheap(pcHeap);
 	    ((HeapChoiceGenerator)cg).setCurrentSymInputHeap(symInputHeap);
 	    //System.out.println(">>>>>>>>>>>> initial pcHeap: " + pcHeap.toString());
@@ -382,7 +381,7 @@ public class JPF_gov_nasa_jpf_symbc_Debug extends NativePeer {
 
 		VM vm = env.getVM();
 		ChoiceGenerator<?> cg = vm.getChoiceGenerator();
-		PathCondition pc = null;
+		JPathCondition pc = null;
 
 		if (!(cg instanceof HeapChoiceGenerator)) {
 			ChoiceGenerator<?> prev_cg = cg.getPreviousChoiceGenerator();

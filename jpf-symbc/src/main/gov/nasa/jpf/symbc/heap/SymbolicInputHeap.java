@@ -38,7 +38,7 @@
 package gov.nasa.jpf.symbc.heap;
 
 import gov.nasa.jpf.symbc.arrays.ArrayHeapNode;
-import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
+import gov.nasa.jpf.constraints.api.Variable;
 import gov.nasa.jpf.vm.ClassInfo;
 
 
@@ -90,7 +90,7 @@ public class SymbolicInputHeap {
 		return false;
 	}
 	
-	public SymbolicInteger getNode(int daIndex) {
+	public Variable<Integer> getNode(int daIndex) {
 	    HeapNode n = header;
         while (n != null){
             if (n.getIndex() == daIndex)
