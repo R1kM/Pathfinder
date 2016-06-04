@@ -30,8 +30,7 @@ import gov.nasa.jpf.symbc.numeric.IntegerConstant;
 import gov.nasa.jpf.symbc.numeric.IntegerExpression;
 import gov.nasa.jpf.symbc.numeric.PathCondition;
 import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
-import gov.nasa.jpf.symbc.string.StringExpression;
-import gov.nasa.jpf.symbc.string.SymbolicStringBuilder;
+import gov.nasa.jpf.symbc.jconstraints.*;
 import gov.nasa.jpf.vm.ChoiceGenerator;
 import gov.nasa.jpf.vm.ClassInfo;
 import gov.nasa.jpf.vm.ClassLoaderInfo;
@@ -76,8 +75,8 @@ public class ALOAD extends gov.nasa.jpf.jvm.bytecode.ALOAD {
 		Object attr = sf.getLocalAttr(index);
 		String typeOfLocalVar = super.getLocalVariableType();
 
-
-		if(attr == null || typeOfLocalVar.equals("?") || attr instanceof SymbolicStringBuilder || attr instanceof StringExpression || attr instanceof ArrayExpression) {
+        // TODO: Symbolic strings were removed, add them again
+		if(attr == null || typeOfLocalVar.equals("?") || attr instanceof ArrayExpression) {
 			return super.execute(th);
 		}
 		
