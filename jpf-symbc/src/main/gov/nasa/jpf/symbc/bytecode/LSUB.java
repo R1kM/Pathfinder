@@ -18,7 +18,10 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 
-import gov.nasa.jpf.symbc.numeric.IntegerExpression;
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.NumericCompound;
+import gov.nasa.jpf.constraints.expressions.NumericOperator;
+import gov.nasa.jpf.symbc.jconstraints.Translate;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
 import gov.nasa.jpf.vm.ThreadInfo;
@@ -32,33 +35,25 @@ public class LSUB extends gov.nasa.jpf.jvm.bytecode.LSUB {
 
   @Override
   public Instruction execute (ThreadInfo th) {
-	  	StackFrame sf = th.getModifiableTopFrame();
+	StackFrame sf = th.getModifiableTopFrame();
+	Expression<?> sym_v1_ex = (Expression<?>) sf.getOperandAttr(1);
+	Expression<?> sym_v2_ex = (Expression<?>) sf.getOperandAttr(3);
+    
+    if(sym_v1_ex==null && sym_v2_ex==null)
+        return super.execute(th);// we'll still do the concrete execution
+    else {
+    	long v1 = sf.popLong();
+    	long v2 = sf.popLong();
+    	sf.pushLong(0); // for symbolic expressions, the concrete value does not matter
+
+        Expression<Long> sym_v1 = Translate.translateLong(sym_v1_ex, v1);
+        Expression<Long> sym_v2 = Translate.translateLong(sym_v2_ex, v2);
+
+    	NumericCompound<Long> result = new NumericCompound<Long>(sym_v2, NumericOperator.MINUS, sym_v1);
+
+    	sf.setLongOperandAttr(result);
 	  
-		IntegerExpression sym_v1 = (IntegerExpression) sf.getOperandAttr(1);
-		IntegerExpression sym_v2 = (IntegerExpression) sf.getOperandAttr(3);
-	    
-	    if(sym_v1==null && sym_v2==null)
-	        return super.execute(th);// we'll still do the concrete execution
-	    else {
-	    	long v1 = sf.popLong();
-	    	long v2 = sf.popLong();
-	    	sf.pushLong(0); // for symbolic expressions, the concrete value does not matter
-
-	    	IntegerExpression result = null;
-	    	if(sym_v2!=null) {
-	    		if (sym_v1!=null)
-	    			result = sym_v2._minus(sym_v1);
-	    		else // v1 is concrete
-	    			result = sym_v2._minus(v1);
-	    	}
-	    	else if (sym_v1!=null)
-	    		result = sym_v1._minus_reverse(v2);
-
-	    	sf.setLongOperandAttr(result);
-
-	    	//System.out.println("Execute LSUB: "+result);
-
-	    	return getNext(th);
+	    return getNext(th);
 	    }
   }
 }

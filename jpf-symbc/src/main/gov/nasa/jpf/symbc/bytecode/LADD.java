@@ -17,8 +17,10 @@
  */
 package gov.nasa.jpf.symbc.bytecode;
 
-
-import gov.nasa.jpf.symbc.numeric.IntegerExpression;
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.NumericCompound;
+import gov.nasa.jpf.constraints.expressions.NumericOperator;
+import gov.nasa.jpf.symbc.jconstraints.Translate;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
 import gov.nasa.jpf.vm.ThreadInfo;
@@ -35,30 +37,22 @@ public class LADD extends gov.nasa.jpf.jvm.bytecode.LADD {
   public Instruction execute (ThreadInfo th) {
 	StackFrame sf = th.getModifiableTopFrame();
 	  
-	IntegerExpression sym_v1 = (IntegerExpression) sf.getOperandAttr(1);
-	IntegerExpression sym_v2 = (IntegerExpression) sf.getOperandAttr(3);
+	Expression<?> sym_v1_ex = (Expression<?>) sf.getOperandAttr(1);
+	Expression<?> sym_v2_ex = (Expression<?>) sf.getOperandAttr(3);
     
-    if(sym_v1==null && sym_v2==null)
+    if(sym_v1_ex==null && sym_v2_ex==null)
         return super.execute(th);// we'll still do the concrete execution
     else {
     	long v1 = sf.popLong();
     	long v2 = sf.popLong();
     	sf.pushLong(0); // for symbolic expressions, the concrete value does not matter
 
-    	IntegerExpression result = null;
-    	if(sym_v1!=null) {
-    		if (sym_v2!=null)
-    			result = sym_v1._plus(sym_v2);
-    		else // v2 is concrete
-    			result = sym_v1._plus(v2);
-    	}
-    	else if (sym_v2!=null) {
-    		result = sym_v2._plus(v1);
+        Expression<Long> sym_v1 = Translate.translateLong(sym_v1_ex, v1);
+        Expression<Long> sym_v2 = Translate.translateLong(sym_v2_ex, v2);
 
-    	}
+    	NumericCompound<Long> result = new NumericCompound<Long>(sym_v2, NumericOperator.PLUS, sym_v1);
+
     	sf.setLongOperandAttr(result);
-
-    	//System.out.println("Execute LADD: "+sf.getLongOperandAttr());
 
     	return getNext(th);
     }

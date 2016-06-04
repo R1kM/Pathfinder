@@ -17,7 +17,13 @@
  */
 package gov.nasa.jpf.symbc.bytecode;
 
-import gov.nasa.jpf.symbc.numeric.IntegerExpression;
+import gov.nasa.jpf.constraints.api.Expression; 
+import gov.nasa.jpf.constraints.casts.NumericCastOperation;
+import gov.nasa.jpf.constraints.expressions.BitvectorExpression;
+import gov.nasa.jpf.constraints.expressions.BitvectorOperator;
+import gov.nasa.jpf.constraints.expressions.CastExpression;
+import gov.nasa.jpf.constraints.types.BuiltinTypes;
+import gov.nasa.jpf.symbc.jconstraints.Translate;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
 import gov.nasa.jpf.vm.ThreadInfo;
@@ -31,29 +37,23 @@ public class LUSHR extends gov.nasa.jpf.jvm.bytecode.LUSHR {
 	@Override
   public Instruction execute (ThreadInfo th) {
 	    StackFrame sf = th.getModifiableTopFrame();
+		Expression<?> sym_v1_ex = (Expression<?>) sf.getOperandAttr(0);
+		Expression<?> sym_v2_ex = (Expression<?>) sf.getOperandAttr(2);
 
-		IntegerExpression sym_v1 = (IntegerExpression) sf.getOperandAttr(0);
-		IntegerExpression sym_v2 = (IntegerExpression) sf.getOperandAttr(2);
-
-	    if(sym_v1==null && sym_v2==null)
-	        return super.execute( th);// we'll still do the concrete execution
+	    if(sym_v1_ex==null && sym_v2_ex==null)
+	        return super.execute(th);// we'll still do the concrete execution
 	    else {
-	    	long v1 = sf.pop();
+	    	int v1 = sf.pop();
 	    	long v2 = sf.popLong();
 	    	sf.pushLong(0); // for symbolic expressions, the concrete value does not matter
 
-	    	IntegerExpression result = null;
-	    	if(sym_v1!=null) {
-	    		if (sym_v2!=null)
-	    			result = sym_v1._shiftUR(sym_v2);
-	    		else // v2 is concrete
-	    			result = sym_v1._shiftUR(v2);
-	    	}
-	    	else if (sym_v2!=null) {
-	    		result = sym_v2._shiftUR(v1);
+            Expression<Integer> sym_v1 = Translate.translateInt(sym_v1_ex, v1);
+            Expression<Long> sym_v2 = Translate.translateLong(sym_v2_ex, v2);
 
-	    	}
+	    	BitvectorExpression<Long> result = BitvectorExpression.create(sym_v2, BitvectorOperator.SHIFTUR, new CastExpression<>(sym_v1, BuiltinTypes.SINT64, NumericCastOperation.TO_SINT64));
+
 	    	sf.setLongOperandAttr(result);
+
 
 	    	return getNext(th);
 	    }

@@ -18,7 +18,9 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 
-import gov.nasa.jpf.symbc.numeric.IntegerExpression;
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.UnaryMinus;
+import gov.nasa.jpf.symbc.jconstraints.Translate;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
 import gov.nasa.jpf.vm.ThreadInfo;
@@ -34,25 +36,22 @@ public class LNEG extends gov.nasa.jpf.jvm.bytecode.LNEG {
   public Instruction execute (ThreadInfo th) {
     StackFrame sf = th.getModifiableTopFrame();
 
-    IntegerExpression sym_v1 = (IntegerExpression) sf.getLongOperandAttr();
-    long v1 = sf.popLong();
+    Expression<?> sym_v1_ex = (Expression<?>) sf.getLongOperandAttr();
     
-  //System.out.println("Execute LNEG: "+Helper.get(index));
-    
-    if(sym_v1==null)
-        sf.pushLong(-v1); // we'll still do the concrete execution
-    else
+    if(sym_v1_ex==null) {
+        return super.execute(th);
+    } else {
+        long v1 = sf.popLong();
         sf.pushLong(0);
-    
-    IntegerExpression result = null;
-    if(sym_v1!=null) {
-        result = sym_v1._neg();
-    }
-    sf.setLongOperandAttr(result);
-    
-    //System.out.println("Execute LNEG: "+result);
+        
+        Expression<Long> symb = Translate.translateLong(sym_v1_ex, v1);
 
-    return getNext(th);
+        UnaryMinus<Long> result = new UnaryMinus<Long>(symb);
+        
+        sf.setLongOperandAttr(result);
+        
+        return getNext(th);
+    }
   }
 
 }

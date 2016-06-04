@@ -18,7 +18,10 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 
-import gov.nasa.jpf.symbc.numeric.IntegerExpression;
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.NumericCompound;
+import gov.nasa.jpf.constraints.expressions.NumericOperator;
+import gov.nasa.jpf.symbc.jconstraints.Translate;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
 import gov.nasa.jpf.vm.ThreadInfo;
@@ -32,31 +35,24 @@ public class LMUL extends gov.nasa.jpf.jvm.bytecode.LMUL {
 
   @Override
   public Instruction execute (ThreadInfo th) {
-	  	StackFrame sf = th.getModifiableTopFrame();
+	StackFrame sf = th.getModifiableTopFrame();
 	  
-		IntegerExpression sym_v1 = (IntegerExpression) sf.getOperandAttr(1);
-		IntegerExpression sym_v2 = (IntegerExpression) sf.getOperandAttr(3);
-	    
-	    if(sym_v1==null && sym_v2==null)
-	        return super.execute(th);// we'll still do the concrete execution
-	    else {
-	    	long v1 = sf.popLong();
-	    	long v2 = sf.popLong();
-	    	sf.pushLong(0); // for symbolic expressions, the concrete value does not matter
+	Expression<?> sym_v1_ex = (Expression<?>) sf.getOperandAttr(1);
+	Expression<?> sym_v2_ex = (Expression<?>) sf.getOperandAttr(3);
+    
+    if(sym_v1_ex==null && sym_v2_ex==null)
+        return super.execute(th);// we'll still do the concrete execution
+    else {
+    	long v1 = sf.popLong();
+    	long v2 = sf.popLong();
+    	sf.pushLong(0); // for symbolic expressions, the concrete value does not matter
 
-	    	IntegerExpression result = null;
-	    	if(sym_v1!=null) {
-	    		if (sym_v2!=null)
-	    			result = sym_v1._mul(sym_v2);
-	    		else // v2 is concrete
-	    			result = sym_v1._mul(v2);
-	    	}
-	    	else if (sym_v2!=null)
-	    		result = sym_v2._mul(v1);
+        Expression<Long> sym_v1 = Translate.translateLong(sym_v1_ex, v1);
+        Expression<Long> sym_v2 = Translate.translateLong(sym_v2_ex, v2);
 
-	    	sf.setLongOperandAttr(result);
+    	NumericCompound<Long> result = new NumericCompound<Long>(sym_v2, NumericOperator.MUL, sym_v1);
 
-	    	//System.out.println("Execute LMUL: "+result);
+    	sf.setLongOperandAttr(result);
 
 	    	return getNext(th);
 	    }

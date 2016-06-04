@@ -38,11 +38,12 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 
-
-import gov.nasa.jpf.symbc.numeric.Comparator;
-import gov.nasa.jpf.symbc.numeric.IntegerExpression;
-import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
-import gov.nasa.jpf.symbc.numeric.PathCondition;
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.Constant;
+import gov.nasa.jpf.constraints.expressions.NumericBooleanExpression;
+import gov.nasa.jpf.constraints.expressions.NumericComparator;
+import gov.nasa.jpf.constraints.types.BuiltinTypes;
+import gov.nasa.jpf.symbc.jconstraints.*;
 import gov.nasa.jpf.vm.ChoiceGenerator;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
@@ -62,64 +63,64 @@ public abstract class SwitchInstruction extends gov.nasa.jpf.jvm.bytecode.Switch
 	@Override
 	public Instruction execute ( ThreadInfo ti) {
 		StackFrame sf = ti.getModifiableTopFrame();
-		IntegerExpression sym_v = (IntegerExpression) sf.getOperandAttr();
+		Expression<?> sym_v_ex = (Expression<?>) sf.getOperandAttr();
 		
-		if(sym_v == null) { // the condition is concrete
+		if(sym_v_ex == null) { // the condition is concrete
 			return super.execute( ti);
 		}
 		else { // the condition is symbolic
 			ChoiceGenerator<?> cg;
 
 			if (!ti.isFirstStepInsn()) { // first time around
-				cg = new PCChoiceGenerator(matches.length+1);
-				((PCChoiceGenerator)cg).setOffset(this.position);
-				((PCChoiceGenerator)cg).setMethodName(this.getMethodInfo().getCompleteName());
+				cg = new JPCChoiceGenerator(matches.length+1);
+				((JPCChoiceGenerator)cg).setOffset(this.position);
+				((JPCChoiceGenerator)cg).setMethodName(this.getMethodInfo().getCompleteName());
 				ti.getVM().getSystemState().setNextChoiceGenerator(cg);
 				return this;
 			} else {  // this is what really returns results
 				cg = ti.getVM().getSystemState().getChoiceGenerator();
-				assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
+				assert (cg instanceof JPCChoiceGenerator) : "expected JPCChoiceGenerator, got: " + cg;
 			}
-			sym_v = (IntegerExpression) sf.getOperandAttr();
+			Expression<Integer> sym_v = Translate.translateInt(sym_v_ex);
 			sf.pop();
-			PathCondition pc;
+			JPathCondition pc;
 			//pc is updated with the pc stored in the choice generator above
 			//get the path condition from the
 			//previous choice generator of the same type
 
 			//TODO: could be optimized to not do this for each choice
-			ChoiceGenerator<?> prev_cg = cg.getPreviousChoiceGeneratorOfType(PCChoiceGenerator.class);
+			ChoiceGenerator<?> prev_cg = cg.getPreviousChoiceGeneratorOfType(JPCChoiceGenerator.class);
 
 			if (prev_cg == null)
-				pc = new PathCondition();
+				pc = new JPathCondition();
 			else
-				pc = ((PCChoiceGenerator)prev_cg).getCurrentPC();
+				pc = ((JPCChoiceGenerator)prev_cg).getCurrentPC();
 
 			assert pc != null;
 			int idx = (Integer)cg.getNextChoice();
 			if (idx == matches.length){ // default branch
 				lastIdx = DEFAULT;
 				for(int i = 0; i< matches.length; i++)
-					pc._addDet(Comparator.NE, sym_v, matches[i]);
+					pc._addDet(NumericBooleanExpression.create(sym_v, NumericComparator.NE, Constant.create(BuiltinTypes.SINT32, matches[i])));
 				if(!pc.simplify())  {// not satisfiable
 					ti.getVM().getSystemState().setIgnored(true);
 				} else {
 					//pc.solve();
-					((PCChoiceGenerator) cg).setCurrentPC(pc);
+					((JPCChoiceGenerator) cg).setCurrentPC(pc);
 					//System.out.println(((PCChoiceGenerator) cg).getCurrentPC());
 				}
 				return mi.getInstructionAt(target);
 			} else {
 				lastIdx = idx;
 				//System.out.println("index "+idx);
-				pc._addDet(Comparator.EQ, sym_v, matches[idx]);
+				pc._addDet(NumericBooleanExpression.create(sym_v, NumericComparator.EQ, Constant.create(BuiltinTypes.SINT32, matches[idx])));
 				//System.out.println(sym_v + "eq"+ matches[idx]);
 				//System.out.println("pc after "+pc);
 				if(!pc.simplify())  {// not satisfiable
 					ti.getVM().getSystemState().setIgnored(true);
 				} else {
 					//pc.solve();
-					((PCChoiceGenerator) cg).setCurrentPC(pc);
+					((JPCChoiceGenerator) cg).setCurrentPC(pc);
 					//System.out.println(((PCChoiceGenerator) cg).getCurrentPC());
 				}
 				return mi.getInstructionAt(targets[idx]);

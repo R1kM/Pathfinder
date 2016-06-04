@@ -17,7 +17,10 @@
  */
 package gov.nasa.jpf.symbc.bytecode;
 
-import gov.nasa.jpf.symbc.numeric.IntegerExpression;
+import gov.nasa.jpf.constraints.api.Expression; 
+import gov.nasa.jpf.constraints.expressions.BitvectorExpression;
+import gov.nasa.jpf.constraints.expressions.BitvectorOperator;
+import gov.nasa.jpf.symbc.jconstraints.Translate;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
 import gov.nasa.jpf.vm.ThreadInfo;
@@ -32,32 +35,23 @@ public class LXOR extends gov.nasa.jpf.jvm.bytecode.LXOR {
   @Override
   public Instruction execute (ThreadInfo th) {
 	    StackFrame sf = th.getModifiableTopFrame();
-	  
-		IntegerExpression sym_v1 = (IntegerExpression) sf.getOperandAttr(1);
-		IntegerExpression sym_v2 = (IntegerExpression) sf.getOperandAttr(3);
+		Expression<?> sym_v1_ex = (Expression<?>) sf.getOperandAttr(1);
+		Expression<?> sym_v2_ex = (Expression<?>) sf.getOperandAttr(3);
 	    
-	    if(sym_v1==null && sym_v2==null)
-	        return super.execute( th);// we'll still do the concrete execution
+	    if(sym_v1_ex==null && sym_v2_ex==null)
+	        return super.execute(th);// we'll still do the concrete execution
 	    else {
 	    	long v1 = sf.popLong();
 	    	long v2 = sf.popLong();
 	    	sf.pushLong(0); // for symbolic expressions, the concrete value does not matter
+            
+            Expression<Long> sym_v1 = Translate.translateLong(sym_v1_ex, v1);
+            Expression<Long> sym_v2 = Translate.translateLong(sym_v2_ex, v2);
 
-	    	IntegerExpression result = null;
-	    	if(sym_v1!=null) {
-	    		if (sym_v2!=null)
-	    			result = sym_v1._xor(sym_v2);
-	    		else // v2 is concrete
-	    			result = sym_v1._xor(v2);
-	    	}
-	    	else if (sym_v2!=null) {
-	    		result = sym_v2._xor(v1);
+            BitvectorExpression<Long> result = BitvectorExpression.create(sym_v2, BitvectorOperator.XOR, sym_v1);
 
-	    	}
 	    	sf.setLongOperandAttr(result);
-
-	    	//System.out.println("Execute LADD: "+sf.getLongOperandAttr());
-
+	  
 	    	return getNext(th);
 	    }   
   }

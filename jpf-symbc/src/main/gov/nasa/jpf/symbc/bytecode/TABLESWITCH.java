@@ -20,11 +20,14 @@ package gov.nasa.jpf.symbc.bytecode;
 import gov.nasa.jpf.JPFException;
 import gov.nasa.jpf.jvm.bytecode.JVMInstructionVisitor;
 
-import gov.nasa.jpf.symbc.numeric.Comparator;
-import gov.nasa.jpf.symbc.numeric.IntegerExpression;
-import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
-import gov.nasa.jpf.symbc.numeric.PathCondition;
-
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.Constant;
+import gov.nasa.jpf.constraints.expressions.NumericBooleanExpression;
+import gov.nasa.jpf.constraints.expressions.NumericComparator;
+import gov.nasa.jpf.constraints.expressions.NumericCompound;
+import gov.nasa.jpf.constraints.expressions.NumericOperator;
+import gov.nasa.jpf.constraints.types.BuiltinTypes;
+import gov.nasa.jpf.symbc.jconstraints.*;
 import gov.nasa.jpf.vm.ChoiceGenerator;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
@@ -48,38 +51,41 @@ public class TABLESWITCH extends SwitchInstruction implements gov.nasa.jpf.vm.by
 	  @Override
 	  public Instruction execute (ThreadInfo ti) {  
 		StackFrame sf = ti.getModifiableTopFrame();
-		IntegerExpression sym_v = (IntegerExpression) sf.getOperandAttr();
+		Expression<?> sym_v_ex = (Expression<?>) sf.getOperandAttr();
 			
 		
-		if(sym_v==null) return super.execute(ti);
+		if(sym_v_ex==null) return super.execute(ti);
 		
 		// the condition is symbolic
 		ChoiceGenerator<?> cg;
 
 		if (!ti.isFirstStepInsn()) { // first time around
-			cg = new PCChoiceGenerator(targets.length+1);
-			((PCChoiceGenerator)cg).setOffset(this.position);
-			((PCChoiceGenerator)cg).setMethodName(this.getMethodInfo().getFullName());
+			cg = new JPCChoiceGenerator(targets.length+1);
+			((JPCChoiceGenerator)cg).setOffset(this.position);
+			((JPCChoiceGenerator)cg).setMethodName(this.getMethodInfo().getFullName());
 			ti.getVM().getSystemState().setNextChoiceGenerator(cg);
 			return this;
 		} else {  // this is what really returns results
 			cg = ti.getVM().getSystemState().getChoiceGenerator();
-			assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
+			assert (cg instanceof JPCChoiceGenerator) : "expected JPCChoiceGenerator, got: " + cg;
 		}
-		sym_v = (IntegerExpression) sf.getOperandAttr();
+		Expression<Integer> sym_v = Translate.translateInt(sym_v_ex);
+        Constant<Integer> min_c = Constant.create(BuiltinTypes.SINT32, min);
+        Constant<Integer> max_c = Constant.create(BuiltinTypes.SINT32, max);
+
 		sf.pop();
-		PathCondition pc;
+		JPathCondition pc;
 		//pc is updated with the pc stored in the choice generator above
 		//get the path condition from the
 		//previous choice generator of the same type
 
 		//TODO: could be optimized to not do this for each choice
-		ChoiceGenerator<?> prev_cg = cg.getPreviousChoiceGeneratorOfType(PCChoiceGenerator.class); 
+		ChoiceGenerator<?> prev_cg = cg.getPreviousChoiceGeneratorOfType(JPCChoiceGenerator.class); 
 	
 		if (prev_cg == null)
-			pc = new PathCondition();
+			pc = new JPathCondition();
 		else
-			pc = ((PCChoiceGenerator)prev_cg).getCurrentPC();
+			pc = ((JPCChoiceGenerator)prev_cg).getCurrentPC();
 
 		assert pc != null;
 		//System.out.println("Execute Switch: PC"+pc);
@@ -91,7 +97,7 @@ public class TABLESWITCH extends SwitchInstruction implements gov.nasa.jpf.vm.by
 			lastIdx = -1;
 		
 			for(int i = 0; i< targets.length; i++)
-				pc._addDet(Comparator.NE, sym_v._minus(min), i);
+				pc._addDet(NumericBooleanExpression.create(new NumericCompound<Integer>(sym_v, NumericOperator.MINUS, min_c), NumericComparator.NE, Constant.create(BuiltinTypes.SINT32, i)));
 			// this could be replaced safely with only one constraint:
 			// pc._addDet(Comparator.GT, sym_v._minus(min), targets.length);
 			
@@ -99,18 +105,18 @@ public class TABLESWITCH extends SwitchInstruction implements gov.nasa.jpf.vm.by
 				ti.getVM().getSystemState().setIgnored(true);
 			} else {
 				//pc.solve();
-				((PCChoiceGenerator) cg).setCurrentPC(pc);
+				((JPCChoiceGenerator) cg).setCurrentPC(pc);
 				//System.out.println(((PCChoiceGenerator) cg).getCurrentPC());
 			}
 			return mi.getInstructionAt(target);
 		} else {
 			lastIdx = idx;
-			pc._addDet(Comparator.EQ, sym_v._minus(min), idx);
+			pc._addDet(NumericBooleanExpression.create(new NumericCompound<Integer>(sym_v, NumericOperator.MINUS, min_c), NumericComparator.EQ, Constant.create(BuiltinTypes.SINT32, idx)));
 			if(!pc.simplify())  {// not satisfiable
 				ti.getVM().getSystemState().setIgnored(true);
 			} else {
 				//pc.solve();
-				((PCChoiceGenerator) cg).setCurrentPC(pc);
+				((JPCChoiceGenerator) cg).setCurrentPC(pc);
 				//System.out.println(((PCChoiceGenerator) cg).getCurrentPC());
 			}
 			return mi.getInstructionAt(targets[idx]);
