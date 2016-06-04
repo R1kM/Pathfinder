@@ -53,7 +53,7 @@ public class FSUB extends gov.nasa.jpf.jvm.bytecode.FSUB {
 	
     sf.push(0, false); 
     
-    NumericCompound<Float> result = new NumericCompound<Float>(sym_v1, NumericOperator.MINUS, sym_v2);
+    NumericCompound<Float> result = new NumericCompound<Float>(sym_v2, NumericOperator.MINUS, sym_v1);
 	
 	sf.setOperandAttr(result);
 

@@ -18,8 +18,11 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 
-
-import gov.nasa.jpf.symbc.numeric.*;
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.Constant;
+import gov.nasa.jpf.constraints.expressions.NumericCompound;
+import gov.nasa.jpf.constraints.expressions.NumericOperator;
+import gov.nasa.jpf.constraints.types.BuiltinTypes;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
 import gov.nasa.jpf.vm.ThreadInfo;
@@ -33,14 +36,14 @@ public class IINC extends gov.nasa.jpf.jvm.bytecode.IINC {
 
     StackFrame sf = th.getModifiableTopFrame();
 
-    IntegerExpression sym_v = (IntegerExpression) sf.getLocalAttr(index);
+    Expression<?> sym_v = (Expression<?>) sf.getLocalAttr(index);
     if (sym_v == null) {
     	// we'll do the concrete execution
     	return super.execute(th);
     }
     else { //(sym_v != null)
     	sf.setLocalVariable(index, 0, false);// maybe not necessary
-    	sf.setLocalAttr(index,sym_v._plus(increment));
+    	sf.setLocalAttr(index, NumericCompound.create(sym_v.requireAs(BuiltinTypes.SINT32), NumericOperator.PLUS, Constant.create(BuiltinTypes.SINT32, increment)));
     	//System.out.println("IINC "+sf.getLocalAttr(index));
     }
     return getNext(th);

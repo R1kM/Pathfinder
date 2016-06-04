@@ -73,7 +73,7 @@ public class DSUB extends gov.nasa.jpf.jvm.bytecode.DSUB {
 
 	sf.pushDouble(0);
 
-    NumericCompound<Double> result = new NumericCompound<Double>(sym_v1, NumericOperator.MINUS, sym_v2);
+    NumericCompound<Double> result = new NumericCompound<Double>(sym_v2, NumericOperator.MINUS, sym_v1);
 
 	sf.setLongOperandAttr(result);
 
