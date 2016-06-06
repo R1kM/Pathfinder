@@ -345,19 +345,17 @@ public class BytecodeUtils {
                         expressionMap.put(name, sym_v);
                         sf.setOperandAttr(stackIdx, sym_v);
                         outputString = outputString.concat(" " + sym_v + ",");
-*/
-/* adapt lazy init to jconstraints 					} else {
+
+ 					}*/ else {
                         // the argument is of reference type and it is symbolic
 						if(lazy != null) {
 							if(lazy[0].equalsIgnoreCase("true")) {
-								IntegerExpression sym_v = new SymbolicInteger(varName(name, VarType.REF));
+								Expression<Integer> sym_v = Variable.create(BuiltinTypes.SINT32, name);
 								expressionMap.put(name, sym_v);
 								sf.setOperandAttr(stackIdx, sym_v);
 								outputString = outputString.concat(" " + sym_v + ",");
 							}
-						}*/
-                    else {
-						throw new RuntimeException("## Error: parameter type not yet handled: " + argTypes[j]);
+						}
 					}
 
 				} else

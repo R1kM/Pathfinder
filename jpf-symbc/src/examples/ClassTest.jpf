@@ -1,0 +1,8 @@
+target = ClassTest
+
+symbolic.method = ClassTest.test(sym)
+symbolic.lazy = on
+listener = gov.nasa.jpf.symbc.heap.HeapSymbolicListener
+search.multiple_errors=true
+symbolic.dp=z3
+classpath=${jpf-symbc}/build/examples
