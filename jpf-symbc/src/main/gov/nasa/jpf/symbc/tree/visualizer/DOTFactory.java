@@ -27,7 +27,7 @@ import att.grappa.Graph;
 import att.grappa.Node;
 import gov.nasa.jpf.jvm.bytecode.IfInstruction;
 import gov.nasa.jpf.jvm.bytecode.JVMInvokeInstruction;
-import gov.nasa.jpf.symbc.numeric.PathCondition;
+import gov.nasa.jpf.symbc.jconstraints.JPathCondition;
 import gov.nasa.jpf.symbc.tree.NodeFactory;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.VM;
@@ -49,7 +49,7 @@ public class DOTFactory extends NodeFactory<Node> {
   public Node constructNode(Node parentNode, Instruction instr, VM vm) {
     Node targetNode = new Node(graph, ""+this.uniqueID++);
     LinkedList<Attribute> attrs = new LinkedList<Attribute>();
-    PathCondition pc = PathCondition.getPC(vm);
+    JPathCondition pc = JPathCondition.getPC(vm);
 
     if(instr instanceof InvokeInstruction)
       attrs.addAll(this.getNodeAttr((InvokeInstruction)instr, pc));
@@ -68,7 +68,7 @@ public class DOTFactory extends NodeFactory<Node> {
     return targetNode;
   }
 
-  protected List<Attribute> getNodeAttr(InvokeInstruction instr, PathCondition pc) {
+  protected List<Attribute> getNodeAttr(InvokeInstruction instr, JPathCondition pc) {
     List<Attribute> attrs = new LinkedList<Attribute>();
 
     StringBuilder lblBuilder = new StringBuilder();
@@ -83,13 +83,13 @@ public class DOTFactory extends NodeFactory<Node> {
     return attrs;
   }
 
-  protected List<Attribute> getNodeAttr(ReturnInstruction instr, PathCondition pc) {
+  protected List<Attribute> getNodeAttr(ReturnInstruction instr, JPathCondition pc) {
     List<Attribute> attrs = new LinkedList<Attribute>();
 
     StringBuilder lblBuilder = new StringBuilder();
     lblBuilder.append(instr.getMnemonic()).append("\\n");
     lblBuilder.append("(").append(instr.getFilePos()).append(")\\n");
-    lblBuilder.append(getPathConditionString(pc));
+    lblBuilder.append(getJPathConditionString(pc));
     Instruction next = instr.getNext();
     if(next != null)
       lblBuilder.append("Returning to:\\n").append(next.getMethodInfo().getFullName());
@@ -99,12 +99,12 @@ public class DOTFactory extends NodeFactory<Node> {
     return attrs;
   }
 
-  protected List<Attribute> getNodeAttr(IfInstruction instr, PathCondition pc) {
+  protected List<Attribute> getNodeAttr(IfInstruction instr, JPathCondition pc) {
     List<Attribute> attrs = new LinkedList<Attribute>();
     StringBuilder lblBuilder = new StringBuilder();
     lblBuilder.append(instr.getMnemonic()).append("\\n");
     lblBuilder.append("(").append(instr.getFilePos()).append(")\\n");
-    lblBuilder.append(getPathConditionString(pc));
+    lblBuilder.append(getJPathConditionString(pc));
 
     attrs.add(new Attribute(Attribute.NODE, Attribute.LABEL_ATTR, lblBuilder.toString()));
     attrs.add(new Attribute(Attribute.NODE, Attribute.COLOR_ATTR, Color.blue));
@@ -112,19 +112,19 @@ public class DOTFactory extends NodeFactory<Node> {
     return attrs;
   }
 
-  protected List<Attribute> getNodeAttr(Instruction instr, PathCondition pc) {
+  protected List<Attribute> getNodeAttr(Instruction instr, JPathCondition pc) {
 
     List<Attribute> attrs = new LinkedList<Attribute>();
     StringBuilder lblBuilder = new StringBuilder();
     lblBuilder.append(instr.getMnemonic()).append("\\n");
     lblBuilder.append("(").append(instr.getFilePos()).append(")\\n");
-    lblBuilder.append(getPathConditionString(pc));
+    lblBuilder.append(getJPathConditionString(pc));
     attrs.add(new Attribute(Attribute.NODE, Attribute.LABEL_ATTR, lblBuilder.toString()));
     attrs.add(new Attribute(Attribute.NODE, Attribute.COLOR_ATTR, Color.black));
     return attrs;
   }
 
-  protected String getPathConditionString(PathCondition pc) {
+  protected String getJPathConditionString(JPathCondition pc) {
     if(pc != null) {
       StringBuilder pcBuilder = new StringBuilder();
       String[] pcs = pc.header.stringPC().split("&&");  

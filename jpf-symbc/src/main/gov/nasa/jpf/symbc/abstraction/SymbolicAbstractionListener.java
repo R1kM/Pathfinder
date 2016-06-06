@@ -18,6 +18,7 @@
 
 package gov.nasa.jpf.symbc.abstraction;
 
+import gov.nasa.jpf.constraints.api.Expression;
 // does not work well for static methods:summary not printed for errors
 import gov.nasa.jpf.Config;
 import gov.nasa.jpf.JPF;
@@ -32,10 +33,8 @@ import gov.nasa.jpf.report.PublisherExtension;
 import gov.nasa.jpf.search.Search;
 import gov.nasa.jpf.symbc.bytecode.BytecodeUtils;
 import gov.nasa.jpf.symbc.bytecode.INVOKESTATIC;
-import gov.nasa.jpf.symbc.numeric.Expression;
-import gov.nasa.jpf.symbc.numeric.IntegerExpression;
-import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
-import gov.nasa.jpf.symbc.numeric.PathCondition;
+import gov.nasa.jpf.symbc.jconstraints.JPCChoiceGenerator;
+import gov.nasa.jpf.symbc.jconstraints.JPathCondition;
 import gov.nasa.jpf.symbc.sequences.SequenceChoiceGenerator;
 import gov.nasa.jpf.util.Pair;
 import gov.nasa.jpf.vm.ChoiceGenerator;
@@ -221,9 +220,9 @@ public class SymbolicAbstractionListener extends PropertyListenerAdapter{
 		String lastInvokedMethod = null;
 		String pcString = null;
 
-		if (!(cg instanceof PCChoiceGenerator)){
+		if (!(cg instanceof JPCChoiceGenerator)){
 			ChoiceGenerator prev_cg = cg.getPreviousChoiceGenerator();
-			while (!((prev_cg == null) || (prev_cg instanceof PCChoiceGenerator))) {
+			while (!((prev_cg == null) || (prev_cg instanceof JPCChoiceGenerator))) {
 				prev_cg = prev_cg.getPreviousChoiceGenerator();
 			}
 			cg = prev_cg;
@@ -234,10 +233,10 @@ public class SymbolicAbstractionListener extends PropertyListenerAdapter{
 		error = "\"" + error.substring(0,error.indexOf("\n")) + "...\"";
 
 		String lastInvokedSequence = null;
-		if ((cg instanceof PCChoiceGenerator) &&
-				      ((PCChoiceGenerator) cg).getCurrentPC() != null){
+		if ((cg instanceof JPCChoiceGenerator) &&
+				      ((JPCChoiceGenerator) cg).getCurrentPC() != null){
 
-			PathCondition pc = ((PCChoiceGenerator) cg).getCurrentPC();
+			JPathCondition pc = ((JPCChoiceGenerator) cg).getCurrentPC();
 			//solve the path condition
 			pc.solve();
 			pcString = pc.stringPC();
@@ -410,17 +409,17 @@ public class SymbolicAbstractionListener extends PropertyListenerAdapter{
 					String lastInvokedSequence = null;
 					String pcString = null;
 					ChoiceGenerator cg = vm.getChoiceGenerator();
-					if (!(cg instanceof PCChoiceGenerator)){
+					if (!(cg instanceof JPCChoiceGenerator)){
 						ChoiceGenerator prev_cg = cg.getPreviousChoiceGenerator();
-						while (!((prev_cg == null) || (prev_cg instanceof PCChoiceGenerator))) {
+						while (!((prev_cg == null) || (prev_cg instanceof JPCChoiceGenerator))) {
 							prev_cg = prev_cg.getPreviousChoiceGenerator();
 						}
 						cg = prev_cg;
 					}
-					if ((cg instanceof PCChoiceGenerator) &&
-							      ((PCChoiceGenerator) cg).getCurrentPC() != null){
+					if ((cg instanceof JPCChoiceGenerator) &&
+							      ((JPCChoiceGenerator) cg).getCurrentPC() != null){
 
-						PathCondition pc = ((PCChoiceGenerator) cg).getCurrentPC();
+						JPathCondition pc = ((JPCChoiceGenerator) cg).getCurrentPC();
 						//solve the path condition
 						pc.solve();
 						pcString = pc.stringPC();
@@ -575,8 +574,8 @@ public class SymbolicAbstractionListener extends PropertyListenerAdapter{
 		for(int i=0; i<numberOfArgs; i++){
 			Object attribute = attributes[i];
 			if (attribute != null){ // parameter symbolic
-				IntegerExpression e = (IntegerExpression)attributes[i];
-				invokedMethod += e.solution() + ",";
+				Expression<Integer> e = (Expression<Integer>)attributes[i];
+				invokedMethod += e + ",";
 			}
 			else { // parameter concrete - for a concrete parameter, the symbolic attribute is null
 				invokedMethod += argValues[i];

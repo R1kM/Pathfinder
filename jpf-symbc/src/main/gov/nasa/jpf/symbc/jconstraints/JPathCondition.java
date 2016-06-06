@@ -88,6 +88,13 @@ public class JPathCondition {
 		}
 	}
 
+    public boolean prependUnlessRepeated(Jconstraint c) {
+       c.and = header;
+       header = c;
+       count ++;
+       return true;
+    }
+
     public boolean solve() {
         Expression<Boolean> res = header.conjunctionConstraints();
         if (SymbolicInstructionFactory.dp == null) 
