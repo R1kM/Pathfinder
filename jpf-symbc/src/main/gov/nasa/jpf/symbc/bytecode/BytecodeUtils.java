@@ -24,10 +24,9 @@ import gov.nasa.jpf.Config;
 
 import gov.nasa.jpf.constraints.api.Expression;
 import gov.nasa.jpf.constraints.api.Variable;
+import gov.nasa.jpf.constraints.expressions.ArrayExpression;
 import gov.nasa.jpf.constraints.types.BuiltinTypes;
 import gov.nasa.jpf.jvm.bytecode.JVMInvokeInstruction;
-import gov.nasa.jpf.symbc.arrays.IntegerSymbolicArray;
-import gov.nasa.jpf.symbc.arrays.ObjectSymbolicArray;
 import gov.nasa.jpf.symbc.heap.Helper;
 import gov.nasa.jpf.symbc.jconstraints.*;
 import gov.nasa.jpf.vm.AnnotationInfo;
@@ -305,48 +304,59 @@ public class BytecodeUtils {
 						//expressionMap.put(name, sym_v);
 						//sf.setOperandAttr(stackIdx, sym_v);
 						//outputString = outputString.concat(" " + sym_v + ",");
-                    }
-/* Adapt to JConstraints
-					} else if(argTypes[j].equalsIgnoreCase("int[]") || argTypes[j].equalsIgnoreCase("long[]")){
+					} else if(argTypes[j].equalsIgnoreCase("int[]")) {
                         Object[] argValues = invInst.getArgumentValues(th);
                         ElementInfo eiArray = (ElementInfo)argValues[j];
 
-                        IntegerSymbolicArray sym_v = new IntegerSymbolicArray(new SymbolicInteger(name + "!length"), varName(name, VarType.ARRAY));
+                        ArrayExpression<Integer> sym_v = ArrayExpression.create(BuiltinTypes.SINT32, name);
                         expressionMap.put(name, sym_v);
                         sf.setOperandAttr(stackIdx, sym_v);
                         outputString = outputString.concat(" " + sym_v + ",");
 
+                    } else if (argTypes[j].equalsIgnoreCase("long[]")) {
+                        Object[] argValues = invInst.getArgumentValues(th);
+                        ElementInfo eiArray = (ElementInfo)argValues[j];
 
-					} else if(argTypes[j].equalsIgnoreCase("float[]") || argTypes[j].equalsIgnoreCase("double[]")){
-						Object[] argValues = invInst.getArgumentValues(th);
-						ElementInfo eiArray = (ElementInfo)argValues[j];
+                        ArrayExpression<Long> sym_v = ArrayExpression.create(BuiltinTypes.SINT64, name);
+                        expressionMap.put(name, sym_v);
+                        sf.setOperandAttr(stackIdx, sym_v);
+                        outputString = outputString.concat(" " + sym_v + ",");
+					} else if(argTypes[j].equalsIgnoreCase("float[]")) {
+                        Object[] argValues = invInst.getArgumentValues(th);
+                        ElementInfo eiArray = (ElementInfo)argValues[j];
 
-						for(int i =0; i< eiArray.arrayLength(); i++) {
-							RealExpression sym_v = new SymbolicReal(varName(name+i, VarType.REAL));
-							expressionMap.put(name+i, sym_v);
-							eiArray.addElementAttr(i, sym_v);
-							outputString = outputString.concat(" " + sym_v + ",");
-						}
+                        ArrayExpression<Float> sym_v = ArrayExpression.create(BuiltinTypes.FLOAT, name);
+                        expressionMap.put(name, sym_v);
+                        sf.setOperandAttr(stackIdx, sym_v);
+                        outputString = outputString.concat(" " + sym_v + ",");
+                    } else if (argTypes[j].equalsIgnoreCase("double[]")){
+                        Object[] argValues = invInst.getArgumentValues(th);
+                        ElementInfo eiArray = (ElementInfo)argValues[j];
+
+                        ArrayExpression<Double> sym_v = ArrayExpression.create(BuiltinTypes.DOUBLE, name);
+                        expressionMap.put(name, sym_v);
+                        sf.setOperandAttr(stackIdx, sym_v);
+                        outputString = outputString.concat(" " + sym_v + ",");
 					} else if(argTypes[j].equalsIgnoreCase("boolean[]")){
-						Object[] argValues = invInst.getArgumentValues(th);
-						ElementInfo eiArray = (ElementInfo)argValues[j];
+                        Object[] argValues = invInst.getArgumentValues(th);
+                        ElementInfo eiArray = (ElementInfo)argValues[j];
 
-                        IntegerSymbolicArray sym_v = new IntegerSymbolicArray(new SymbolicInteger(name + "!length"), varName(name, VarType.ARRAY));
+                        ArrayExpression<Boolean> sym_v = ArrayExpression.create(BuiltinTypes.BOOL, name);
                         expressionMap.put(name, sym_v);
                         sf.setOperandAttr(stackIdx, sym_v);
                         outputString = outputString.concat(" " + sym_v + ",");
 
 					} else if (argTypes[j].contains("[]")) {
-                        // If the type name contains [] but wasn't catched previously, then it is an object array
                         Object[] argValues = invInst.getArgumentValues(th);
                         ElementInfo eiArray = (ElementInfo)argValues[j];
+                        // If the type name contains [] but wasn't catched previously, then it is an object array
 
-                        ObjectSymbolicArray sym_v = new ObjectSymbolicArray(new SymbolicInteger(name + "!length"), varName(name, VarType.ARRAY), argTypes[j]);
+                        ArrayExpression<Integer> sym_v = ArrayExpression.create(BuiltinTypes.SINT32, name);
                         expressionMap.put(name, sym_v);
                         sf.setOperandAttr(stackIdx, sym_v);
                         outputString = outputString.concat(" " + sym_v + ",");
 
- 					}*/ else {
+ 					} else {
                         // the argument is of reference type and it is symbolic
 						if(lazy != null) {
 							if(lazy[0].equalsIgnoreCase("true")) {
