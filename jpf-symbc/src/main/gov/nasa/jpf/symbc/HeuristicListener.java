@@ -24,7 +24,7 @@ import gov.nasa.jpf.Config;
 import gov.nasa.jpf.JPF;
 import gov.nasa.jpf.PropertyListenerAdapter;
 import gov.nasa.jpf.search.Search;
-import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
+import gov.nasa.jpf.symbc.jconstraints.JPCChoiceGenerator;
 import gov.nasa.jpf.vm.ChoiceGenerator;
 
 public class HeuristicListener extends PropertyListenerAdapter  {
@@ -38,11 +38,11 @@ public class HeuristicListener extends PropertyListenerAdapter  {
 		System.out.println("State advanced here.");
 		ChoiceGenerator<?> cg = search.getVM().getSystemState().getChoiceGenerator();
 		int n = cg.getTotalNumberOfChoices();
-		if (cg instanceof PCChoiceGenerator) {
+		if (cg instanceof JPCChoiceGenerator) {
 			System.out.println("got a PC choice generator "+ n + " "+
-			((PCChoiceGenerator) cg).getNextChoice() + " "+((PCChoiceGenerator) cg).getCurrentPC());
+			((JPCChoiceGenerator) cg).getNextChoice() + " "+((JPCChoiceGenerator) cg).getCurrentPC());
 		
-		if(((PCChoiceGenerator) cg).getNextChoice()==0) { // replace this condition with yours
+		if(((JPCChoiceGenerator) cg).getNextChoice()==0) { // replace this condition with yours
 			System.out.println("backtrack");
 			search.getVM().getSystemState().setIgnored(true);
 		}

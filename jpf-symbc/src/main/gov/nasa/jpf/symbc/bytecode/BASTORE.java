@@ -20,18 +20,17 @@
 
 package gov.nasa.jpf.symbc.bytecode;
 
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.ArrayExpression;
+import gov.nasa.jpf.constraints.expressions.Constant;
+import gov.nasa.jpf.constraints.expressions.NumericBooleanExpression;
+import gov.nasa.jpf.constraints.expressions.NumericComparator;
+import gov.nasa.jpf.constraints.expressions.SelectExpression;
+import gov.nasa.jpf.constraints.expressions.StoreExpression;
+import gov.nasa.jpf.constraints.types.BuiltinTypes;
+
 import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
-import gov.nasa.jpf.symbc.arrays.ArrayExpression;
-import gov.nasa.jpf.symbc.arrays.IntegerSymbolicArray;
-import gov.nasa.jpf.symbc.arrays.SymbolicIntegerValueAtIndex;
-import gov.nasa.jpf.symbc.arrays.PreviousIntegerArray;
-import gov.nasa.jpf.symbc.arrays.SelectExpression;
-import gov.nasa.jpf.symbc.arrays.StoreExpression;
-import gov.nasa.jpf.symbc.numeric.Comparator;
-import gov.nasa.jpf.symbc.numeric.IntegerConstant;
-import gov.nasa.jpf.symbc.numeric.IntegerExpression;
-import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
-import gov.nasa.jpf.symbc.numeric.PathCondition;
+import gov.nasa.jpf.symbc.jconstraints.*;
 import gov.nasa.jpf.vm.ArrayIndexOutOfBoundsExecutiveException;
 import gov.nasa.jpf.vm.ChoiceGenerator;
 import gov.nasa.jpf.vm.ElementInfo;
@@ -50,14 +49,14 @@ public class BASTORE extends gov.nasa.jpf.jvm.bytecode.BASTORE {
 	  public Instruction execute (ThreadInfo ti) {
          // We may need to add the case where we have a smybolic index and a concrete array
 
-          IntegerExpression indexAttr = null;
-          IntegerSymbolicArray arrayAttr = null;
+          Expression<Integer> indexAttr = null;
+          ArrayExpression<Byte> arrayAttr = null;
 		  StackFrame frame = ti.getModifiableTopFrame();
 
-          if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
+          if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression<?>)) {
              //In this case, the array isn't symbolic
-             if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
-                 if (frame.getOperandAttr(0) == null || !(frame.getOperandAttr(0) instanceof IntegerExpression)) {
+             if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof Expression<?>)) {
+                 if (frame.getOperandAttr(0) == null || !(frame.getOperandAttr(0) instanceof Expression<?>)) {
                      // nothing is symbolic here
                      return super.execute(ti);
                  }
@@ -69,54 +68,58 @@ public class BASTORE extends gov.nasa.jpf.jvm.bytecode.BASTORE {
           boolean condition;
           int arrayRef = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
 
+          if (arrayRef == MJIEnv.NULL) {
+              return ti.createAndThrowException("java.lang.NullPointerException");
+          }
+
           if (!ti.isFirstStepInsn()) { // first time around
-              cg = new PCChoiceGenerator(3);
-              ((PCChoiceGenerator) cg).setOffset(this.position);
-              ((PCChoiceGenerator) cg).setMethodName(this.getMethodInfo().getFullName());
+              cg = new JPCChoiceGenerator(3);
+              ((JPCChoiceGenerator) cg).setOffset(this.position);
+              ((JPCChoiceGenerator) cg).setMethodName(this.getMethodInfo().getFullName());
               ti.getVM().setNextChoiceGenerator(cg);
               return this;
           } else { // this is what really returns results
             cg = ti.getVM().getChoiceGenerator();
-            assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
+            assert (cg instanceof JPCChoiceGenerator) : "expected JPCChoiceGenerator, got: " + cg;
           }
           
-          PathCondition pc;
-          ChoiceGenerator<?> prev_cg = cg.getPreviousChoiceGeneratorOfType(PCChoiceGenerator.class);
+          JPathCondition pc;
+          ChoiceGenerator<?> prev_cg = cg.getPreviousChoiceGeneratorOfType(JPCChoiceGenerator.class);
           
           if (prev_cg == null)
-              pc = new PathCondition();
+              pc = new JPathCondition();
           else
-              pc = ((PCChoiceGenerator)prev_cg).getCurrentPC();
+              pc = ((JPCChoiceGenerator)prev_cg).getCurrentPC();
           
           assert pc != null;
 
-		 if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
+		 if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof Expression<?>)) {
               int index = ti.getTopFrame().peek(1);
-              indexAttr =  new IntegerConstant(index); 
+              indexAttr =  Constant.create(BuiltinTypes.SINT32, index); 
 		  } else {
-              indexAttr = (IntegerExpression)peekIndexAttr(ti);
+              indexAttr = Translate.translateInt((Expression<?>)peekIndexAttr(ti));
           }
           assert (indexAttr != null) : "indexAttr shouldn't be null in IASTORE instruction";
   
-          if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
+          if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression<?>)) {
              //In this case, the array isn't symbolic
-             if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
-                 if (frame.getOperandAttr(0) == null || !(frame.getOperandAttr(0) instanceof IntegerExpression)) {
+             if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof Expression<?>)) {
+                 if (frame.getOperandAttr(0) == null || !(frame.getOperandAttr(0) instanceof Expression<?>)) {
                      // nothing is symbolic here
                      return super.execute(ti);
                  }
              } else {
               // We create a symbolic array out of the concrete array
                ElementInfo arrayInfo = ti.getElementInfo(arrayRef);   
-               arrayAttr = new IntegerSymbolicArray(arrayInfo.arrayLength());
+               arrayAttr = ArrayExpression.create(BuiltinTypes.SINT8, arrayInfo.arrayLength());
                // We add the constraints about all the elements of the array
                for (int i = 0; i < arrayInfo.arrayLength(); i++) {
                    byte arrValue = arrayInfo.getByteElement(i);
-                   pc._addDet(Comparator.EQ, new SelectExpression(arrayAttr, i), new IntegerConstant(arrValue));
+                   pc._addDet(new SelectExpression(arrayAttr, Constant.create(BuiltinTypes.SINT32, i), Constant.create(BuiltinTypes.SINT8, arrValue)));
                }
              }
           } else {
-            arrayAttr = (IntegerSymbolicArray)peekArrayAttr(ti);
+            arrayAttr = (ArrayExpression<Byte>)peekArrayAttr(ti);
           }
           assert (arrayAttr != null) : "arrayAttr shouldn't be null in IASTORE instruction";
 
@@ -126,9 +129,9 @@ public class BASTORE extends gov.nasa.jpf.jvm.bytecode.BASTORE {
 
           
           if ((Integer)cg.getNextChoice() == 1) { // check bounds of the index
-              pc._addDet(Comparator.GE, indexAttr, arrayAttr.length);
+              pc._addDet(NumericBooleanExpression.create(indexAttr, NumericComparator.GE, arrayAttr.length));
               if (pc.simplify()) { // satisfiable
-                  ((PCChoiceGenerator) cg).setCurrentPC(pc);
+                  ((JPCChoiceGenerator) cg).setCurrentPC(pc);
                   return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException", "index greater than array bounds");
               }
               else {
@@ -137,9 +140,9 @@ public class BASTORE extends gov.nasa.jpf.jvm.bytecode.BASTORE {
               }
           }
           else if ((Integer)cg.getNextChoice() == 2) {
-              pc._addDet(Comparator.LT, indexAttr, new IntegerConstant(0));
+              pc._addDet(NumericBooleanExpression.create(indexAttr, NumericComparator.LT, Constant.create(BuiltinTypes.SINT32, 0)));
               if (pc.simplify()) { // satisfiable
-                  ((PCChoiceGenerator) cg).setCurrentPC(pc);
+                  ((JPCChoiceGenerator) cg).setCurrentPC(pc);
                   return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException", "index smaller than array bounds");
               }
               else {
@@ -148,33 +151,32 @@ public class BASTORE extends gov.nasa.jpf.jvm.bytecode.BASTORE {
               }
           }
           else {
-              pc._addDet(Comparator.LT, indexAttr, arrayAttr.length);
-              pc._addDet(Comparator.GE, indexAttr, new IntegerConstant(0));
+              pc._addDet(NumericBooleanExpression.create(indexAttr, NumericComparator.LT, arrayAttr.length));
+              pc._addDet(NumericBooleanExpression.create(indexAttr, NumericComparator.GE, Constant.create(BuiltinTypes.SINT32, 0)));
               if (pc.simplify()) { // satisfiable
-                  ((PCChoiceGenerator) cg).setCurrentPC(pc);
+                  ((JPCChoiceGenerator) cg).setCurrentPC(pc);
                   
                   // set the result                 
 
                   // We have to check if the value is symbolic or not, create a symbolicIntegerValueatIndex out of it, and 
                   // call the setVal function, before storing the attr 
-                  IntegerExpression sym_value = null;
-		          if (frame.getOperandAttr(0) == null || !(frame.getOperandAttr(0) instanceof IntegerExpression)) {
+                  Expression<Byte> sym_value = null;
+		          if (frame.getOperandAttr(0) == null || !(frame.getOperandAttr(0) instanceof Expression<?>)) {
                       // The value isn't symbolic. We store a new IntegerConstant in the valAt map, at index indexAttr
-                      int value = frame.pop();
-                      sym_value = new IntegerConstant(value);
+                      byte value = (byte)frame.pop();
+                      sym_value = Constant.create(BuiltinTypes.SINT8, value);
                   }
                   else {
                       // The value is symbolic.
-                      sym_value = (IntegerExpression)frame.getOperandAttr(0);
+                      sym_value = Translate.translateIntType((Expression<?>)frame.getOperandAttr(0), BuiltinTypes.SINT8) ;
                       frame.pop();
                   }
-                  PreviousIntegerArray previous = new PreviousIntegerArray(arrayAttr, indexAttr, sym_value);
                   // We create a new arrayAttr, and inherits information from the previous attribute
-                  IntegerSymbolicArray newArrayAttr = new IntegerSymbolicArray(previous);
+                  ArrayExpression<Byte> newArrayAttr = new ArrayExpression<Byte>(arrayAttr);
                   frame.pop(2); // We pop the array and the index
 
-                  StoreExpression se = new StoreExpression(arrayAttr, indexAttr, sym_value);
-                  pc._addDet(Comparator.EQ, se, newArrayAttr);
+                  StoreExpression se = new StoreExpression(arrayAttr, indexAttr, sym_value, newArrayAttr);
+                  pc._addDet(se);
 
                   return getNext(ti);
              }

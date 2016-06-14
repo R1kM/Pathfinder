@@ -17,8 +17,10 @@
  */
 package gov.nasa.jpf.symbc.bytecode;
 
-import gov.nasa.jpf.symbc.arrays.ArrayExpression;
-import gov.nasa.jpf.symbc.numeric.*;
+import gov.nasa.jpf.constraints.api.Expression;
+import gov.nasa.jpf.constraints.expressions.ArrayExpression;
+import gov.nasa.jpf.symbc.jconstraints.Translate;
+
 import gov.nasa.jpf.vm.ChoiceGenerator;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
@@ -34,14 +36,15 @@ public class ARRAYLENGTH extends gov.nasa.jpf.jvm.bytecode.ARRAYLENGTH {
     public Instruction execute (ThreadInfo th) {
         StackFrame frame = th.getModifiableTopFrame();
         
-        if (peekArrayAttr(th) == null || !(peekArrayAttr(th) instanceof ArrayExpression)) {
+        if (peekArrayAttr(th) == null || !(peekArrayAttr(th) instanceof ArrayExpression<?>)) {
             return super.execute(th);
         }
 
-       ArrayExpression arrayAttr = (ArrayExpression)peekArrayAttr(th);
+       ArrayExpression<?> arrayAttr = (ArrayExpression<?>)peekArrayAttr(th);
        frame.pop(1); // We pop the array
        frame.push(0, false); // The concrete value does not matter
-       frame.setOperandAttr(arrayAttr.length);
+       Expression<Integer> result = Translate.translateInt(arrayAttr.length);
+       frame.setOperandAttr(result);
         
        return getNext(th);
     }
