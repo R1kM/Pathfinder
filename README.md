@@ -15,6 +15,10 @@ This support is optional : To enable it, specify `symbolic.arrays=true` in the .
 
 See Arrays examples in the src/examples/arrays folder.
 
+A Dockerfile is provided to use SPF. Just run
+`docker build -t spf .`
+`docker run -it spf`
+
 If Z3 can't be found, make sure that LD_LIBRARY_PATH contains the Pathfinder/jpf-symbc/lib directory.
 
 ### Overview

@@ -19,7 +19,20 @@ WORKDIR /Pathfinder/jpf-core
 ENV JUNIT_HOME /usr/share/java
 RUN ant build 
 RUN java -jar build/RunJPF.jar src/examples/Racer.jpf
+WORKDIR /
+RUN git clone https://github.com/Z3Prover/z3.git
+RUN apt-get update && \
+    apt-get install -y build-essential && \
+    apt-get install -y gcc && \
+    apt-get install -y m4 && \
+    apt-get install -y g++
+WORKDIR /z3
+RUN python scripts/mk_make.py
+WORKDIR /z3/build
+RUN make && \
+    make install
 WORKDIR /Pathfinder/jpf-symbc
 RUN ant build
 RUN java -jar ../jpf-core/build/RunJPF.jar src/examples/TestPaths.jpf
 WORKDIR /
+COPY site.properties /root/.jpf/
