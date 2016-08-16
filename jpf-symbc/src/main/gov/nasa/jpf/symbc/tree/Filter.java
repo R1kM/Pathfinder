@@ -17,8 +17,12 @@
  */
 package gov.nasa.jpf.symbc.tree;
 
+import gov.nasa.jpf.jvm.bytecode.DIRECTCALLRETURN;
 import gov.nasa.jpf.jvm.bytecode.IfInstruction;
+import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
 import gov.nasa.jpf.vm.Instruction;
+import gov.nasa.jpf.vm.ThreadInfo;
+import gov.nasa.jpf.vm.VM;
 import gov.nasa.jpf.vm.bytecode.InvokeInstruction;
 import gov.nasa.jpf.vm.bytecode.ReturnInstruction;
 
@@ -31,14 +35,24 @@ public interface Filter {
   // symbolic.tree.filter
   public static class AllInstrFilter implements Filter {
     @Override
-    public boolean apply(Instruction executedInstruction, Instruction instrToBeExecuted) {
+    public boolean apply(Instruction executedInstruction, Instruction instrToBeExecuted, VM vm, ThreadInfo currentThread) {
       return true;
+    }
+  }
+  
+  public static class SymbolicDecisionFilter implements Filter {
+    @Override
+    public boolean apply(Instruction executedInstruction, Instruction instrToBeExecuted, VM vm, ThreadInfo currentThread) {
+      PCChoiceGenerator pc = vm.getLastChoiceGeneratorOfType(PCChoiceGenerator.class);
+      if(pc != null)
+        return (pc.getInsn() == executedInstruction);
+      return false;
     }
   }
   
   public static class ConstInstrFilter implements Filter {
     @Override
-    public boolean apply(Instruction executedInstruction, Instruction instrToBeExecuted) {
+    public boolean apply(Instruction executedInstruction, Instruction instrToBeExecuted, VM vm, ThreadInfo currentThread) {
       return (instrToBeExecuted instanceof IfInstruction || 
           instrToBeExecuted instanceof ReturnInstruction);
     }
@@ -46,11 +60,11 @@ public interface Filter {
   
   public static class InvokeInstrFilter implements Filter {
     @Override
-    public boolean apply(Instruction executedInstruction, Instruction instrToBeExecuted) {
+    public boolean apply(Instruction executedInstruction, Instruction instrToBeExecuted, VM vm, ThreadInfo currentThread) {
       return instrToBeExecuted instanceof InvokeInstruction;
     }
   }
   
-  public boolean apply(Instruction executedInstruction, Instruction instrToBeExecuted);
+  public boolean apply(Instruction executedInstruction, Instruction instrToBeExecuted, VM vm, ThreadInfo currentThread);
   
 }

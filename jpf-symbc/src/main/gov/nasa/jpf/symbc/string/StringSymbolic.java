@@ -104,7 +104,7 @@ public class StringSymbolic extends StringExpression {
 	    	varsVals.put(fixName(name), solution);
 	    }
 
-	   private String fixName(String name) {
+	   public String fixName(String name) {
 	    	if (name.endsWith(SYM_STRING_SUFFIX)) {
 	    		name = name.substring(0, name.lastIndexOf(SYM_STRING_SUFFIX));
 	    	}

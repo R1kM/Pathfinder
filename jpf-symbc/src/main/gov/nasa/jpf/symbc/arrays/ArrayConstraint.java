@@ -13,18 +13,16 @@ public class ArrayConstraint extends Constraint {
         super(se, c, ae);
     }
 
-
-    @Override
     public ArrayConstraint not() {
         try {
             return new ArrayConstraint((SelectExpression)super.getLeft(), getComparator().not(), (IntegerExpression)getRight());
         } catch (Exception e) {
             try {
                 return new ArrayConstraint((StoreExpression)super.getLeft(), getComparator().not(), (ArrayExpression)getRight());
-            }
-            catch (Exception r) {
+            } catch (Exception r) {
                 throw new RuntimeException("ArrayConstraint is not select or store");
             }
         }
     }
 }
+

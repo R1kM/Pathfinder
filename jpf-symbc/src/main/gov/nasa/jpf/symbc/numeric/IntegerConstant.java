@@ -38,29 +38,25 @@
 package gov.nasa.jpf.symbc.numeric;
 
 import java.util.Map;
+
 import static gov.nasa.jpf.symbc.numeric.Operator.*;
 
 public class IntegerConstant extends LinearIntegerExpression {
-  public int value;
+  public long value;
 
-  public IntegerConstant (int i) {
-    value = i;
+  public IntegerConstant (long i) {
+	  value = i;
   }
 
-  public IntegerExpression _minus (int i) {
-      //simplify
+  public IntegerExpression _minus (long i) {
       if (i == 0)
           return this;
-
-    return new IntegerConstant(value - i);
+	  return new IntegerConstant(value - i);
   }
 
-  public IntegerExpression _minus_reverse (int i) {
+  public IntegerExpression _minus_reverse (long i) {
     return new IntegerConstant(i - value);
   }
-  public IntegerExpression _minus_reverse (long i) {
-	    return new IntegerConstant((int) i - value);
-	  }
 
   public IntegerExpression _minus (IntegerExpression e) {
       //simplify
@@ -79,7 +75,7 @@ public class IntegerConstant extends LinearIntegerExpression {
     }
   }
 
-  public IntegerExpression _div (int i) {
+  public IntegerExpression _div (long i) {
       //simplify
       if (i == 1)
           return this;
@@ -87,16 +83,10 @@ public class IntegerConstant extends LinearIntegerExpression {
     return new IntegerConstant(value / i);
   }
 
-  public IntegerExpression _div_reverse (int i) {
-      //simplify
-	  assert  (value !=0);
-    return new IntegerConstant(i / value);
-  }
-
   public IntegerExpression _div_reverse (long i) {
-      //simplify
+	  //simplify
 	  assert  (value !=0);
-    return new IntegerConstant((int) i / value);
+	  return new IntegerConstant(i / value);
   }
 
   public IntegerExpression _div (IntegerExpression e) {
@@ -115,7 +105,7 @@ public class IntegerConstant extends LinearIntegerExpression {
 	 return super._div(e);
   }
 
-  public IntegerExpression _mul (int i) {
+  public IntegerExpression _mul (long i) {
       //simplify
       if (i == 1)
           return this;
@@ -145,7 +135,7 @@ public class IntegerConstant extends LinearIntegerExpression {
   }
 
 
-  public IntegerExpression _plus (int i) {
+  public IntegerExpression _plus (long i) {
       //simplify
       if (i == 0)
           return this;
@@ -176,19 +166,11 @@ public class IntegerConstant extends LinearIntegerExpression {
 			return super._neg();
 	}
 
-
-	public IntegerExpression _and (int i) {
-	   if (i == 0) {
-		   return new IntegerConstant(0);
-	   }
-	    return new IntegerConstant(value & i);
-	}
-
 	public IntegerExpression _and (long i) {
 		   if (i == 0) {
 			   return new IntegerConstant(0);
 		   }
-		    return new IntegerConstant(value & ((int) i));
+		    return new IntegerConstant(value & i);
 		}
 
 	public IntegerExpression _and (IntegerExpression e) {
@@ -201,18 +183,11 @@ public class IntegerConstant extends LinearIntegerExpression {
 		return new BinaryLinearIntegerExpression(this, AND, e);
 	}
 
-	public IntegerExpression _or (int i) {
-		if (i == 0) {
-			return this;
-		}
-		return new IntegerConstant(value | i);
-	}
-
 	public IntegerExpression _or (long i) {
 		if (i == 0) {
 			return this;
 		}
-		return new IntegerConstant(value | ((int) i));
+		return new IntegerConstant(value | i);
 	}
 
 	public IntegerExpression _or (IntegerExpression e) {
@@ -225,12 +200,8 @@ public class IntegerConstant extends LinearIntegerExpression {
 		return new BinaryLinearIntegerExpression(this, OR, e);
 	}
 
-	public IntegerExpression _xor (int i) {
-		    return new IntegerConstant(value ^ i);
-	}
-
 	public IntegerExpression _xor (long i) {
-	    return new IntegerConstant(value ^ ((int) i));
+		    return new IntegerConstant(value ^ i);
 	}
 
 	public IntegerExpression _xor (IntegerExpression e) {
@@ -241,12 +212,8 @@ public class IntegerConstant extends LinearIntegerExpression {
 	}
 
 
-	public IntegerExpression _shiftL (int i) {
-	    return new IntegerConstant(value << i);
-	}
-
 	public IntegerExpression _shiftL (long i) {
-		return new IntegerConstant(value << ((int) i));
+	    return new IntegerConstant(value << i);
 	}
 
 	public IntegerExpression _shiftL (IntegerExpression e) {
@@ -256,12 +223,8 @@ public class IntegerConstant extends LinearIntegerExpression {
 		return new BinaryLinearIntegerExpression(this, SHIFTL, e);
 	}
 
-	public IntegerExpression _shiftR (int i) {
-	    return new IntegerConstant(value >> i);
-	}
-
 	public IntegerExpression _shiftR (long i) {
-		return new IntegerConstant(value >> ((int) i));
+	    return new IntegerConstant(value >> i);
 	}
 
 	public IntegerExpression _shiftR (IntegerExpression e) {
@@ -271,12 +234,8 @@ public class IntegerConstant extends LinearIntegerExpression {
 		return new BinaryLinearIntegerExpression(this, SHIFTR, e);
 	}
 
-	public IntegerExpression _shiftUR (int i) {
-	    return new IntegerConstant(value >>> i);
-	}
-
 	public IntegerExpression _shiftUR (long i) {
-		return new IntegerConstant(value >>> ((int) i));
+	    return new IntegerConstant(value >>> i);
 	}
 
 	public IntegerExpression _shiftUR (IntegerExpression e) {
@@ -296,24 +255,49 @@ public class IntegerConstant extends LinearIntegerExpression {
   }
 
 	@Override
-  public int hashCode() {
-	  return value;
+  public int hashCode() { // analogous to java.lang.Long
+	  return (int)(this.value^(value>>>32));
   }
  
   public String toString () {
     return "CONST_" + value + "";
   }
 
+  public String prefix_notation ()
+	{
+		return ""+value;
+	}
+  
   public String stringPC () {
     return "CONST_" + value + "";
   }
 
   public int value () {
-    return value;
+    return (int) value;
   }
 
-  public int solution() {
-  		return value;
+  public long solution() { // to be fixed
+  		return value; 
+  }
+  
+  public int solutionInt() {
+	  assert(value>=Integer.MIN_VALUE && value<=Integer.MAX_VALUE);
+	  return (int) value;
+  }
+  
+  public short solutionShort() {
+	  assert(value>=Short.MIN_VALUE && value<=Short.MAX_VALUE);
+	  return (short) value;
+  }
+  
+  public byte solutionByte() {
+	  assert(value>=Byte.MIN_VALUE && value<=Byte.MAX_VALUE);
+	  return (byte) value;
+  }
+  
+  public char solutionChar() {
+	  assert(value>=Character.MIN_VALUE && value<=Character.MAX_VALUE);
+	  return (char) value;
   }
 
   public void getVarsVals(Map<String,Object> varsVals) {}
@@ -329,8 +313,8 @@ public class IntegerConstant extends LinearIntegerExpression {
 	public int compareTo(Expression expr) {
 		if (expr instanceof IntegerConstant) {
 			IntegerConstant e = (IntegerConstant) expr;
-			int a = value();
-			int b = e.value();
+			long a = value();
+			long b = e.value();
 			return (a < b) ? -1 : (a > b) ? 1 : 0;
 		} else {
 			return getClass().getCanonicalName().compareTo(expr.getClass().getCanonicalName());

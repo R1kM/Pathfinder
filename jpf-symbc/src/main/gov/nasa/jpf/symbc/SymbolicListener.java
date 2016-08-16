@@ -47,20 +47,17 @@ import gov.nasa.jpf.symbc.bytecode.BytecodeUtils;
 import gov.nasa.jpf.symbc.bytecode.INVOKESTATIC;
 import gov.nasa.jpf.symbc.concolic.PCAnalyzer;
 
-import gov.nasa.jpf.symbc.arrays.IntegerSymbolicArray;
+
 import gov.nasa.jpf.symbc.numeric.Comparator;
 import gov.nasa.jpf.symbc.numeric.Expression;
 import gov.nasa.jpf.symbc.numeric.IntegerConstant;
 import gov.nasa.jpf.symbc.numeric.IntegerExpression;
 import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
-import gov.nasa.jpf.symbc.numeric.PCParser;
 import gov.nasa.jpf.symbc.numeric.PathCondition;
 import gov.nasa.jpf.symbc.numeric.RealConstant;
 import gov.nasa.jpf.symbc.numeric.RealExpression;
 import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
 import gov.nasa.jpf.symbc.numeric.SymbolicReal;
-import gov.nasa.jpf.symbc.numeric.solvers.ProblemGeneral;
-import gov.nasa.jpf.symbc.numeric.solvers.ProblemZ3;
 
 import gov.nasa.jpf.symbc.numeric.SymbolicConstraintsGeneral;
 //import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
@@ -132,7 +129,6 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 	public void propertyViolated (Search search){
 
 		VM vm = search.getVM();
-        String Model = "";
 
 			ChoiceGenerator <?>cg = vm.getChoiceGenerator();
 			if (!(cg instanceof PCChoiceGenerator)){
@@ -145,11 +141,6 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 			if ((cg instanceof PCChoiceGenerator) &&
 				      ((PCChoiceGenerator) cg).getCurrentPC() != null){
 				PathCondition pc = ((PCChoiceGenerator) cg).getCurrentPC();
-                if (SymbolicInstructionFactory.dp[0].equalsIgnoreCase("z3")) {
-                    ProblemGeneral pb = new ProblemZ3();
-                    pb = PCParser.parse(pc, pb);
-                    Model = "Z3 Model\n" + pb.getModel();
-                }
 				String error = search.getLastError().getDetails();
 				error = "\"" + error.substring(0,error.indexOf("\n")) + "...\"";
 				// C: not clear where result was used here -- to review
@@ -167,10 +158,12 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 				else
 					pc.solve();
 
-				Pair<String,String> pcPair = new Pair<String,String>(pc.toString() + Model,error);//(pc.toString(),error);
+				Pair<String,String> pcPair = new Pair<String,String>(pc.toString(),error);//(pc.toString(),error);
 
 				//String methodName = vm.getLastInstruction().getMethodInfo().getName();
 				MethodSummary methodSummary = allSummaries.get(currentMethodName);
+				if (methodSummary==null) 
+					methodSummary = new MethodSummary();
 				methodSummary.addPathCondition(pcPair);
 				allSummaries.put(currentMethodName,methodSummary);
 				System.out.println("Property Violated: PC is "+pc.toString());
@@ -185,7 +178,6 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 
 	@Override
 	 public void instructionExecuted(VM vm, ThreadInfo currentThread, Instruction nextInstruction, Instruction executedInstruction) {
-
 
 		if (!vm.getSystemState().isIgnored()) {
 			Instruction insn = executedInstruction;
@@ -259,11 +251,7 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 					for(int i=0; i < numberOfArgs; i++){
 						Expression expLocal = (Expression)sf.getLocalAttr(sfIndex);
 						if (expLocal != null) // symbolic
-							if (expLocal instanceof IntegerSymbolicArray) {
-                                symVarNameStr = ((IntegerSymbolicArray)expLocal).getName();
-                            } else {
-                            symVarNameStr = expLocal.toString();
-                            }
+							symVarNameStr = expLocal.toString();
 						else
 							symVarNameStr = argsInfo[namesIndex].getName() + "_CONCRETE" + ",";
 						// TODO: what happens if the argument is an array?
@@ -457,12 +445,7 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 			  while(it.hasNext()){
 				  String testCase = methodSummary.getMethodName() + "(";
 				  Pair pcPair = (Pair)it.next();
-                  String[] aux = ((String)pcPair._1).split("Z3 Model");
-				  String pc = aux[0];
-                  String model = "";
-                  if (aux.length > 1) {
-                  model = aux[1];
-                  }
+				  String pc = (String)pcPair._1;
 				  String errorMessage = (String)pcPair._2;
 				  String symValues = methodSummary.getSymValues();
 				  String argValues = methodSummary.getArgValues();
@@ -480,13 +463,6 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 					  byte actualType = Byte.parseByte(st3.nextToken());
 					  if (st.hasMoreTokens())
 						  token = st.nextToken();
-                          if (token.contains("SYMARRAY")) {
-                            String[] parts = token.split("_");
-                            token = parts[0] ;
-                            for (int i = 1; i<parts.length - 2; i++) {
-                                token = token + "_" + parts[i];
-                            }
-                          }
 					  if (pc.contains(token)){
 						  String temp = pc.substring(pc.indexOf(token));
 						  if (temp.indexOf(']') < 0) {
@@ -495,9 +471,10 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 						  
 						  String val = temp.substring(temp.indexOf("[")+1,temp.indexOf("]"));
 						  
+						  
 						  //if(actualType == Types.T_INT || actualType == Types.T_FLOAT || actualType == Types.T_LONG || actualType == Types.T_DOUBLE)
 							  //testCase = testCase + val + ",";
-						  if(actualType == Types.T_INT || actualType == Types.T_FLOAT || actualType == Types.T_LONG || actualType == Types.T_DOUBLE) {
+						  if(actualType == Types.T_INT || actualType == Types.T_FLOAT || actualType == Types.T_LONG || actualType == Types.T_SHORT || actualType == Types.T_BYTE || actualType == Types.T_CHAR || actualType == Types.T_DOUBLE) {
 							  String suffix = "";
 							  if (actualType == Types.T_LONG) {
 								  suffix = "l";
@@ -520,12 +497,9 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 							  else
 								  testCase = testCase + "true" + ",";
 						  }
-						  else if (actualType == Types.T_ARRAY) {
-                              testCase = testCase + token  + ",";
+						  else
+							  throw new RuntimeException("## Error: listener does not support type other than int, long, short, byte, float, double and boolean");
 						  // TODO: to extend with arrays
-                          } else {
-							  throw new RuntimeException("## Error: listener does not support type other than int, long, float, double and boolean");
-                        }
 					  }else{
 						  //need to check if value is concrete
 						  if (token.contains("CONCRETE"))
@@ -543,8 +517,7 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 					  testCase = testCase + "  --> " + errorMessage;
 				  //do not add duplicate test case
 				  if (!allTestCases.contains(testCase))
-					  allTestCases = allTestCases + "\n" + testCase + "\n" + model;
-                      // TODO : parse correctly model to keep only the interesting information
+					  allTestCases = allTestCases + "\n" + testCase;
 			  }
 			  pw.println(allTestCases);
 		  }else{
@@ -592,7 +565,7 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 						  }
 						  
 						  String val = temp.substring(temp.indexOf("[")+1,temp.indexOf("]"));
-					      if(actualType == Types.T_INT || actualType == Types.T_FLOAT || actualType == Types.T_LONG || actualType == Types.T_DOUBLE)
+					      if(actualType == Types.T_INT || actualType == Types.T_FLOAT || actualType == Types.T_LONG || actualType == Types.T_SHORT || actualType == Types.T_BYTE || actualType == Types.T_DOUBLE)
 							  testCase = testCase + "<td>" + val + "</td>";
 						  else if (actualType == Types.T_BOOLEAN) { //translate boolean values represented as ints
 							  //to "true" or "false"
@@ -602,8 +575,7 @@ public class SymbolicListener extends PropertyListenerAdapter implements Publish
 								  testCase = testCase + "<td>true</td>";
 						  }
 						  else
-                            System.out.println("TODO : print arrays");
-							//  throw new RuntimeException("## Error: listener does not support type other than int, long, float, double and boolean");
+							  throw new RuntimeException("## Error: listener does not support type other than int, long, short, byte, float, double and boolean");
 
 					  }else{
 						  //need to check if value is concrete

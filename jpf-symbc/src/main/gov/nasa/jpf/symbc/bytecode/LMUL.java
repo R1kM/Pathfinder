@@ -45,20 +45,20 @@ public class LMUL extends gov.nasa.jpf.jvm.bytecode.LMUL {
 	    	sf.pushLong(0); // for symbolic expressions, the concrete value does not matter
 
 	    	IntegerExpression result = null;
-	    	if(sym_v1!=null) {
-	    		if (sym_v2!=null)
-	    			result = sym_v1._mul(sym_v2);
-	    		else // v2 is concrete
-	    			result = sym_v1._mul(v2);
-	    	}
-	    	else if (sym_v2!=null)
-	    		result = sym_v2._mul(v1);
+	    	
+			if(sym_v1!=null) {
+				if (sym_v2!=null)
+					result = sym_v1._mul(sym_v2);
+				else // v2 is concrete
+					result = sym_v1._mul(v2);
+			}
+			else if (sym_v2!=null)
+				result = sym_v2._mul(v1);
+			sf.setLongOperandAttr(result);
 
-	    	sf.setLongOperandAttr(result);
+			//System.out.println("Execute IMUL: "+result);
 
-	    	//System.out.println("Execute LMUL: "+result);
-
-	    	return getNext(th);
+			return getNext(th);
 	    }
   }
  }

@@ -42,7 +42,9 @@ public class Vertex {
 		this.name = name;
 		this.constant = false;
 		//symbolic_length = new SymbolicInteger(name + ".length_" +count+ "_", 0, MinMax.MAXINT); //Must start with 0, for concat
-		symbolic_length = sig.create (name, 0, MinMax.getVarMaxInt(""));
+		long l = MinMax.getVarMaxInt("");
+		assert(l>=Integer.MIN_VALUE && l<=Integer.MAX_VALUE);
+		symbolic_length = sig.create (name, 0, (int) l);
 		this.uniqueNumber = count++;
 	}
 	
@@ -79,7 +81,7 @@ public class Vertex {
 		if (constant) {
 			return solution.length();
 		}
-		return symbolic_length.solution();
+		return (int) symbolic_length.solution();
 	}
 	
 	public void setSolution (String s) {

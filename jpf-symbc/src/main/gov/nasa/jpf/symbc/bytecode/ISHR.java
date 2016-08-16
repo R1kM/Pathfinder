@@ -19,6 +19,7 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 
+import gov.nasa.jpf.symbc.numeric.IntegerConstant;
 import gov.nasa.jpf.symbc.numeric.IntegerExpression;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
@@ -40,16 +41,22 @@ public class ISHR extends gov.nasa.jpf.jvm.bytecode.ISHR {
 			sf.push(0, false); // for symbolic expressions, the concrete value does not matter
 		
 			IntegerExpression result = null;
-			if(sym_v1!=null) {
-				if (sym_v2!=null)
-					result = sym_v1._shiftR(sym_v2);
-				else // v2 is concrete
-					result = sym_v1._shiftR(v2);
+			if (sym_v1 != null) {
+				if (sym_v2!=null) {
+					//result = sym_v1._shiftR(sym_v2);
+					// FIX: it's the second argument right shifted by the first argument
+					result = sym_v2._shiftR(sym_v1);
+				}
+				else {// v2 is concrete
+					//result = sym_v1._shiftR(v2);
+					result = (new IntegerConstant((int) v2))._shiftR(sym_v1);
+				}
 			}
-			else if (sym_v2!=null)
+			else if (sym_v2 != null) {
 				result = sym_v2._shiftR(v1);
+			}
+
 			sf.setOperandAttr(result);
-				
 			return getNext(th);
 		}
 	

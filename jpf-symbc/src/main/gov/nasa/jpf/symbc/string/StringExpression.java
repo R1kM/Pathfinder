@@ -96,7 +96,8 @@ public abstract class StringExpression extends Expression {
 	  SymbolicCharAtInteger result = charAt.get(ie.toString());
 	  if (result == null) {
 		  //System.out.println ("[StringExpression] [_charAt] could not find: '" + ie.toString() + "' in: " + charAt);
-		  result = new SymbolicCharAtInteger("CharAt(" + ie.toString() + ")_" + lengthcount + "_", 0, MinMax.getVarMaxInt(""), this, ie);
+		  result = new SymbolicCharAtInteger("CharAt(" + ie.toString() + ")_" + lengthcount + "_", 0, Character.MAX_VALUE, this, ie); //Rody: not sure about this
+//		  result = new SymbolicCharAtInteger("CharAt(" + ie.toString() + ")_" + lengthcount + "_", 0, MinMax.getVarMaxInt(""), this, ie);
 		  lengthcount++;
 		  charAt.put(ie.toString(), result);
 	  }

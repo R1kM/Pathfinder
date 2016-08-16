@@ -52,12 +52,12 @@ package gov.nasa.jpf.symbc.string;
 
 
 public enum StringOperator {
-
   CONCAT("concat"),
   REPLACE("replace"),
   TRIM("trim"),
   SUBSTRING("substring"),
   REPLACEFIRST("replacefirst"),
+  REPLACEALL("replaceall"),
   TOLOWERCASE("tolowercase"),
   TOUPPERCASE("touppercase"),
   VALUEOF("valueof");

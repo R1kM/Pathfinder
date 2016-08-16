@@ -114,6 +114,10 @@ public class SymbolicReal extends RealExpression {
 		}
 	}
 
+	public String prefix_notation ()
+	{
+		return (name != null) ? name : "REAL_" + hashCode();
+	}
 
 	public double solution() {
 		if (PathCondition.flagSolved) {

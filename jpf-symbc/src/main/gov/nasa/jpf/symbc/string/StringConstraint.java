@@ -50,6 +50,9 @@ TERMINATION OF THIS AGREEMENT.
 
 package gov.nasa.jpf.symbc.string;
 
+import gov.nasa.jpf.symbc.numeric.ConstraintExpressionVisitor;
+import gov.nasa.jpf.symbc.numeric.visitors.CollectVariableVisitor;
+
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -167,4 +170,20 @@ public class StringConstraint {
   public StringConstraint and () {
 	  return and;
   }
+  
+	public void accept(ConstraintExpressionVisitor visitor) {
+		visitor.preVisit(this);
+		left.accept(visitor);
+		right.accept(visitor);
+	    if (and!=null) and.accept(visitor);
+			visitor.postVisit(this);
+	}
+
+	public void accept(CollectVariableVisitor visitor) {
+		visitor.preVisit(this);
+		left.accept(visitor);
+		right.accept(visitor);
+	    if (and!=null) and.accept(visitor);
+			visitor.postVisit(this);
+	}
 }

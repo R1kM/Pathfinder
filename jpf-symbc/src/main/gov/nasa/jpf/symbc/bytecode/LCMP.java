@@ -18,7 +18,6 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 
-import gov.nasa.jpf.symbc.bytecode.util.IFInstrSymbHelper;
 import gov.nasa.jpf.symbc.numeric.Comparator;
 import gov.nasa.jpf.symbc.numeric.IntegerExpression;
 import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
@@ -45,16 +44,8 @@ public class LCMP extends gov.nasa.jpf.jvm.bytecode.LCMP {
 	if (sym_v1 == null && sym_v2 == null)  // both conditions are concrete
 		return super.execute(th);
 	else { // at least one condition is symbolic
-		Instruction nxtInstr = IFInstrSymbHelper.getNextInstructionAndSetPCChoice(th, 
-																				  this, 
-																				  sym_v1,
-																				  sym_v2,
-																				  Comparator.LT, 
-																				  Comparator.EQ,
-																				  Comparator.GT);
 
-		return nxtInstr;
-		/*ChoiceGenerator<?> cg;
+		ChoiceGenerator<?> cg;
 		int conditionValue;
 
 		if (!th.isFirstStepInsn()) { // first time around
@@ -139,7 +130,7 @@ public class LCMP extends gov.nasa.jpf.jvm.bytecode.LCMP {
 
 		sf.push(conditionValue, false);
 		//System.out.println("Execute LCMP: " + ((PCChoiceGenerator) cg).getCurrentPC());
-		return getNext(th);*/
+		return getNext(th);
 	}
 
   }

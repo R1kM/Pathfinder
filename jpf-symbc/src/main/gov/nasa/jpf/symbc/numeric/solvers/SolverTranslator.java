@@ -38,23 +38,46 @@ public class SolverTranslator {
 
 	private static Map<ConstraintSequence, Instance> instanceCache = new HashMap<ConstraintSequence, Instance>();
 
-	public static Instance createInstance(Constraint constraint) {
-		Constraint c = constraint; // first constraint
-		Constraint r = c.getTail(); // rest of constraint
-		Instance p = null; // parent instance
-		if (r != null) {
-			p = instanceCache.get(new ConstraintSequence(r));
-			if (p == null) {
-				p = createInstance(r);
-//				instanceCache.put(r, p);
+	public static Instance createInstance(Constraint c) {
+
+		Expression e = null;
+
+		while (c != null) {
+			Translator translator = new Translator();
+			c.accept(translator);
+
+			Expression tmp = translator.getExpression();
+
+			if (e == null) {
+				e = tmp;
+			} else {
+				e = new Operation(Operation.Operator.AND, e, tmp);
 			}
+
+			c = c.and;
 		}
-		Translator translator = new Translator();
-		c.accept(translator);
-		Instance i = new Instance(SymbolicInstructionFactory.greenSolver, p, translator.getExpression());
-		instanceCache.put(new ConstraintSequence(constraint), i);
-		return i;
+
+		Instance greenPC = new Instance(SymbolicInstructionFactory.greenSolver, null, e);
+		return greenPC;
 	}
+
+//	public static Instance createInstance(Constraint constraint) {
+//		Constraint c = constraint; // first constraint
+//		Constraint r = c.getTail(); // rest of constraint
+//		Instance p = null; // parent instance
+//		if (r != null) {
+//			p = instanceCache.get(new ConstraintSequence(r));
+//			if (p == null) {
+//				p = createInstance(r);
+////				instanceCache.put(r, p);
+//			}
+//		}
+//		Translator translator = new Translator();
+//		c.accept(translator);
+//		Instance i = new Instance(SymbolicInstructionFactory.greenSolver, p, translator.getExpression());
+//		instanceCache.put(new ConstraintSequence(constraint), i);
+//		return i;
+//	}
 
 	private final static class ConstraintSequence {
 
@@ -169,12 +192,13 @@ public class SolverTranslator {
 
 		@Override
 		public void postVisit(IntegerConstant constant) {
-			stack.push(new IntConstant(constant.value));
+			stack.push(new IntConstant((int)constant.value));
 		}
 
 		@Override
 		public void postVisit(SymbolicInteger node) {
-			stack.push(new IntVariable(node.getName(), node, node._min, node._max));
+			assert(node._min>=Integer.MIN_VALUE && node._max<=Integer.MAX_VALUE);
+			stack.push(new IntVariable(node.getName(), node, (int) node._min, (int) node._max));
 		}
 
 	}

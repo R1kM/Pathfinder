@@ -23,6 +23,7 @@ import gov.nasa.jpf.symbc.mixednumstrg.SpecialIntegerExpression;
 import gov.nasa.jpf.symbc.mixednumstrg.SpecialRealExpression;
 import gov.nasa.jpf.symbc.string.DerivedStringExpression;
 import gov.nasa.jpf.symbc.string.StringConstant;
+import gov.nasa.jpf.symbc.string.StringConstraint;
 import gov.nasa.jpf.symbc.string.StringExpression;
 import gov.nasa.jpf.symbc.string.StringSymbolic;
 import gov.nasa.jpf.symbc.string.SymbolicStringBuilder;
@@ -100,6 +101,12 @@ public abstract class ConstraintExpressionVisitor {
 	}
 
 	public void postVisit(RealConstraint constraint) {
+	}
+	
+	public void preVisit(StringConstraint stringConstraint) {		
+	}
+	
+	public void postVisit(StringConstraint stringConstraint) {		
 	}
 
 	/*--- EXPRESSION VISITOR ROUTINES ---*/
@@ -229,5 +236,7 @@ public abstract class ConstraintExpressionVisitor {
 
 	public void postVisit(SymbolicStringBuilder expr) {
 	}
+
+
 
 }

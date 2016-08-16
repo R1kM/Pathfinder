@@ -47,4 +47,6 @@ public abstract class Expression implements Comparable<Expression> {
     public abstract String stringPC();
     public abstract void getVarsVals(Map<String,Object> varsVals);
 	public abstract void accept(ConstraintExpressionVisitor visitor);
+	public String prefix_notation() {throw new RuntimeException("error printing");}
+	
 }

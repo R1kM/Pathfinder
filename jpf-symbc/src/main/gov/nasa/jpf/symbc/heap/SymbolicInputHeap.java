@@ -133,7 +133,7 @@ public class SymbolicInputHeap {
 		  }
 		  return nodes;
 	}
-	
+
     public ArrayHeapNode[] getArrayNodesOfType(ClassInfo type, int ref) {
         int numSymRefs = 0;
         HeapNode n = header;
@@ -166,6 +166,7 @@ public class SymbolicInputHeap {
         return nodes;
     }
 
+	
 	public String toString() {
 		return "SymbolicInputHeap = " + count + ((header == null) ? "" : "\n" + header.toString());
 	}

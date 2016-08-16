@@ -17,6 +17,7 @@
  */
 package gov.nasa.jpf.symbc.bytecode;
 
+import gov.nasa.jpf.symbc.numeric.IntegerConstant;
 import gov.nasa.jpf.symbc.numeric.IntegerExpression;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.StackFrame;
@@ -38,23 +39,26 @@ public class LUSHR extends gov.nasa.jpf.jvm.bytecode.LUSHR {
 	    if(sym_v1==null && sym_v2==null)
 	        return super.execute( th);// we'll still do the concrete execution
 	    else {
-	    	long v1 = sf.pop();
+	    	int v1 = sf.pop();
 	    	long v2 = sf.popLong();
 	    	sf.pushLong(0); // for symbolic expressions, the concrete value does not matter
 
 	    	IntegerExpression result = null;
 	    	if(sym_v1!=null) {
-	    		if (sym_v2!=null)
-	    			result = sym_v1._shiftUR(sym_v2);
-	    		else // v2 is concrete
-	    			result = sym_v1._shiftUR(v2);
+	    		if (sym_v2!=null) {
+					//result = sym_v1._shiftUR(sym_v2);
+					result = sym_v2._shiftUR(sym_v1);
+				}
+	    		else { // v2 is concrete
+					result = sym_v1._shiftUR(v2);
+					result = (new IntegerConstant((int) v2))._shiftUR(sym_v1);
+				}
 	    	}
-	    	else if (sym_v2!=null) {
-	    		result = sym_v2._shiftUR(v1);
+			else if (sym_v2 != null) {
+				result = sym_v2._shiftUR(v1);
+	    	}
 
-	    	}
 	    	sf.setLongOperandAttr(result);
-
 	    	return getNext(th);
 	    }
   }

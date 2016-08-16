@@ -1,8 +1,9 @@
-target = Arrays
+target = arrays.Arrays
 
-symbolic.method=Arrays.check_obj_length(sym#sym)
+symbolic.method=arrays.Arrays.check_obj_length(sym#sym)
 symbolic.lazy=on
 classpath=${jpf-symbc}/build/examples
 search.multiple_errors=true
 listener = gov.nasa.jpf.symbc.SymbolicListener
 symbolic.dp=z3
+symbolic.arrays=true

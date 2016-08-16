@@ -20,6 +20,7 @@ package gov.nasa.jpf.symbc.bytecode;
 import gov.nasa.jpf.vm.ClassInfo;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.MethodInfo;
+import gov.nasa.jpf.vm.MJIEnv;
 import gov.nasa.jpf.vm.ThreadInfo;
 
 // need to fix names
@@ -34,7 +35,7 @@ public class INVOKEVIRTUAL extends gov.nasa.jpf.jvm.bytecode.INVOKEVIRTUAL {
 	public Instruction execute( ThreadInfo th) {
 		int objRef = th.getCalleeThis(getArgSize());
 
-	    if (objRef == -1) {
+	    if (objRef == MJIEnv.NULL) {
 	      lastObj = -1;
 	      return th.createAndThrowException("java.lang.NullPointerException", "Calling '" + mname + "' on null object");
 	    }

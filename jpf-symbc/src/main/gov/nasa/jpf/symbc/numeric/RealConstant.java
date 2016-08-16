@@ -166,6 +166,11 @@ public class RealConstant extends RealExpression {
     return "CONST_" + value + "";
   }
 
+  public String prefix_notation ()
+	{
+		return ""+value;
+	}
+  
   public String stringPC () {
     return "CONST_" + value + "";
   }

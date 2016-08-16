@@ -78,6 +78,8 @@ package gov.nasa.jpf.symbc.string;
 		   NOTBOOLEAN(" notboolean ") { public StringComparator not() { return ISBOOLEAN; }},		   
 		   EMPTY(" empty ") { public StringComparator not() { return NOTEMPTY; }},
 		   NOTEMPTY(" notempty ") { public StringComparator not() { return EMPTY; }},	
+		   MATCHES(" matches ") { public StringComparator not() { return NOMATCHES; }},
+		   NOMATCHES(" nomatches ") { public StringComparator not() { return MATCHES; }},
 		   REGIONMATCHES(" regionmatches ") { public StringComparator not() { return NOREGIONMATCHES; }},	
 		   NOREGIONMATCHES(" noregionmatches ") { public StringComparator not() { return REGIONMATCHES; }};
 		   

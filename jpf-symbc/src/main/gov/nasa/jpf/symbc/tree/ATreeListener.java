@@ -46,7 +46,7 @@ public abstract class ATreeListener<T> extends PropertyListenerAdapter {
   protected Instruction executed;
   
   private final static String FILTER = "symbolic.tree.filter";
-  protected final Filter nodePredicate;
+  protected Filter nodePredicate;
   
   public ATreeListener(Config conf, JPF jpf) {
     this.symbolicMethodStarted = false;
@@ -80,7 +80,7 @@ public abstract class ATreeListener<T> extends PropertyListenerAdapter {
   @Override
   public void executeInstruction(VM vm, ThreadInfo currentThread, Instruction instructionToExecute) {
     if(isRelevantState(vm, currentThread)) {
-      if(nodePredicate.apply(executed, instructionToExecute)) {
+      if(nodePredicate.apply(executed, instructionToExecute, vm, currentThread)) {
         T node = this.nodeFactory.constructNode(prev, instructionToExecute, vm);
         this.prev = node; 
       }

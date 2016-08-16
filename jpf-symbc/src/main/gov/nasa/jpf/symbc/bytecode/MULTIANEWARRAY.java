@@ -50,11 +50,12 @@ public class MULTIANEWARRAY extends gov.nasa.jpf.jvm.bytecode.MULTIANEWARRAY {
 			Object attr = sf.getOperandAttr();
 			
 			if(attr instanceof SymbolicLengthInteger) {
-				arrayLengths[i] = ((SymbolicLengthInteger) attr).solution;
+				long l = ((SymbolicLengthInteger) attr).solution;
+				assert(l>=0 && l<=Integer.MAX_VALUE) : "Array length must be positive integer";
+				arrayLengths[i] = (int) l;
 				sf.pop();
 			} else 	if(attr instanceof IntegerExpression) {
-				arrayLengths[i] = ((IntegerExpression) attr).solution();
-				sf.pop();
+				throw new RuntimeException("MULTIANEWARRAY: symbolic array length");
 			} else {
 				arrayLengths[i] = sf.pop();
 			}

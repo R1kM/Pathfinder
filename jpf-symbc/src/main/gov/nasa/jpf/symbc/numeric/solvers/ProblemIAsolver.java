@@ -51,7 +51,7 @@ public class ProblemIAsolver extends ProblemGeneral {
 		pb = "";
 	}
 
-	public String makeIntVar(String name, int min, int max) {
+	public String makeIntVar(String name, long min, long max) {
 		pb = pb + name + " >= " + min + "; "+ name + " <= " + max + "; ";
 		return name;
 	}
@@ -61,8 +61,8 @@ public class ProblemIAsolver extends ProblemGeneral {
 		return name;
 	}
 
-	public Object eq(int value, Object exp){return  value + " = " + (String)exp + "; ";}
-	public Object eq(Object exp, int value){return  (String)exp + " = " + value + "; ";}
+	public Object eq(long value, Object exp){return  value + " = " + (String)exp + "; ";}
+	public Object eq(Object exp, long value){return  (String)exp + " = " + value + "; ";}
 	public Object eq(Object exp1, Object exp2){
 		return  (String)exp1 + " = " + (String)exp2 + "; ";
 	}
@@ -70,8 +70,8 @@ public class ProblemIAsolver extends ProblemGeneral {
 	public Object eq(double value, Object exp){return  String.format(format,value) + " = " + (String)exp + "; ";}
 	public Object eq(Object exp, double value){return  (String)exp + " = " + String.format(format,value) + "; ";}
 
-	public Object neq(int value, Object exp){return  value + " != " + (String)exp + "; ";}
-	public Object neq(Object exp, int value){return  (String)exp + " != " + value + "; ";}
+	public Object neq(long value, Object exp){return  value + " != " + (String)exp + "; ";}
+	public Object neq(Object exp, long value){return  (String)exp + " != " + value + "; ";}
 	public Object neq(Object exp1, Object exp2){
 		return  (String)exp1 + " != " + (String)exp2 + "; ";
 	}
@@ -79,24 +79,24 @@ public class ProblemIAsolver extends ProblemGeneral {
 	public Object neq(Object exp, double value){return  (String)exp + " != " + String.format(format,value) + "; ";}
 
 
-	public Object leq(int value, Object exp){return  value + " <= " + (String)exp + "; ";}
-	public Object leq(Object exp, int value){return  (String)exp + " <= " + value + "; ";}
+	public Object leq(long value, Object exp){return  value + " <= " + (String)exp + "; ";}
+	public Object leq(Object exp, long value){return  (String)exp + " <= " + value + "; ";}
 	public Object leq(Object exp1, Object exp2){
 		return  (String)exp1 + " <= " + (String)exp2 + "; ";
 	}
 	public Object leq(double value, Object exp){return  String.format(format,value) + " <= " + (String)exp + "; ";}
 	public Object leq(Object exp, double value){return  (String)exp + " <= " + String.format(format,value) + "; ";}
 
-	public Object geq(int value, Object exp){return  value + " >= " + (String)exp + "; ";}
-	public Object geq(Object exp, int value){return  (String)exp + " >= " + value + "; ";}
+	public Object geq(long value, Object exp){return  value + " >= " + (String)exp + "; ";}
+	public Object geq(Object exp, long value){return  (String)exp + " >= " + value + "; ";}
 	public Object geq(Object exp1, Object exp2){
 		return  (String)exp1 + " >= " + (String)exp2 + "; ";
 	}
 	public Object geq(double value, Object exp){return  String.format(format,value) + " >= " + (String)exp + "; ";}
 	public Object geq(Object exp, double value){return  (String)exp + " >= " + String.format(format,value) + "; ";}
 
-	public Object lt(int value, Object exp){return  value + " < " + (String)exp + "; ";}
-	public Object lt(Object exp, int value){return  (String)exp + " < " + value + "; ";}
+	public Object lt(long value, Object exp){return  value + " < " + (String)exp + "; ";}
+	public Object lt(Object exp, long value){return  (String)exp + " < " + value + "; ";}
 	public Object lt(Object exp1, Object exp2){
 		return  (String)exp1 + " < " + (String)exp2 + "; ";
 	}
@@ -104,34 +104,34 @@ public class ProblemIAsolver extends ProblemGeneral {
 	public Object lt(Object exp, double value){return  (String)exp + " < " + String.format(format,value) + "; ";}
 
 
-	public Object gt(int value, Object exp){return  value + " > " + (String)exp + "; ";}
-	public Object gt(Object exp, int value){return  (String)exp + " > " + value + "; ";}
+	public Object gt(long value, Object exp){return  value + " > " + (String)exp + "; ";}
+	public Object gt(Object exp, long value){return  (String)exp + " > " + value + "; ";}
 	public Object gt(Object exp1, Object exp2){
 		return  (String)exp1 + " > " + (String)exp2 + "; ";
 	}
 	public Object gt(double value, Object exp){return  String.format(format,value) + " > " + (String)exp + "; ";}
 	public Object gt(Object exp, double value){return  (String)exp + " > " + String.format(format,value) + "; ";}
 
-	public Object plus(int value, Object exp) {return  "("+value + "+" + exp +")" ;}
-	public Object plus(Object exp, int value) {return  "("+exp + "+" + value +")" ;}
+	public Object plus(long value, Object exp) {return  "("+value + "+" + exp +")" ;}
+	public Object plus(Object exp, long value) {return  "("+exp + "+" + value +")" ;}
 	public Object plus(Object exp1, Object exp2) {return  "("+exp1 + "+" + exp2 +")" ;}
 	public Object plus(double value, Object exp) {return  "("+String.format(format,value) + "+" + exp +")" ;}
 	public Object plus(Object exp, double value) {return  "("+exp + "+" + String.format(format,value) +")" ;}
 
-	public Object minus(int value, Object exp) {return  "("+value + "-" + exp +")" ;}
-	public Object minus(Object exp, int value) {return  "("+exp + "-" + value +")" ;}
+	public Object minus(long value, Object exp) {return  "("+value + "-" + exp +")" ;}
+	public Object minus(Object exp, long value) {return  "("+exp + "-" + value +")" ;}
 	public Object minus(Object exp1, Object exp2) {return  "("+exp1 + "-" + exp2 +")" ;}
 	public Object minus(double value, Object exp) {return  "("+String.format(format,value) + "-" + exp +")" ;}
 	public Object minus(Object exp, double value) {return  "("+exp + "-" + String.format(format,value) +")" ;}
 
-	public Object mult(int value, Object exp) {return  "("+value + "*" + exp +")" ;}
-	public Object mult(Object exp, int value) {return  "("+exp + "*" + value +")" ;}
+	public Object mult(long value, Object exp) {return  "("+value + "*" + exp +")" ;}
+	public Object mult(Object exp, long value) {return  "("+exp + "*" + value +")" ;}
 	public Object mult(Object exp1, Object exp2) {return  "("+exp1 + "*" + exp2 +")" ;}
 	public Object mult(double value, Object exp) {return  "("+String.format(format,value) + "*" + exp +")" ;}
 	public Object mult(Object exp, double value) {return  "("+exp + "*" + String.format(format,value) +")" ;}
 
-	public Object div(int value, Object exp) {return  "("+value + "/" + exp +")" ;}
-	public Object div(Object exp, int value) {return  "("+exp + "/" + value +")" ;}
+	public Object div(long value, Object exp) {return  "("+value + "/" + exp +")" ;}
+	public Object div(Object exp, long value) {return  "("+exp + "/" + value +")" ;}
 	public Object div(Object exp1, Object exp2) {return  "("+exp1 + "/" + exp2 +")" ;}
 	public Object div(double value, Object exp) {return  "("+String.format(format,value) + "/" + exp +")" ;}
 	public Object div(Object exp, double value) {return  "("+exp + "/" + String.format(format,value) +")" ;}
@@ -242,7 +242,7 @@ public class ProblemIAsolver extends ProblemGeneral {
 		throw new RuntimeException("# Error: IASolver can not compute real solution!");
 	}
 
-	public int getIntValue(Object dpVar) {
+	public long getIntValue(Object dpVar) {
 		throw new RuntimeException("# Error: IASolver can not compute int solution!");
 	}
 
@@ -268,11 +268,11 @@ public class ProblemIAsolver extends ProblemGeneral {
 		pb = pb + constraint;
 	}
 
-	public Object and(int value, Object exp) {
+	public Object and(long value, Object exp) {
 		throw new RuntimeException("## Error IASolver does not support bitwise AND");
 	}
 
-	public Object and(Object exp, int value) {
+	public Object and(Object exp, long value) {
 		throw new RuntimeException("## Error IASolver does not support bitwise AND");
 	}
 
@@ -281,12 +281,12 @@ public class ProblemIAsolver extends ProblemGeneral {
 	}
 
 	@Override
-	public Object or(int value, Object exp) {
+	public Object or(long value, Object exp) {
 		throw new RuntimeException("## Error IASolver does not support bitwise OR");
 	}
 
 	@Override
-	public Object or(Object exp, int value) {
+	public Object or(Object exp, long value) {
 		throw new RuntimeException("## Error IASolver does not support bitwise OR");
 	}
 
@@ -295,27 +295,27 @@ public class ProblemIAsolver extends ProblemGeneral {
 		throw new RuntimeException("## Error IASolver does not support bitwise OR");
 	}
 
-	public Object shiftL(int value, Object exp) {
+	public Object shiftL(long value, Object exp) {
 		throw new RuntimeException("## Error IASolver does not support bitwise SHIFT");
 	}
 
-	public Object shiftL(Object exp, int value) {
+	public Object shiftL(Object exp, long value) {
 		throw new RuntimeException("## Error IASolver does not support bitwise SHIFT");
 	}
 
-	public Object shiftR(int value, Object exp) {
+	public Object shiftR(long value, Object exp) {
 		throw new RuntimeException("## Error IASolver does not support bitwise SHIFT");
 	}
 
-	public Object shiftR(Object exp, int value) {
+	public Object shiftR(Object exp, long value) {
 		throw new RuntimeException("## Error IASolver does not support bitwise SHIFT");
 	}
 
-	public Object xor(int value, Object exp) {
+	public Object xor(long value, Object exp) {
 		throw new RuntimeException("## Error IASolver does not support bitwise XOR");
 	}
 
-	public Object xor(Object exp, int value) {
+	public Object xor(Object exp, long value) {
 		throw new RuntimeException("## Error IASolver does not support bitwise XOR");
 	}
 
@@ -331,12 +331,12 @@ public class ProblemIAsolver extends ProblemGeneral {
 		throw new RuntimeException("## Error IASolver does not support bitwise SHIFT");
 	}
 
-	public Object shiftUR(int value, Object exp) {
+	public Object shiftUR(long value, Object exp) {
 		throw new RuntimeException("## Error IASolver does not support bitwise SHIFT");
 
 	}
 
-	public Object shiftUR(Object exp, int value) {
+	public Object shiftUR(Object exp, long value) {
 		throw new RuntimeException("## Error IASolver does not support bitwise SHIFT");
 	}
 
@@ -348,6 +348,24 @@ public class ProblemIAsolver extends ProblemGeneral {
 	public void postLogicalOR(Object[] constraint) {
 		// TODO Auto-generated method stub
 		throw new RuntimeException("## Error IASolver does not support LogicalOR");
+	}
+
+	@Override
+	public Object rem(Object exp1, Object exp2) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Object rem(long exp1, Object exp2) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Object rem(Object exp1, long exp2) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 

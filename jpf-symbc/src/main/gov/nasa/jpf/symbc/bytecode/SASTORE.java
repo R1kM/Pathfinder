@@ -21,19 +21,11 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
-import gov.nasa.jpf.symbc.arrays.ArrayExpression;
-import gov.nasa.jpf.symbc.arrays.IntegerSymbolicArray;
-import gov.nasa.jpf.symbc.arrays.SymbolicIntegerValueAtIndex;
-import gov.nasa.jpf.symbc.arrays.PreviousIntegerArray;
-import gov.nasa.jpf.symbc.arrays.SelectExpression;
-import gov.nasa.jpf.symbc.arrays.StoreExpression;
 import gov.nasa.jpf.symbc.numeric.Comparator;
-import gov.nasa.jpf.symbc.numeric.IntegerConstant;
 import gov.nasa.jpf.symbc.numeric.IntegerExpression;
 import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
 import gov.nasa.jpf.symbc.numeric.PathCondition;
 import gov.nasa.jpf.vm.ArrayIndexOutOfBoundsExecutiveException;
-import gov.nasa.jpf.vm.ChoiceGenerator;
 import gov.nasa.jpf.vm.ElementInfo;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.MJIEnv;
@@ -46,143 +38,132 @@ import gov.nasa.jpf.vm.ThreadInfo;
  */
 public class SASTORE extends gov.nasa.jpf.jvm.bytecode.SASTORE {
 
-	 @Override
+	@Override
 	  public Instruction execute (ThreadInfo ti) {
-         // We may need to add the case where we have a smybolic index and a concrete array
-
-          IntegerExpression indexAttr = null;
-          IntegerSymbolicArray arrayAttr = null;
+		
+		 if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression))
+			  return super.execute(ti);
 		  StackFrame frame = ti.getModifiableTopFrame();
-
-          if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
-             //In this case, the array isn't symbolic
-             if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
-                 if (frame.getOperandAttr(0) == null || !(frame.getOperandAttr(0) instanceof IntegerExpression)) {
-                     // nothing is symbolic here
-                     return super.execute(ti);
-                 }
-             }
-          }
-
-
-          ChoiceGenerator<?> cg;
-          boolean condition;
-          int arrayRef = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
-
-          if (!ti.isFirstStepInsn()) { // first time around
-              cg = new PCChoiceGenerator(3);
-              ((PCChoiceGenerator) cg).setOffset(this.position);
-              ((PCChoiceGenerator) cg).setMethodName(this.getMethodInfo().getFullName());
-              ti.getVM().setNextChoiceGenerator(cg);
-              return this;
-          } else { // this is what really returns results
-            cg = ti.getVM().getChoiceGenerator();
-            assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
-          }
-          
-          PathCondition pc;
-          ChoiceGenerator<?> prev_cg = cg.getPreviousChoiceGeneratorOfType(PCChoiceGenerator.class);
-          
-          if (prev_cg == null)
-              pc = new PathCondition();
-          else
-              pc = ((PCChoiceGenerator)prev_cg).getCurrentPC();
-          
-          assert pc != null;
-
-		 if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
-              int index = ti.getTopFrame().peek(1);
-              indexAttr =  new IntegerConstant(index); 
-		  } else {
-              indexAttr = (IntegerExpression)peekIndexAttr(ti);
-          }
-          assert (indexAttr != null) : "indexAttr shouldn't be null in IASTORE instruction";
-  
-          if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
-             //In this case, the array isn't symbolic
-             if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
-                 if (frame.getOperandAttr(0) == null || !(frame.getOperandAttr(0) instanceof IntegerExpression)) {
-                     // nothing is symbolic here
-                     return super.execute(ti);
-                 }
-             } else {
-              // We create a symbolic array out of the concrete array
-               ElementInfo arrayInfo = ti.getElementInfo(arrayRef);   
-               arrayAttr = new IntegerSymbolicArray(arrayInfo.arrayLength());
-               // We add the constraints about all the elements of the array
-               for (int i = 0; i < arrayInfo.arrayLength(); i++) {
-                   int arrValue = arrayInfo.getShortElement(i);
-                   pc._addDet(Comparator.EQ, new SelectExpression(arrayAttr, i), new IntegerConstant(arrValue));
-               }
-             }
-          } else {
-            arrayAttr = (IntegerSymbolicArray)peekArrayAttr(ti);
-          }
-          assert (arrayAttr != null) : "arrayAttr shouldn't be null in IASTORE instruction";
-
-		  if (arrayRef == MJIEnv.NULL) {
+		  int arrayref = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
+		  ElementInfo eiArray = ti.getElementInfo(arrayref);
+		      
+		  if (arrayref == MJIEnv.NULL) {
 		        return ti.createAndThrowException("java.lang.NullPointerException");
 		  } 
+		  
+			
+		  int len=(eiArray.getArrayFields()).arrayLength(); // assumed concrete
+		  
+		  if(!ti.isFirstStepInsn()){
+			  PCChoiceGenerator arrayCG = new PCChoiceGenerator(0,len+1); // add 2 error cases: <0, >=len  
+			  ti.getVM().getSystemState().setNextChoiceGenerator(arrayCG);
+			  
+	          //ti.reExecuteInstruction();
+			  if (SymbolicInstructionFactory.debugMode)
+				  System.out.println("# array cg registered: " + arrayCG);
+	          return this;
 
-          
-          if ((Integer)cg.getNextChoice() == 1) { // check bounds of the index
-              pc._addDet(Comparator.GE, indexAttr, arrayAttr.length);
-              if (pc.simplify()) { // satisfiable
-                  ((PCChoiceGenerator) cg).setCurrentPC(pc);
-                  return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException", "index greater than array bounds");
-              }
-              else {
-                  ti.getVM().getSystemState().setIgnored(true);
-                  return getNext(ti);
-              }
-          }
-          else if ((Integer)cg.getNextChoice() == 2) {
-              pc._addDet(Comparator.LT, indexAttr, new IntegerConstant(0));
-              if (pc.simplify()) { // satisfiable
-                  ((PCChoiceGenerator) cg).setCurrentPC(pc);
-                  return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException", "index smaller than array bounds");
-              }
-              else {
-                  ti.getVM().getSystemState().setIgnored(true);
-                  return getNext(ti);
-              }
-          }
-          else {
-              pc._addDet(Comparator.LT, indexAttr, arrayAttr.length);
-              pc._addDet(Comparator.GE, indexAttr, new IntegerConstant(0));
-              if (pc.simplify()) { // satisfiable
-                  ((PCChoiceGenerator) cg).setCurrentPC(pc);
-                  
-                  // set the result                 
+	      } else { //this is what really returns results
+	    	  
+			    
 
-                  // We have to check if the value is symbolic or not, create a symbolicIntegerValueatIndex out of it, and 
-                  // call the setVal function, before storing the attr 
-                  IntegerExpression sym_value = null;
-		          if (frame.getOperandAttr(0) == null || !(frame.getOperandAttr(0) instanceof IntegerExpression)) {
-                      // The value isn't symbolic. We store a new IntegerConstant in the valAt map, at index indexAttr
-                      int value = frame.pop();
-                      sym_value = new IntegerConstant(value);
-                  }
-                  else {
-                      // The value is symbolic.
-                      sym_value = (IntegerExpression)frame.getOperandAttr(0);
-                      frame.pop();
-                  }
-                  PreviousIntegerArray previous = new PreviousIntegerArray(arrayAttr, indexAttr, sym_value);
-                  // We create a new arrayAttr, and inherits information from the previous attribute
-                  IntegerSymbolicArray newArrayAttr = new IntegerSymbolicArray(previous);
-                  frame.pop(2); // We pop the array and the index
+			    //index = frame.peek();
+			    PCChoiceGenerator lastCG=ti.getVM().getSystemState().getLastChoiceGeneratorOfType(PCChoiceGenerator.class); 
+			    assert(lastCG!=null);
+			    PCChoiceGenerator prevCG=lastCG.getPreviousChoiceGeneratorOfType(PCChoiceGenerator.class);
+			    
+			    index=lastCG.getNextChoice();
+			    IntegerExpression sym_index=(IntegerExpression)peekIndexAttr(ti);
+			    //check the constraint
+			    
+			    PathCondition pc;
+				
+				if (prevCG == null)
+					pc = new PathCondition();
+				else
+					pc = ((PCChoiceGenerator)prevCG).getCurrentPC();
 
-                  StoreExpression se = new StoreExpression(arrayAttr, indexAttr, sym_value);
-                  pc._addDet(Comparator.EQ, se, newArrayAttr);
+				assert pc != null;
 
-                  return getNext(ti);
-             }
-             else {
-                 ti.getVM().getSystemState().setIgnored(true);
-                 return getNext(ti);
-             }
-          }
-      }
+				if(index<len) { 
+					pc._addDet(Comparator.EQ,index,sym_index);
+					if(pc.simplify())  { // satisfiable
+						((PCChoiceGenerator) lastCG).setCurrentPC(pc);
+					}
+					else {
+						ti.getVM().getSystemState().setIgnored(true);//backtrack
+						return getNext(ti);
+					}
+				} 
+				// now check for out of bounds exceptions
+				else if(index==len) {
+					pc._addDet(Comparator.LT,sym_index,0);
+					if(pc.simplify())  { // satisfiable
+						((PCChoiceGenerator) lastCG).setCurrentPC(pc);
+						return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException");
+					}
+					else {
+						ti.getVM().getSystemState().setIgnored(true);//backtrack
+						return getNext(ti);
+					}
+				}
+				else if(index==len+1) {
+					pc._addDet(Comparator.GE,sym_index,len);
+					if(pc.simplify())  { // satisfiable
+						((PCChoiceGenerator) lastCG).setCurrentPC(pc);
+						return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException");
+					}
+					else {
+						ti.getVM().getSystemState().setIgnored(true);//backtrack
+						return getNext(ti);
+					}
+				}
+			    
+			   
+			    //original code for concrete execution
+		 
+
+	    //int idx = peekIndex(ti);
+	    int aref = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
+	    
+	    arrayOperandAttr = peekArrayAttr(ti);
+	    indexOperandAttr = peekIndexAttr(ti);
+	    
+	    
+	      //--- shared access CG
+	      /*ignore POR for now TODO
+	      Scheduler scheduler = ti.getScheduler();
+	      if (scheduler.canHaveSharedArrayCG(ti, this, eiArray, idx)){
+	        eiArray = scheduler.updateArraySharedness(ti, eiArray, idx);
+	        if (scheduler.setsSharedArrayCG(ti, this, eiArray, idx)){
+	          return this;
+	        }
+	      }
+	    }
+	    */
+	   
+	    try {
+	      //setArrayElement(ti, frame, eiArray); // this pops operands
+	    	int esize = getElementSize();
+	        Object attr = esize == 1 ? frame.getOperandAttr() : frame.getLongOperandAttr();
+	        
+	        popValue(frame);
+	        frame.pop();
+	        // don't set 'arrayRef' before we do the CG checks (would kill loop optimization)
+	        arrayRef = frame.pop();
+
+	        eiArray = eiArray.getModifiableInstance();
+	        setField(eiArray, index);
+	        eiArray.setElementAttrNoClone(index,attr); // <2do> what if the value is the same but not the attr?
+	     
+	    } catch (ArrayIndexOutOfBoundsExecutiveException ex) { // at this point, the AIOBX is already processed
+	      return ex.getInstruction();
+	    }
+
+	    return getNext(ti);
+	      }
+	 }
+	
+	
 	 
 }

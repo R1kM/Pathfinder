@@ -46,10 +46,9 @@ public class MathRealExpression extends RealExpression
 	public MathFunction   op;
 	//int exp; // for power
 
-	public MathRealExpression (final MathFunction o, final RealExpression a)
+	public MathRealExpression (MathFunction o, RealExpression a)
 	{
 		assert
-		o == MathFunction.ABS || //Added for dReal by Nima
 		o == MathFunction.SIN || o == MathFunction.COS ||
 		o == MathFunction.EXP ||
 		o == MathFunction.ASIN || o == MathFunction.ACOS ||
@@ -70,7 +69,7 @@ public class MathRealExpression extends RealExpression
 //
 //	}
 
-	public MathRealExpression (final MathFunction o, final RealExpression a1, final double a2)
+	public MathRealExpression (MathFunction o, RealExpression a1, double a2)
 	{
 		assert
 		o == MathFunction.POW || o == MathFunction.ATAN2;
@@ -80,7 +79,7 @@ public class MathRealExpression extends RealExpression
 
 	}
 
-	public MathRealExpression (final MathFunction o, final double a1, final RealExpression a2)
+	public MathRealExpression (MathFunction o, double a1, RealExpression a2)
 	{
 		assert
 		o == MathFunction.POW || o == MathFunction.ATAN2;
@@ -89,7 +88,7 @@ public class MathRealExpression extends RealExpression
 		arg2 = a2;
 
 	}
-	public MathRealExpression (final MathFunction o, final RealExpression a1, final RealExpression a2)
+	public MathRealExpression (MathFunction o, RealExpression a1, RealExpression a2)
 	{
 		assert
 		o == MathFunction.POW || o == MathFunction.ATAN2;
@@ -111,13 +110,11 @@ public class MathRealExpression extends RealExpression
 		return op;
 	}
 
-	@Override
-  public double solution()
+	public double solution()
 	{
-		final double a1 = (arg1==null?0:arg1.solution());
-	    final double a2 = (arg2==null?0:arg2.solution());
+		double a1 = (arg1==null?0:arg1.solution());
+	    double a2 = (arg2==null?0:arg2.solution());
 		switch(op){
-		   case ABS: return Math.abs(a1); // Added for dReal by Nima
 		   case COS:  return Math.cos(a1);
 		   case SIN:  return Math.sin(a1);
 		   case EXP: return Math.exp(a1);
@@ -134,16 +131,13 @@ public class MathRealExpression extends RealExpression
 		}
 	}
 
-    @Override
-    public void getVarsVals(final Map<String,Object> varsVals) {
+    public void getVarsVals(Map<String,Object> varsVals) {
     	if (arg1 != null) arg1.getVarsVals(varsVals);
     	if (arg2 != null) arg2.getVarsVals(varsVals);
     }
 
-	@Override
-  public String stringPC() {
-		if (op == MathFunction.ABS || //Added for dReal by Nima
-		    op == MathFunction.SIN || op == MathFunction.COS ||
+	public String stringPC() {
+		if (op == MathFunction.SIN || op == MathFunction.COS ||
 			op == MathFunction.EXP ||
 			op == MathFunction.ASIN || op == MathFunction.ACOS ||
 			op == MathFunction.ATAN || op == MathFunction.LOG ||
@@ -153,10 +147,8 @@ public class MathRealExpression extends RealExpression
 			return "(" + op.toString() + "(" + arg1.stringPC() + "," + arg2.stringPC() + "))";
 	}
 
-	@Override
-  public String toString () {
-		if (op == MathFunction.ABS || //Added for dReal by Nima
-		    op == MathFunction.SIN || op == MathFunction.COS ||
+	public String toString () {
+		if (op == MathFunction.SIN || op == MathFunction.COS ||
 				op == MathFunction.EXP ||
 				op == MathFunction.ASIN || op == MathFunction.ACOS ||
 				op == MathFunction.ATAN || op == MathFunction.LOG ||
@@ -167,7 +159,7 @@ public class MathRealExpression extends RealExpression
 	}
 	
 	@Override
-	public void accept(final ConstraintExpressionVisitor visitor) {
+	public void accept(ConstraintExpressionVisitor visitor) {
 		visitor.preVisit(this);
 		if (arg1 != null) {
 			arg1.accept(visitor);
@@ -179,9 +171,9 @@ public class MathRealExpression extends RealExpression
 	}
 
 	@Override
-	public int compareTo(final Expression expr) {
+	public int compareTo(Expression expr) {
 		if (expr instanceof MathRealExpression) {
-			final MathRealExpression e = (MathRealExpression) expr;
+			MathRealExpression e = (MathRealExpression) expr;
 			int r = getOp().compareTo(e.getOp());
 			if (r == 0) {
 				if (getArg1() != null) {

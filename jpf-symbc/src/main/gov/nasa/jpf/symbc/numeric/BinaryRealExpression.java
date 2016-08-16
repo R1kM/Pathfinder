@@ -80,6 +80,11 @@ public class BinaryRealExpression extends RealExpression
 		return "(" + left.toString() + op.toString() + right.toString() + ")";
 	}
 
+	public String prefix_notation ()
+	{
+		return "(" + op.prefix_notation() + " "+left.prefix_notation()+" "  + right.prefix_notation() + ")";
+	}
+	
 	public Operator getOp() {
 		return op;
 	}

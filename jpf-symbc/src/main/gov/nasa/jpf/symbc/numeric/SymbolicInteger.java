@@ -44,11 +44,11 @@ import java.util.Random;
 
 public class SymbolicInteger extends LinearIntegerExpression
 {
-	public static int UNDEFINED = Integer.MIN_VALUE;;
-	public int _min = 0;
-	public int _max = 0;
-	public int solution = UNDEFINED; // C
-
+	public static long UNDEFINED = Long.MIN_VALUE;
+	public long _min = 0;
+	public long _max = 0;
+	public long solution = UNDEFINED; // C
+	
 	int unique_id;
 
 	public static String SYM_INT_SUFFIX = "_SYMINT";
@@ -61,6 +61,8 @@ public class SymbolicInteger extends LinearIntegerExpression
 		name = "INT_" + hashCode();
 		_min = MinMax.getVarMinInt(name);
 		_max = MinMax.getVarMaxInt(name);
+		if (SymbolicInstructionFactory.debugMode)
+			System.out.println("New sym int " + name + " min=" + _min + ", max=" + _max);
 	}
 
 	public SymbolicInteger (String s) {
@@ -71,19 +73,22 @@ public class SymbolicInteger extends LinearIntegerExpression
 		_min = MinMax.getVarMinInt(name);
 		_max = MinMax.getVarMaxInt(name);
 		//trackedSymVars.add(fixName(name));
-
+		if (SymbolicInstructionFactory.debugMode)
+			System.out.println("New sym int " + name + " min=" + _min + ", max=" + _max);
 	}
 
-	public SymbolicInteger (int l, int u) {
+	public SymbolicInteger (long l, long u) {
 		super();
 		unique_id = MinMax.UniqueId++;
 		_min = l;
 		_max = u;
 		//PathCondition.flagSolved=false;
-    name = "INT_" + hashCode();
+		name = "INT_" + hashCode();
+		if (SymbolicInstructionFactory.debugMode)
+			System.out.println("New sym int " + name + " min=" + _min + ", max=" + _max);
 	}
 
-	public SymbolicInteger (String s, int l, int u) {
+	public SymbolicInteger (String s, long l, long u) {
 		super();
 		unique_id = MinMax.UniqueId++;
 		_min = l;
@@ -91,10 +96,10 @@ public class SymbolicInteger extends LinearIntegerExpression
 		name = s;
 		//PathCondition.flagSolved=false;
 		//trackedSymVars.add(fixName(name));
-
+		if (SymbolicInstructionFactory.debugMode)
+			System.out.println("New sym int " + name + " min=" + _min + ", max=" + _max);
 	}
-
-
+	
 	public String getName() {
 		return (name != null) ? name : "INT_" + hashCode();
 	}
@@ -112,11 +117,16 @@ public class SymbolicInteger extends LinearIntegerExpression
 				"INT_" + hashCode() + "[" + solution + "]";
 		}
 	}
+	
+	public String prefix_notation ()
+	{
+		return (name != null) ? name : "INT_" + hashCode();
+	}
 
-	public int solution() {
+	public long solution() {
 		if (PathCondition.flagSolved) {
 			if (solution == UNDEFINED && SymbolicInstructionFactory.concolicMode) {
-				solution = (new Random().nextInt(_max-_min))+_min;
+				solution = (new Random().nextLong() % (_max-_min)) + _min;
 			}
 			return solution;
 		}

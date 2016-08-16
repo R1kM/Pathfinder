@@ -47,27 +47,31 @@ public class IAND extends gov.nasa.jpf.jvm.bytecode.IAND {
 		StackFrame sf = th.getModifiableTopFrame();
 		IntegerExpression sym_v1 = (IntegerExpression) sf.getOperandAttr(0); 
 		IntegerExpression sym_v2 = (IntegerExpression) sf.getOperandAttr(1);
-		
-		if(sym_v1==null && sym_v2==null)
+
+		if (sym_v1 == null && sym_v2 == null) {
 			return super.execute(th); // we'll still do the concrete execution
+		}
 		else {
 			int v1 = sf.pop();
 			int v2 = sf.pop();
 			sf.push(0, false); // for symbolic expressions, the concrete value does not matter
 		
 			IntegerExpression result = null;
-			if(sym_v1!=null) {
-				if (sym_v2!=null)
-					result = sym_v1._and(sym_v2);
-				else // v2 is concrete
-					result = sym_v1._and(v2);
+			if (sym_v1 != null) {
+				if (sym_v2 != null) {
+					//result = sym_v1._and(sym_v2);
+					result = sym_v2._and(sym_v1);
+				}
+				else { // v2 is concrete
+					//result = sym_v1._and(v2);
+					result = (new IntegerConstant((int) v2))._and(sym_v1);
+				}
 			}
-			else if (sym_v2!=null)
+			else if (sym_v2 != null) {
 				result = sym_v2._and(v1);
+			}
+
 			sf.setOperandAttr(result);
-		
-			//System.out.println("Execute IADD: "+result);
-		
 			return getNext(th);
 		}
 	}	

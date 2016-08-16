@@ -176,4 +176,22 @@ public abstract class Constraint implements Comparable<Constraint> {
 		visitor.postVisit(this);
 	}
 
+	public String prefix_notation() {
+		//return left.toString() + comp.toString() + right.toString()
+		        //+ ((and == null) ? "" : " && " + and.toString()); -- for specialization
+		  //      + ((and == null) ? "" : " &&\n" + and.toString());
+		// Sang: rewrite NE in z3's notation: (a != b) becomes (not (= a b))
+		String result = null;
+		if (comp == Comparator.NE){
+			result = "(not ( = " + left.prefix_notation() + " " + right.prefix_notation() +"))";
+		}
+		else{
+			result = " ("+ comp.toString() +" "+ left.prefix_notation() +" " + right.prefix_notation() +")";
+		}
+		if(and!=null) result = "(and "+and.prefix_notation()+" "+result+")";
+		return result;
+	}
+
+	
+
 }

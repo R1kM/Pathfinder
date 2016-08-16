@@ -37,98 +37,135 @@
 
 package gov.nasa.jpf.symbc.numeric.solvers;
 
+import java.util.*;
+
 //TODO: problem: we do not distinguish between ints and reals?
 // still needs a lot of work: do not use!
 
 
-import java.util.HashMap;
-import java.util.List;
+import com.microsoft.z3.*;
 
-import com.microsoft.z3.ArithExpr;
-import com.microsoft.z3.ArrayExpr;
-import com.microsoft.z3.BoolExpr;
-import com.microsoft.z3.Context;
-import com.microsoft.z3.Expr;
-import com.microsoft.z3.IntExpr;
-import com.microsoft.z3.Model;
-import com.microsoft.z3.RealExpr;
-import com.microsoft.z3.Sort;
-import com.microsoft.z3.Solver;
-import com.microsoft.z3.Status;
-
-
+import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
+import symlib.Util;
 
 public class ProblemZ3 extends ProblemGeneral {
-	Context ctx;
-	Solver solver;
+
+  //This class acts as a safeguard to prevent
+  //issues when referencing ProblemZ3 in case the z3 libs are
+  //not on the ld_library_path. If the
+  //Z3 solver object and context were class fields,
+  //we would likely encounter a linker error
+	private static class Z3Wrapper {
+		private Context ctx;
+		private Solver solver;
+
+		private static Z3Wrapper instance = null;
+
+		public static Z3Wrapper getInstance() {
+			if (instance != null) {
+				return instance;
+			}
+			return instance = new Z3Wrapper();
+		}
+
+		private Z3Wrapper() {
+			HashMap<String, String> cfg = new HashMap<String, String>();
+			cfg.put("model", "true");
+			ctx = new Context(cfg);
+			solver = ctx.mkSolver();
+		}
+
+		public Solver getSolver() {
+			return this.solver;
+		}
+
+		public Context getCtx() {
+			return this.ctx;
+		}
+	}
+
+	private Solver solver;
+	private Context ctx;
+
+	// Do we use the floating point theory or linear arithmetic over reals
+	private boolean useFpForReals = false;
 
 	public ProblemZ3() {
-		HashMap<String, String> cfg = new HashMap<String, String>();
-        cfg.put("model", "true");
+		Z3Wrapper z3 = Z3Wrapper.getInstance();
+		solver = z3.getSolver();
+		ctx = z3.getCtx();
+		solver.push();
+		useFpForReals = SymbolicInstructionFactory.fp;
+	}
 
-		try{
-			ctx = new Context(cfg);
-			solver = ctx.MkSolver();
-			 
+	public void cleanup() {
+		int scopes = solver.getNumScopes();
+		if (scopes > 0) {
+			solver.pop(scopes);
+		}
+	}
+
+//	public ProblemZ3() {
+//		HashMap<String, String> cfg = new HashMap<String, String>();
+//		cfg.put("model", "true");
+//		ctx = new Context(cfg);
+//		solver = ctx.mkSolver();
+//	}
+//
+//	public void cleanup() {
+//		this.solver.reset();
+//		this.ctx.dispose();
+//	}
+
+	public Object makeIntVar(String name, long min, long max) {
+		try {
+			IntExpr intConst = ctx.mkIntConst(name);
+			solver.add(ctx.mkGe(intConst, ctx.mkInt(min)));
+			solver.add(ctx.mkLe(intConst, ctx.mkInt(max)));
+			return intConst;
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
+			throw new RuntimeException("## Error Z3: Exception caught in makeIntVar: \n" + e);
 	    }
 	}
 
-
-	//if min or max are passed in as null objects 
-	//it will use minus and plus infinity
-	// TODO: to add ranges
-	public Object makeIntVar(String name, int min, int max) {
-		try{
-			
-			return ctx.MkIntConst(name);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
-
-	    }
-	}
-
-
-	// TODO: to add ranges
 	public Object makeRealVar(String name, double min, double max) {
-
-		try{
-			return ctx.MkReal(name); 
+		try {
+			if (useFpForReals) {
+				Expr expr = ctx.mkConst(name, ctx.mkFPSortDouble());
+				solver.add(ctx.mkFPGt((FPExpr) expr, ctx.mkFP(min, ctx.mkFPSortDouble())));
+				solver.add(ctx.mkFPLt((FPExpr) expr, ctx.mkFP(max, ctx.mkFPSortDouble())));
+				return expr;
+			} else {
+				RealExpr expr = ctx.mkRealConst(name);
+				solver.add(ctx.mkGe(expr, ctx.mkReal("" + min)));
+				solver.add(ctx.mkLe(expr, ctx.mkReal("" + max)));
+				return expr;
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
-
 	    }
 	}
 
-	public Object eq(int value, Object exp){
-		try{
-			return ctx.MkEq( ctx.MkInt(value), (IntExpr)exp);
-			
+	public Object eq(long value, Object exp){
+		try {
+			return ctx.mkEq( ctx.mkInt(value), (Expr)exp);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
-
 	    }
 	}
 
-	public Object eq(Object exp, int value){
-		try{
-			return ctx.MkEq( ctx.MkInt(value), (IntExpr)exp);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
+	public Object eq(Object exp, long value){
 
-	    }
+		return ctx.mkEq(ctx.mkInt(value), (Expr)exp);
 	}
 
 	// should we use Expr or ArithExpr?
 	public Object eq(Object exp1, Object exp2){
 		try{
-			return  ctx.MkEq((Expr)exp1, (Expr)exp2);
+			return  ctx.mkEq((Expr)exp1, (Expr)exp2);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
@@ -157,42 +194,30 @@ public class ProblemZ3 extends ProblemGeneral {
 //	    }
 //	}
 
-	public Object neq(int value, Object exp){
-		try{
-			return ctx.MkNot(ctx.MkEq(ctx.MkInt(value), (IntExpr)exp));
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
-
-	    }
+	public Object neq(long value, Object exp){
+		return ctx.mkNot(ctx.mkEq(ctx.mkInt(value), (Expr)exp));
 	}
 
-	public Object neq(Object exp, int value){
-		try{
-			return ctx.MkNot(ctx.MkEq(ctx.MkInt(value), (IntExpr)exp));
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
-
-	    }
+	
+	public Object neq(Object exp, long value){
+		return ctx.mkNot(ctx.mkEq(ctx.mkInt(value), (Expr) exp));
 	}
 
 	public Object neq(Object exp1, Object exp2){
 		try{
-			return  ctx.MkNot(ctx.MkEq((Expr)exp1, (Expr)exp2));
+			return  ctx.mkNot(ctx.mkEq((Expr)exp1, (Expr)exp2));
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
-
 	    }
 	}
 
 	public Object not(Object exp1){
 		try{
-			return  ctx.MkNot((BoolExpr)exp1);
+			return  ctx.mkNot((BoolExpr)exp1);
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new RuntimeException("## Error CVC3: Exception caught in CVC3 JNI: \n" + e);
+			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 
 	    }
 	}
@@ -203,7 +228,7 @@ public class ProblemZ3 extends ProblemGeneral {
 //			return  vc.notExpr(vc.eqExpr(vc.ratExpr(Double.toString(value), base), (Expr)exp));
 //		} catch (Exception e) {
 //			e.printStackTrace();
-//			throw new RuntimeException("## Error CVC3: Exception caught in CVC3 JNI: \n" + e);
+//			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 //
 //	    }
 //	}
@@ -213,14 +238,14 @@ public class ProblemZ3 extends ProblemGeneral {
 //			return  vc.notExpr(vc.eqExpr((Expr)exp, vc.ratExpr(Double.toString(value), base)));
 //		} catch (Exception e) {
 //			e.printStackTrace();
-//			throw new RuntimeException("## Error CVC3: Exception caught in CVC3 JNI: \n" + e);
+//			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 //
 //	    }
 //	}
 
-	public Object leq(int value, Object exp){
+	public Object leq(long value, Object exp){
 		try{
-			return  ctx.MkLe(ctx.MkInt(value), (IntExpr)exp);
+			return  ctx.mkLe(ctx.mkInt(value), (IntExpr)exp);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
@@ -228,9 +253,9 @@ public class ProblemZ3 extends ProblemGeneral {
 	    }
 	}
 
-	public Object leq(Object exp, int value){
+	public Object leq(Object exp, long value){
 		try{
-			return  ctx.MkLe((IntExpr)exp,ctx.MkInt(value));
+			return  ctx.mkLe((IntExpr)exp,ctx.mkInt(value));
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
@@ -240,7 +265,7 @@ public class ProblemZ3 extends ProblemGeneral {
 
 	public Object leq(Object exp1, Object exp2){
 		try{
-			return  ctx.MkLe((ArithExpr)exp1, (ArithExpr)exp2);
+			return  ctx.mkLe((ArithExpr)exp1, (ArithExpr)exp2);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
@@ -253,7 +278,7 @@ public class ProblemZ3 extends ProblemGeneral {
 //			return  vc.leExpr(vc.ratExpr(Double.toString(value), base), (Expr)exp);
 //		} catch (Exception e) {
 //			e.printStackTrace();
-//			throw new RuntimeException("## Error CVC3: Exception caught in CVC3 JNI: \n" + e);
+//			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 //
 //	    }
 //	}
@@ -263,14 +288,14 @@ public class ProblemZ3 extends ProblemGeneral {
 //			return  vc.leExpr((Expr)exp, vc.ratExpr(Double.toString(value), base));
 //		} catch (Exception e) {
 //			e.printStackTrace();
-//			throw new RuntimeException("## Error CVC3: Exception caught in CVC3 JNI: \n" + e);
+//			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 //
 //	    }
 //	}
 //
-	public Object geq(int value, Object exp){
+	public Object geq(long value, Object exp){
 		try{
-			return  ctx.MkGe(ctx.MkInt(value),(IntExpr)exp);
+			return  ctx.mkGe(ctx.mkInt(value),(IntExpr)exp);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
@@ -278,9 +303,9 @@ public class ProblemZ3 extends ProblemGeneral {
 	    }
 	}
 
-	public Object geq(Object exp, int value){
+	public Object geq(Object exp, long value){
 		try{
-			return  ctx.MkGe((IntExpr)exp,ctx.MkInt(value));
+			return  ctx.mkGe((IntExpr)exp,ctx.mkInt(value));
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
@@ -290,7 +315,7 @@ public class ProblemZ3 extends ProblemGeneral {
 
 	public Object geq(Object exp1, Object exp2){
 		try{
-			return  ctx.MkGe((ArithExpr)exp1,(ArithExpr)exp2);
+			return  ctx.mkGe((ArithExpr)exp1,(ArithExpr)exp2);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
@@ -303,7 +328,7 @@ public class ProblemZ3 extends ProblemGeneral {
 //			return  vc.geExpr(vc.ratExpr(Double.toString(value), base), (Expr)exp);
 //		} catch (Exception e) {
 //			e.printStackTrace();
-//			throw new RuntimeException("## Error CVC3: Exception caught in CVC3 JNI: \n" + e);
+//			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 //
 //	    }
 //	}
@@ -313,14 +338,14 @@ public class ProblemZ3 extends ProblemGeneral {
 //			return  vc.geExpr((Expr)exp, vc.ratExpr(Double.toString(value), base));
 //		} catch (Exception e) {
 //			e.printStackTrace();
-//			throw new RuntimeException("## Error CVC3: Exception caught in CVC3 JNI: \n" + e);
+//			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 //
 //	    }
 //	}
 //
-	public Object lt(int value, Object exp){
+	public Object lt(long value, Object exp){
 		try{
-			return  ctx.MkLt(ctx.MkInt(value),(IntExpr)exp);
+			return  ctx.mkLt(ctx.mkInt(value),(IntExpr)exp);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
@@ -328,9 +353,9 @@ public class ProblemZ3 extends ProblemGeneral {
 	    }
 	}
 
-	public Object lt(Object exp, int value){
+	public Object lt(Object exp, long value){
 		try{
-			return  ctx.MkLt((IntExpr)exp,ctx.MkInt(value));
+			return  ctx.mkLt((IntExpr)exp,ctx.mkInt(value));
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
@@ -340,7 +365,7 @@ public class ProblemZ3 extends ProblemGeneral {
 
 	public Object lt(Object exp1, Object exp2){
 		try{
-			return  ctx.MkLt((ArithExpr)exp1,(ArithExpr)exp2);
+			return  ctx.mkLt((ArithExpr)exp1,(ArithExpr)exp2);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
@@ -353,7 +378,7 @@ public class ProblemZ3 extends ProblemGeneral {
 //			return  vc.ltExpr(vc.ratExpr(Double.toString(value), base), (Expr)exp);
 //		} catch (Exception e) {
 //			e.printStackTrace();
-//			throw new RuntimeException("## Error CVC3: Exception caught in CVC3 JNI: \n" + e);
+//			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 //
 //	    }
 //	}
@@ -363,15 +388,15 @@ public class ProblemZ3 extends ProblemGeneral {
 //			return  vc.ltExpr((Expr)exp, vc.ratExpr(Double.toString(value), base));
 //		} catch (Exception e) {
 //			e.printStackTrace();
-//			throw new RuntimeException("## Error CVC3: Exception caught in CVC3 JNI: \n" + e);
+//			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 //
 //	    }
 //	}
 //
 //
-	public Object gt(int value, Object exp){
+	public Object gt(long value, Object exp){
 		try{
-			return  ctx.MkGt(ctx.MkInt(value),(IntExpr)exp);
+			return  ctx.mkGt(ctx.mkInt(value),(IntExpr)exp);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
@@ -379,9 +404,9 @@ public class ProblemZ3 extends ProblemGeneral {
 	    }
 	}
 
-	public Object gt(Object exp, int value){
+	public Object gt(Object exp, long value){
 		try{
-			return  ctx.MkGt((IntExpr)exp,ctx.MkInt(value));
+			return  ctx.mkGt((IntExpr)exp,ctx.mkInt(value));
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
@@ -391,7 +416,7 @@ public class ProblemZ3 extends ProblemGeneral {
 
 	public Object gt(Object exp1, Object exp2){
 		try{
-			return  ctx.MkGt((ArithExpr)exp1,(ArithExpr)exp2);
+			return  ctx.mkGt((ArithExpr)exp1,(ArithExpr)exp2);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
@@ -404,7 +429,7 @@ public class ProblemZ3 extends ProblemGeneral {
 //			return  vc.impliesExpr((Expr)exp1, (Expr)exp2);
 //		} catch (Exception e) {
 //			e.printStackTrace();
-//			throw new RuntimeException("## Error CVC3: Exception caught in CVC3 JNI: \n" + e);
+//			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 //
 //	    }
 //	}
@@ -414,7 +439,7 @@ public class ProblemZ3 extends ProblemGeneral {
 //			return  vc.gtExpr(vc.ratExpr(Double.toString(value), base), (Expr)exp);
 //		} catch (Exception e) {
 //			e.printStackTrace();
-//			throw new RuntimeException("## Error CVC3: Exception caught in CVC3 JNI: \n" + e);
+//			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 //
 //	    }
 //	}
@@ -424,7 +449,7 @@ public class ProblemZ3 extends ProblemGeneral {
 //			return  vc.gtExpr((Expr)exp, vc.ratExpr(Double.toString(value), base));
 //		} catch (Exception e) {
 //			e.printStackTrace();
-//			throw new RuntimeException("## Error CVC3: Exception caught in CVC3 JNI: \n" + e);
+//			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 //
 //	    }
 //	}
@@ -432,18 +457,18 @@ public class ProblemZ3 extends ProblemGeneral {
 //
 //
 //
-	public Object plus(int value, Object exp) {
+	public Object plus(long value, Object exp) {
 		try{
-			return  ctx.MkAdd(new ArithExpr[] { ctx.MkInt(value), (IntExpr)exp});
+			return  ctx.mkAdd(new ArithExpr[] { ctx.mkInt(value), (IntExpr)exp});
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 		}
 	}
 
-	public Object plus(Object exp, int value) {
+	public Object plus(Object exp, long value) {
 		try{
-			return  ctx.MkAdd(new ArithExpr[] { ctx.MkInt(value), (IntExpr)exp});
+			return  ctx.mkAdd(new ArithExpr[] { ctx.mkInt(value), (IntExpr)exp});
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
@@ -452,7 +477,7 @@ public class ProblemZ3 extends ProblemGeneral {
 
 	public Object plus(Object exp1, Object exp2) {
 		try{
-			return  ctx.MkAdd(new ArithExpr[] { (ArithExpr)exp1, (ArithExpr)exp2});
+			return  ctx.mkAdd(new ArithExpr[] { (ArithExpr)exp1, (ArithExpr)exp2});
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
@@ -464,7 +489,7 @@ public class ProblemZ3 extends ProblemGeneral {
 //			return  vc.plusExpr(vc.ratExpr(Double.toString(value), base), (Expr)exp);
 //		} catch (Exception e) {
 //			e.printStackTrace();
-//			throw new RuntimeException("## Error CVC3: Exception caught in CVC3 JNI: \n" + e);
+//			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 //		}
 //	}
 //
@@ -473,22 +498,22 @@ public class ProblemZ3 extends ProblemGeneral {
 //			return  vc.plusExpr((Expr)exp, vc.ratExpr(Double.toString(value), base));
 //		} catch (Exception e) {
 //			e.printStackTrace();
-//			throw new RuntimeException("## Error CVC3: Exception caught in CVC3 JNI: \n" + e);
+//			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 //		}
 //	}
 
-	public Object minus(int value, Object exp) {
+	public Object minus(long value, Object exp) {
 		try{
-			return  ctx.MkSub(new ArithExpr[] { ctx.MkInt(value), (IntExpr)exp});
+			return  ctx.mkSub(new ArithExpr[] { ctx.mkInt(value), (IntExpr)exp});
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 		}
 	}
 
-	public Object minus(Object exp, int value) {
+	public Object minus(Object exp, long value) {
 		try{
-			return  ctx.MkSub(new ArithExpr[] {(IntExpr)exp, ctx.MkInt(value)});
+			return  ctx.mkSub(new ArithExpr[] {(IntExpr)exp, ctx.mkInt(value)});
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
@@ -497,7 +522,7 @@ public class ProblemZ3 extends ProblemGeneral {
 
 	public Object minus(Object exp1, Object exp2) {
 		try{
-			return  ctx.MkSub(new ArithExpr[] { (ArithExpr)exp1, (ArithExpr)exp2});
+			return  ctx.mkSub(new ArithExpr[] { (ArithExpr)exp1, (ArithExpr)exp2});
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
@@ -509,7 +534,7 @@ public class ProblemZ3 extends ProblemGeneral {
 //			return  vc.minusExpr(vc.ratExpr(Double.toString(value), base), (Expr)exp);
 //		} catch (Exception e) {
 //			e.printStackTrace();
-//			throw new RuntimeException("## Error CVC3: Exception caught in CVC3 JNI: \n" + e);
+//			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 //		}
 //	}
 //
@@ -518,22 +543,22 @@ public class ProblemZ3 extends ProblemGeneral {
 //			return  vc.minusExpr((Expr)exp, vc.ratExpr(Double.toString(value), base));
 //		} catch (Exception e) {
 //			e.printStackTrace();
-//			throw new RuntimeException("## Error CVC3: Exception caught in CVC3 JNI: \n" + e);
+//			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 //		}
 //	}
 
-	public Object mult(int value, Object exp) {
+	public Object mult(long value, Object exp) {
 		try{
-			return  ctx.MkMul(new ArithExpr[] {(IntExpr)exp, ctx.MkInt(value)});
+			return  ctx.mkMul(new ArithExpr[] {(IntExpr)exp, ctx.mkInt(value)});
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 		}
 	}
 
-	public Object mult(Object exp, int value) {
+	public Object mult(Object exp, long value) {
 		try{
-			return  ctx.MkMul(new ArithExpr[] {(IntExpr)exp, ctx.MkInt(value)});
+			return  ctx.mkMul(new ArithExpr[] {(IntExpr)exp, ctx.mkInt(value)});
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
@@ -542,7 +567,7 @@ public class ProblemZ3 extends ProblemGeneral {
 
 	public Object mult(Object exp1, Object exp2) {
 		try{
-			return  ctx.MkMul(new ArithExpr[] {(ArithExpr)exp1, (ArithExpr)exp2});
+			return  ctx.mkMul(new ArithExpr[] {(ArithExpr)exp1, (ArithExpr)exp2});
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
@@ -553,7 +578,7 @@ public class ProblemZ3 extends ProblemGeneral {
 //			return  vc.multExpr(vc.ratExpr(Double.toString(value), base), (Expr)exp);
 //		} catch (Exception e) {
 //			e.printStackTrace();
-//			throw new RuntimeException("## Error CVC3: Exception caught in CVC3 JNI: \n" + e);
+//			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 //		}
 //	}
 //	public Object mult(Object exp, double value) {
@@ -561,24 +586,24 @@ public class ProblemZ3 extends ProblemGeneral {
 //			return  vc.multExpr((Expr)exp, vc.ratExpr(Double.toString(value), base));
 //		} catch (Exception e) {
 //			e.printStackTrace();
-//			throw new RuntimeException("## Error CVC3: Exception caught in CVC3 JNI: \n" + e);
+//			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 //		}
 //	}
 //
 //	
 
-	public Object div(int value, Object exp) {
+	public Object div(long value, Object exp) {
 		try{
-			return  ctx.MkDiv(ctx.MkInt(value), (IntExpr)exp);
+			return  ctx.mkDiv(ctx.mkInt(value), (IntExpr)exp);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 		}
 	}
 
-	public Object div(Object exp, int value) {
+	public Object div(Object exp, long value) {
 		try{
-			return  ctx.MkDiv((IntExpr)exp,ctx.MkInt(value));
+			return  ctx.mkDiv((IntExpr)exp,ctx.mkInt(value));
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
@@ -587,18 +612,48 @@ public class ProblemZ3 extends ProblemGeneral {
 
 	public Object div(Object exp1, Object exp2) {
 		try{
-			return  ctx.MkDiv((ArithExpr)exp1,(ArithExpr)exp2);
+			return  ctx.mkDiv((ArithExpr)exp1,(ArithExpr)exp2);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 		}
 	}
+	
+	public Object rem(Object exp, long value) {// added by corina
+		try{
+			
+			return  ctx.mkRem((IntExpr) exp, ctx.mkInt(value));
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
+		}
+	}
+	public Object rem(long value, Object exp) {// added by corina
+		try{
+			
+			return  ctx.mkRem(ctx.mkInt(value), (IntExpr) exp);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
+		}
+	}
+	public Object rem(Object exp1, Object exp2) {// added by corina
+		try{
+			if(exp2 instanceof Integer)
+				return  ctx.mkRem((IntExpr)exp1,ctx.mkInt((Integer)exp2));
+			return  ctx.mkRem((IntExpr) exp1, (IntExpr) exp2);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
+		}
+	}
+	
 //	public Object div(double value, Object exp) {
 //		try{
 //			return  vc.divideExpr(vc.ratExpr(Double.toString(value), base), (Expr)exp);
 //		} catch (Exception e) {
 //			e.printStackTrace();
-//			throw new RuntimeException("## Error CVC3: Exception caught in CVC3 JNI: \n" + e);
+//			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 //		}
 //	}
 //	public Object div(Object exp, double value) {
@@ -606,91 +661,19 @@ public class ProblemZ3 extends ProblemGeneral {
 //			return  vc.divideExpr((Expr)exp, vc.ratExpr(Double.toString(value), base));
 //		} catch (Exception e) {
 //			e.printStackTrace();
-//			throw new RuntimeException("## Error CVC3: Exception caught in CVC3 JNI: \n" + e);
+//			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 //		}
 //	}
 
-    public Object select(Object exp1, Object exp2) {
-        try {
-            return ctx.MkSelect((ArrayExpr)exp1, (IntExpr)exp2);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
-        }
-    }
-    
-    public Object store(Object exp1, Object exp2, Object exp3) {
-        try {
-            return ctx.MkStore((ArrayExpr)exp1, (IntExpr)exp2, (IntExpr)exp3);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
-        }
-    }
-
-    public Object makeArrayVar(String name) {
-        try {
-            Sort int_type = ctx.IntSort();
-            return ctx.MkArrayConst(name, int_type, int_type);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: " + e);
-        }
-    }
-
-    public Object makeIntConst(int value) {
-        try {
-            return ctx.MkInt(value);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("## Error Z3 : Exception caught in Z3 JNI: " + e);
-        }
-    }
-
-	
-    public Object realSelect(Object exp1, Object exp2) {
-        try {
-            return ctx.MkSelect((ArrayExpr)exp1, (RealExpr)exp2);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
-        }
-    }
-    
-    public Object realStore(Object exp1, Object exp2, Object exp3) {
-        try {
-            return ctx.MkStore((ArrayExpr)exp1, (IntExpr)exp2, (RealExpr)exp3);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
-        }
-    }
-
-    public Object makeRealArrayVar(String name) {
-        try {
-            Sort int_type = ctx.IntSort();
-            Sort real_type = ctx.RealSort();
-            return ctx.MkArrayConst(name, int_type, real_type);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: " + e);
-        }
-    }
-
-    public Object makeRealConst(double value) {
-        throw new RuntimeException("floats not supported by Z3");
-    }
-	
-
-	public int getIntValue(Object dpVar) { 
-		try{
+	public long getIntValue(Object dpVar) {
+		try {
 			Model model = null;
-			 if (Status.SATISFIABLE == solver.Check())
-	         {
-	             model = solver.Model();
-	             return Integer.parseInt((model.Evaluate((IntExpr)dpVar,false)).toString());
+			 if (Status.SATISFIABLE == solver.check()) {
+				 model = solver.getModel();
+	             return Long.parseLong((model.evaluate((IntExpr)dpVar,false)).toString());
 	         }
 	         else {
+				 System.out.println("Error retrieving int value from Z3.");
 	        	 assert false; // should not be reachable
 	             return 0;
 	         }
@@ -699,8 +682,6 @@ public class ProblemZ3 extends ProblemGeneral {
 			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
 		}
 	}
-
-	
 
 	private Expr test(){
 		Expr e = (Expr)makeIntVar("Z",-10, 10);
@@ -714,308 +695,398 @@ public class ProblemZ3 extends ProblemGeneral {
 	public Boolean solve() {
         try {
         	/* find model for the constraints above */
-            Model model = null;
-            if (Status.SATISFIABLE == solver.Check())
-            {
-                model = solver.Model();
-           //     System.out.println(model);
+            Model model = null;                
+            
+            if (Status.SATISFIABLE == solver.check()) {   
                 return true;
-            } else
-          
+            } else {       
                 return false;
-        	
-   
-        }catch(Exception e){
+            }
+        } catch(Exception e){
         	e.printStackTrace();
         	throw new RuntimeException("## Error Z3: " + e);
         }
 	}
 
-    public String getModel() {
-        try {
-            if (Status.SATISFIABLE == solver.Check())
-            {
-                return solver.Model().toString();
-            } else
-            return "";
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("## Error Z3: " +e);
-        }
-    }
-
 	public void post(Object constraint) {
 		try{
-			solver.Assert((BoolExpr)constraint);
+			//solver.Assert((BoolExpr)constraint);
+			solver.add((BoolExpr)constraint);
 		} catch (Exception e) {
 			e.printStackTrace();
-        	throw new RuntimeException("## Error Z3 \n" + e);
+        	throw new RuntimeException("## Error posting constraint to Z3 \n" + e);
 	    }
 	}
 
-
-	
-	// need to implement all of these
 	@Override
 	public Object eq(double value, Object exp) {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("## Error Z3 \n");
+		try {
+			if (useFpForReals) {
+				return ctx.mkFPEq(ctx.mkFPNumeral(value, ctx.mkFPSort64()), (FPExpr) exp);
+			} else {
+				return ctx.mkEq(ctx.mkReal("" + value), (Expr) exp);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("## Error Z3: eq(double, Object) failed.\n" + e);
+		}
 	}
-
 
 	@Override
 	public Object eq(Object exp, double value) {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("## Error Z3 \n");
+		try {
+			if (useFpForReals) {
+				return ctx.mkFPEq((FPExpr) exp, ctx.mkFPNumeral(value, ctx.mkFPSort64()));
+			} else {
+				return ctx.mkEq((Expr) exp, ctx.mkReal("" + value));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("## Error Z3: eq(double, Object) failed.\n" + e);
+		}
 	}
-
 
 	@Override
 	public Object neq(double value, Object exp) {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("## Error Z3 \n");
+		try {
+			if (useFpForReals) {
+				return ctx.mkNot(ctx.mkFPEq(ctx.mkFPNumeral(value, ctx.mkFPSort64()), (FPExpr) exp));
+			} else {
+				return ctx.mkNot(ctx.mkEq(ctx.mkReal("" + value), (Expr) exp));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("## Error Z3: neq(double, Object) failed.\n" + e);
+		}
 	}
-
 
 	@Override
 	public Object neq(Object exp, double value) {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("## Error Z3 \n");
+		try {
+			if (useFpForReals) {
+				return ctx.mkNot(ctx.mkFPEq((FPExpr) exp, ctx.mkFPNumeral(value, ctx.mkFPSort64())));
+			} else {
+				return ctx.mkNot(ctx.mkEq((Expr) exp, ctx.mkReal("" + value)));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("## Error Z3: neq(double, Object) failed.\n" + e);
+		}
 	}
-
 
 	@Override
 	public Object leq(double value, Object exp) {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("## Error Z3 \n");
+		try {
+			if (useFpForReals) {
+				return ctx.mkFPLEq(ctx.mkFPNumeral(value, ctx.mkFPSort64()), (FPExpr) exp);
+			} else {
+				return ctx.mkLe(ctx.mkReal("" + value), (ArithExpr) exp);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("## Error Z3: leq(double, Object) failed.\n" + e);
+		}
 	}
-
 
 	@Override
 	public Object leq(Object exp, double value) {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("## Error Z3 \n");
+		try {
+			if (useFpForReals) {
+				return ctx.mkFPLEq((FPExpr) exp, ctx.mkFPNumeral(value, ctx.mkFPSort64()));
+			} else {
+				return ctx.mkLe((ArithExpr) exp, ctx.mkReal("" + value));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("## Error Z3: leq(double, Object) failed.\n" + e);
+		}
 	}
-
-
-
 
 	@Override
 	public Object geq(double value, Object exp) {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("## Error Z3 \n");
+		try {
+			if (useFpForReals) {
+				return ctx.mkFPGEq(ctx.mkFPNumeral(value, ctx.mkFPSort64()), (FPExpr) exp);
+			} else {
+				return ctx.mkGe(ctx.mkReal("" + value), (ArithExpr) exp);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("## Error Z3: geq(double, Object) failed.\n" + e);
+		}
 	}
-
 
 	@Override
 	public Object geq(Object exp, double value) {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("## Error Z3 \n");
+		try {
+			if (useFpForReals) {
+				return ctx.mkFPGEq((FPExpr) exp, ctx.mkFPNumeral(value, ctx.mkFPSort64()));
+			} else {
+				return ctx.mkGe((ArithExpr) exp, ctx.mkReal("" + value));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("## Error Z3: geq(double, Object) failed.\n" + e);
+		}
 	}
-
-
-
-
 
 	@Override
 	public Object lt(double value, Object exp) {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("## Error Z3 \n");
+		try {
+			if (useFpForReals) {
+				return ctx.mkFPLt(ctx.mkFPNumeral(value, ctx.mkFPSort64()), (FPExpr) exp);
+			} else {
+				return ctx.mkLt(ctx.mkReal("" + value), (ArithExpr) exp);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("## Error Z3: lt(double, Object) failed.\n" + e);
+		}
 	}
-
 
 	@Override
 	public Object lt(Object exp, double value) {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("## Error Z3 \n");
+		try {
+			if (useFpForReals) {
+				return ctx.mkFPLt((FPExpr) exp, ctx.mkFPNumeral(value, ctx.mkFPSort64()));
+			} else {
+				return ctx.mkLt((ArithExpr) exp, ctx.mkReal("" + value));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("## Error Z3: lt(double, Object) failed.\n" + e);
+		}
 	}
-
-
-
-
 
 	@Override
 	public Object gt(double value, Object exp) {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("## Error Z3 \n");
+		try {
+			if (useFpForReals) {
+				return ctx.mkFPGt(ctx.mkFPNumeral(value, ctx.mkFPSort64()), (FPExpr) exp);
+			} else {
+				return ctx.mkGt(ctx.mkReal("" + value), (ArithExpr) exp);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("## Error Z3: gt(double, Object) failed.\n" + e);
+		}
 	}
-
 
 	@Override
 	public Object gt(Object exp, double value) {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("## Error Z3 \n");
+		try {
+			if (useFpForReals) {
+				return ctx.mkFPGt((FPExpr) exp, ctx.mkFPNumeral(value, ctx.mkFPSort64()));
+			} else {
+				return ctx.mkGt((ArithExpr) exp, ctx.mkReal("" + value));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("## Error Z3: gt(double, Object) failed.\n" + e);
+		}
 	}
 
+	@Override
+	public Object plus(double value, Object exp) {
+		try {
+			if (useFpForReals) {
+				return ctx.mkFPAdd(ctx.mkFPRoundNearestTiesToEven(), ctx.mkFPNumeral(value, ctx.mkFPSort64()), (FPExpr) exp);
+			} else {
+				return ctx.mkAdd(ctx.mkReal("" + value), (ArithExpr) exp);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("## Error Z3: plus(Object, double) failed.\n" + e);
+		}
+	}
 
+	@Override
+	public Object plus(Object exp, double value) {
+		try {
+			if (useFpForReals) {
+				return ctx.mkFPAdd(ctx.mkFPRoundNearestTiesToEven(), (FPExpr) exp, ctx.mkFPNumeral(value, ctx.mkFPSort64()));
+			} else {
+				return ctx.mkAdd((ArithExpr) exp, ctx.mkReal("" + value));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("## Error Z3: plus(Object, double) failed.\n" + e);
+		}
+	}
 
 	@Override
 	public Object minus(double value, Object exp) {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("## Error Z3 \n");
+		try {
+			if (useFpForReals) {
+				return ctx.mkFPSub(ctx.mkFPRoundNearestTiesToEven(), ctx.mkFPNumeral(value, ctx.mkFPSort64()), (FPExpr) exp);
+			} else {
+				return ctx.mkSub(ctx.mkReal("" + value), (ArithExpr) exp);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("## Error Z3: minus(double, Object) failed.\n" + e);
+		}
 	}
-
 
 	@Override
 	public Object minus(Object exp, double value) {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("## Error Z3 \n");
+		try {
+			if (useFpForReals) {
+				return ctx.mkFPSub(ctx.mkFPRoundNearestTiesToEven(), (FPExpr) exp, ctx.mkFPNumeral(value, ctx.mkFPSort64()));
+			} else {
+				return ctx.mkSub((ArithExpr) exp, ctx.mkReal("" + value));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("## Error Z3: minus(double, Object) failed.\n" + e);
+		}
 	}
-
-
 
 	@Override
 	public Object mult(double value, Object exp) {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("## Error Z3 \n");
+		try {
+			if (useFpForReals) {
+				return ctx.mkFPMul(ctx.mkFPRoundNearestTiesToEven(), ctx.mkFPNumeral(value, ctx.mkFPSort64()), (FPExpr) exp);
+			} else {
+				return ctx.mkMul(ctx.mkReal("" + value), (ArithExpr) exp);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("## Error Z3: mult(double, Object) failed.\n" + e);
+		}
 	}
-
 
 	@Override
 	public Object mult(Object exp, double value) {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("## Error Z3 \n");
+		try {
+			if (useFpForReals) {
+				return ctx.mkFPMul(ctx.mkFPRoundNearestTiesToEven(), (FPExpr) exp, ctx.mkFPNumeral(value, ctx.mkFPSort64()));
+			} else {
+				return ctx.mkMul((ArithExpr) exp, ctx.mkReal("" + value));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("## Error Z3: mult(double, Object) failed.\n" + e);
+		}
 	}
 
 	@Override
 	public Object div(double value, Object exp) {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("## Error Z3 \n");
+		try {
+			if (useFpForReals) {
+				return ctx.mkFPDiv(ctx.mkFPRoundNearestTiesToEven(), ctx.mkFPNumeral(value, ctx.mkFPSort64()), (FPExpr) exp);
+			} else {
+				return ctx.mkDiv(ctx.mkReal("" + value), (ArithExpr) exp);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("## Error Z3: div(double, Object) failed.\n" + e);
+		}
 	}
-
 
 	@Override
 	public Object div(Object exp, double value) {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("## Error Z3 \n");
+		try {
+			if (useFpForReals) {
+				return ctx.mkFPDiv(ctx.mkFPRoundNearestTiesToEven(), (FPExpr) exp, ctx.mkFPNumeral(value, ctx.mkFPSort64()));
+			} else {
+				return ctx.mkDiv((ArithExpr) exp, ctx.mkReal("" + value));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("## Error Z3: div(double, Object) failed.\n" + e);
+		}
 	}
-
-
+	
 	@Override
-	public Object and(int value, Object exp) {
-		// TODO Auto-generated method stub
+	public Object and(long value, Object exp) {
 		throw new RuntimeException("## Error Z3 \n");
 	}
-
-
+	
 	@Override
-	public Object and(Object exp, int value) {
-		// TODO Auto-generated method stub
+	public Object and(Object exp, long value) {
 		throw new RuntimeException("## Error Z3 \n");
 	}
-
 
 	@Override
 	public Object and(Object exp1, Object exp2) {
-		// TODO Auto-generated method stub
 		throw new RuntimeException("## Error Z3 \n");
 	}
-
 
 	@Override
-	public Object or(int value, Object exp) {
-		// TODO Auto-generated method stub
+	public Object or(long value, Object exp) {
 		throw new RuntimeException("## Error Z3 \n");
 	}
-
 
 	@Override
-	public Object or(Object exp, int value) {
-		// TODO Auto-generated method stub
+	public Object or(Object exp, long value) {
 		throw new RuntimeException("## Error Z3 \n");
 	}
-
 
 	@Override
 	public Object or(Object exp1, Object exp2) {
-		// TODO Auto-generated method stub
 		throw new RuntimeException("## Error Z3 \n");
 	}
-
 
 	@Override
-	public Object xor(int value, Object exp) {
-		// TODO Auto-generated method stub
+	public Object xor(long value, Object exp) {
 		throw new RuntimeException("## Error Z3 \n");
 	}
-
 
 	@Override
-	public Object xor(Object exp, int value) {
-		// TODO Auto-generated method stub
+	public Object xor(Object exp, long value) {
 		throw new RuntimeException("## Error Z3 \n");
 	}
-
 
 	@Override
 	public Object xor(Object exp1, Object exp2) {
-		// TODO Auto-generated method stub
 		throw new RuntimeException("## Error Z3 \n");
 	}
-
 
 	@Override
-	public Object shiftL(int value, Object exp) {
-		// TODO Auto-generated method stub
+	public Object shiftL(long value, Object exp) {
 		throw new RuntimeException("## Error Z3 \n");
 	}
-
 
 	@Override
-	public Object shiftL(Object exp, int value) {
-		// TODO Auto-generated method stub
+	public Object shiftL(Object exp, long value) {
 		throw new RuntimeException("## Error Z3 \n");
 	}
-
 
 	@Override
 	public Object shiftL(Object exp1, Object exp2) {
-		// TODO Auto-generated method stub
 		throw new RuntimeException("## Error Z3 \n");
 	}
-
 
 	@Override
-	public Object shiftR(int value, Object exp) {
-		// TODO Auto-generated method stub
+	public Object shiftR(long value, Object exp) {
 		throw new RuntimeException("## Error Z3 \n");
 	}
-
 
 	@Override
-	public Object shiftR(Object exp, int value) {
-		// TODO Auto-generated method stub
+	public Object shiftR(Object exp, long value) {
 		throw new RuntimeException("## Error Z3 \n");
 	}
-
 
 	@Override
 	public Object shiftR(Object exp1, Object exp2) {
-		// TODO Auto-generated method stub
 		throw new RuntimeException("## Error Z3 \n");
 	}
-
 
 	@Override
-	public Object shiftUR(int value, Object exp) {
-		// TODO Auto-generated method stub
+	public Object shiftUR(long value, Object exp) {
 		throw new RuntimeException("## Error Z3 \n");
 	}
-
 
 	@Override
-	public Object shiftUR(Object exp, int value) {
-		// TODO Auto-generated method stub
+	public Object shiftUR(Object exp, long value) {
 		throw new RuntimeException("## Error Z3 \n");
 	}
-
 
 	@Override
 	public Object shiftUR(Object exp1, Object exp2) {
-		// TODO Auto-generated method stub
 		throw new RuntimeException("## Error Z3 \n");
 	}
-
 
 	@Override
 	public Object mixed(Object exp1, Object exp2) {
@@ -1023,13 +1094,29 @@ public class ProblemZ3 extends ProblemGeneral {
 		throw new RuntimeException("## Error Z3 \n");
 	}
 
-
 	@Override
 	public double getRealValueInf(Object dpvar) {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("## Error Z3 \n");//return 0;
+		try {
+			Model model = null;
+			if (Status.SATISFIABLE == solver.check()) {
+				model = solver.getModel();
+				// TODO: clean this up
+				String strResult = model.eval((Expr)dpvar, true).toString().replaceAll("\\s+","");
+				Expr temp = model.eval((Expr)dpvar, false);
+				if (temp instanceof com.microsoft.z3.RatNum) {
+					strResult = ((com.microsoft.z3.RatNum)temp).toDecimalString(10);
+				}
+				return Double.parseDouble(strResult);
+			}
+			else {
+				assert false; // should not be reachable
+				return 0;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("## Error Z3: Exception caught in Z3 JNI: \n" + e);
+		}
 	}
-
 
 	@Override
 	public double getRealValueSup(Object dpVar) {
@@ -1037,13 +1124,11 @@ public class ProblemZ3 extends ProblemGeneral {
 		throw new RuntimeException("## Error Z3 \n");//return 0;
 	}
 
-
 	@Override
 	public double getRealValue(Object dpVar) {
 		// TODO Auto-generated method stub
 		throw new RuntimeException("## Error Z3 \n");//return 0;
 	}
-
 
 	@Override
 	public void postLogicalOR(Object[] constraint) {
@@ -1051,21 +1136,88 @@ public class ProblemZ3 extends ProblemGeneral {
 		throw new RuntimeException("## Error Z3 \n");	
 	}
 
+    // Added by Aymeric to support arrays
+    @Override
+    public Object makeArrayVar(String name) {
+        try {
+            Sort int_type = ctx.mkIntSort();
+            return ctx.mkArrayConst(name, int_type, int_type);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("## Error Z3 : Exception caught in Z3 JNI: " + e);
+        }
+    }
 
-	@Override
-	public Object plus(double value, Object exp) {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("## Error Z3 \n");
-	}
+    @Override
+    public Object makeRealArrayVar(String name) {
+        try {
+            Sort int_type = ctx.mkIntSort();
+            Sort real_type = ctx.mkRealSort();
+            return ctx.mkArrayConst(name, int_type, real_type);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("## Error Z3 : Exception caught in Z3 JNI: " + e);
+        }
+    }
+    
+    @Override
+    public Object select(Object exp1, Object exp2) {
+        try {
+            return ctx.mkSelect((ArrayExpr)exp1, (IntExpr)exp2);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("## Error Z3 : Exception caught in Z3 JNI: " + e);
+        }
+    }
 
+    @Override
+    public Object store(Object exp1, Object exp2, Object exp3) {
+        try {
+            return ctx.mkStore((ArrayExpr)exp1, (IntExpr)exp2, (IntExpr)exp3);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("## Error Z3 : Exception caught in Z3 JNI: " + e);
+        }
+    }
 
-	@Override
-	public Object plus(Object exp, double value) {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("## Error Z3 \n");
-	}
+    @Override
+    public Object realSelect(Object exp1, Object exp2) {
+        try {
+            return ctx.mkSelect((ArrayExpr)exp1, (IntExpr)exp2);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("## Error Z3 : Exception caught in Z3 JNI: " + e);
+        }
+    }
 
+    @Override
+    public Object realStore(Object exp1, Object exp2, Object exp3) {
+        try {
+            return ctx.mkStore((ArrayExpr)exp1, (IntExpr)exp2, (RealExpr)exp3);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("## Error Z3 : Exception caught in Z3 JNI: " + e);
+        }
+    }
 
-	
+    @Override
+    public Object makeIntConst(long value) {
+        try {
+            return ctx.mkInt(value);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("## Error Z3 : Exception caught in Z3 JNI: " + e);
+        }
+    }
+
+    @Override
+    public Object makeRealConst(double value) {
+        try {
+            return ctx.mkReal("" + value);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("## Error Z3 : Exception caught in Z3 JNI: " + e);
+        }
+    }
 
 }

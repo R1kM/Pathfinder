@@ -18,7 +18,6 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 
-import gov.nasa.jpf.symbc.bytecode.util.IFInstrSymbHelper;
 import gov.nasa.jpf.symbc.numeric.Comparator;
 import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
 import gov.nasa.jpf.symbc.numeric.PathCondition;
@@ -44,16 +43,90 @@ public class FCMPL extends gov.nasa.jpf.jvm.bytecode.FCMPL {
 		if (sym_v1 == null && sym_v2 == null) { // both conditions are concrete
 			return super.execute(th);
 		} else { // at least one condition is symbolic
-			
-			Instruction nxtInstr = IFInstrSymbHelper.getNextInstructionAndSetPCChoiceFloat(th, 
-																					  this, 
-																					  sym_v1,
-																					  sym_v2,
-																					  Comparator.LT, 
-																					  Comparator.EQ,
-																					  Comparator.GT);
+			ChoiceGenerator<?> cg;
+			int conditionValue;
 
-			return nxtInstr;
+			if (!th.isFirstStepInsn()) { // first time around
+				cg = new PCChoiceGenerator(3);
+				((PCChoiceGenerator)cg).setOffset(this.position);
+				((PCChoiceGenerator)cg).setMethodName(this.getMethodInfo().getFullName());
+				th.getVM().getSystemState().setNextChoiceGenerator(cg);
+				return this;
+			} else { // this is what really returns results
+				cg = th.getVM().getSystemState().getChoiceGenerator();
+				assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
+				conditionValue = ((PCChoiceGenerator) cg).getNextChoice() -1;
+			}
+
+			float v1 = Types.intToFloat(sf.pop());
+			float v2 = Types.intToFloat(sf.pop());
+
+			// System.out.println("Execute FCMPL: "+ conditionValue);
+			PathCondition pc;
+
+			// pc is updated with the pc stored in the choice generator above get
+			// the path condition from the previous CG of the same type
+
+			ChoiceGenerator<?> prev_cg = cg.getPreviousChoiceGeneratorOfType(PCChoiceGenerator.class);
+
+			if (prev_cg == null)
+				pc = new PathCondition();
+			else
+				pc = ((PCChoiceGenerator) prev_cg).getCurrentPC();
+			assert pc != null;
+
+			if (conditionValue == -1) {
+				if (sym_v1 != null) {
+					if (sym_v2 != null) { // both are symbolic values
+						pc._addDet(Comparator.LT, sym_v2, sym_v1);
+					} else
+						pc._addDet(Comparator.LT, v2, sym_v1);
+				} else
+					pc._addDet(Comparator.LT, sym_v2, v1);
+
+				if (!pc.simplify()) {// not satisfiable
+					th.getVM().getSystemState().setIgnored(true);
+				} else {
+					// pc.solve();
+					((PCChoiceGenerator) cg).setCurrentPC(pc);
+					// System.out.println(((PCChoiceGenerator) cg).getCurrentPC());
+				}
+			} else if (conditionValue == 0) {
+				if (sym_v1 != null) {
+					if (sym_v2 != null) { // both are symbolic values
+						pc._addDet(Comparator.EQ, sym_v1, sym_v2);
+					} else
+						pc._addDet(Comparator.EQ, sym_v1, v2);
+				} else
+					pc._addDet(Comparator.EQ, v1, sym_v2);
+				if (!pc.simplify()) {// not satisfiable
+					th.getVM().getSystemState().setIgnored(true);
+				} else {
+					// pc.solve();
+					((PCChoiceGenerator) cg).setCurrentPC(pc);
+					// System.out.println(((PCChoiceGenerator) cg).getCurrentPC());
+				}
+			} else { // 1
+				if (sym_v1 != null) {
+					if (sym_v2 != null) { // both are symbolic values
+						pc._addDet(Comparator.GT, sym_v2, sym_v1);
+					} else
+						pc._addDet(Comparator.GT, v2, sym_v1);
+				} else
+					pc._addDet(Comparator.GT, sym_v2, v1);
+				if (!pc.simplify()) {// not satisfiable
+					th.getVM().getSystemState().setIgnored(true);
+				} else {
+					// pc.solve();
+					((PCChoiceGenerator) cg).setCurrentPC(pc);
+					// System.out.println(((PCChoiceGenerator) cg).getCurrentPC());
+				}
+			}
+
+			sf.push(conditionValue, false);
+
+			//System.out.println("Execute FCMPL: " + ((PCChoiceGenerator) cg).getCurrentPC());
+			return getNext(th);
 		}
 	}
 }

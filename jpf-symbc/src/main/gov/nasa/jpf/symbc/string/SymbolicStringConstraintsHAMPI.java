@@ -50,6 +50,7 @@ package gov.nasa.jpf.symbc.string;
 
 //import gov.nasa.jpf.symbc.numeric.Expression;
 import gov.nasa.jpf.symbc.numeric.IntegerConstant;
+import gov.nasa.jpf.util.LogManager;
 import java.util.*;
 
 
@@ -58,6 +59,7 @@ import hampi.constraints.Constraint;
 import hampi.constraints.Regexp;
 import hampi.constraints.Expression;
 import hampi.Solution;
+import java.util.logging.Logger;
 
 
 /*
@@ -66,6 +68,7 @@ import hampi.Solution;
  * Then we need to add this directory to the java.library.path on the command line as in: -Djava.library.path=<jpf-root>extensions/symbc/lib
  */
 public class SymbolicStringConstraintsHAMPI {
+  static Logger logger = LogManager.getLogger("stringsolver");
   StringPathCondition pc = null;
   Hampi hampi;
 
@@ -107,7 +110,7 @@ public class SymbolicStringConstraintsHAMPI {
 			}
 		}
 		else {
-			System.out.println("Exiting after unhandled type " + expr);
+			logger.severe("Exiting after unhandled type " + expr);
 			System.exit(0);
 		}
 		return result;
@@ -122,12 +125,12 @@ public class SymbolicStringConstraintsHAMPI {
 		while (len < 256) {
 			s = hampi.solve(all,len);
 			if (s.isSatisfiable()) {
-				System.out.println("Found solution!");
+				logger.info("Found solution!");
 				return true;
 			}
 			len++;
 		}
-		System.out.println("No solution for " + all.toJavaCode(""));
+		logger.warning("No solution for " + all.toJavaCode(""));
 		return false;
 	}
 
@@ -142,7 +145,7 @@ public class SymbolicStringConstraintsHAMPI {
 			left = getStringExpression(c.left);
 			right = getStringExpression(c.right);
 			if (!(c.left instanceof StringConstant) && !(c.right instanceof StringConstant)) {
-				System.out.println("EQ: One side must be non symbolic for HAMPI to work!");
+				logger.severe("EQ: One side must be non symbolic for HAMPI to work!");
 				System.exit(0);
 			}
 			if ((c.left instanceof StringConstant) && (c.right instanceof StringConstant))  {
@@ -172,7 +175,7 @@ public class SymbolicStringConstraintsHAMPI {
 			left = getStringExpression(c.left);
 			right = getStringExpression(c.right);
 			if (!(c.left instanceof StringConstant) && !(c.right instanceof StringConstant)) {
-				System.out.println("NE: One side must be non symbolic for HAMPI to work!");
+				logger.severe("NE: One side must be non symbolic for HAMPI to work!");
 				System.exit(0);
 			}
 			if ((c.left instanceof StringConstant) && (c.right instanceof StringConstant))  {

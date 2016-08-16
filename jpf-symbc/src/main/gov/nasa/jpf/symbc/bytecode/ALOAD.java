@@ -19,8 +19,8 @@
 package gov.nasa.jpf.symbc.bytecode;
 
 import gov.nasa.jpf.Config;
-import gov.nasa.jpf.symbc.arrays.ArrayExpression;
 import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
+import gov.nasa.jpf.symbc.arrays.ArrayExpression;
 import gov.nasa.jpf.symbc.heap.HeapChoiceGenerator;
 import gov.nasa.jpf.symbc.heap.HeapNode;
 import gov.nasa.jpf.symbc.heap.Helper;
@@ -38,7 +38,6 @@ import gov.nasa.jpf.vm.ClassLoaderInfo;
 import gov.nasa.jpf.vm.ElementInfo;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.KernelState;
-import gov.nasa.jpf.vm.MJIEnv;
 import gov.nasa.jpf.vm.StackFrame;
 import gov.nasa.jpf.vm.SystemState;
 //import gov.nasa.jpf.symbc.uberlazy.TypeHierarchy;
@@ -58,7 +57,6 @@ public class ALOAD extends gov.nasa.jpf.jvm.bytecode.ALOAD {
 
     @Override
 	public Instruction execute (ThreadInfo th) {
-         
 		HeapNode[] prevSymRefs = null; // previously initialized objects of same type: candidates for lazy init
         int numSymRefs = 0; // # of prev. initialized objects
         ChoiceGenerator<?> prevHeapCG = null;
@@ -70,6 +68,7 @@ public class ALOAD extends gov.nasa.jpf.jvm.bytecode.ALOAD {
 
 		// TODO: fix handle polymorphism
 		
+
 		StackFrame sf = th.getModifiableTopFrame();
 		int objRef = sf.peek();
 		ElementInfo ei = th.getElementInfo(objRef);
@@ -154,7 +153,7 @@ public class ALOAD extends gov.nasa.jpf.jvm.bytecode.ALOAD {
 		}
 		else if (currentChoice == numSymRefs && !(((IntegerExpression)attr).toString()).contains("this")){ //null object
 			pcHeap._addDet(Comparator.EQ, (SymbolicInteger) attr, new IntegerConstant(-1));
-			daIndex = MJIEnv.NULL;
+			daIndex = -1;
 		}
 		else if ((currentChoice == (numSymRefs + 1) && !abstractClass) | (currentChoice == numSymRefs && (((IntegerExpression)attr).toString()).contains("this"))) {
 			//creates a new object with all fields symbolic

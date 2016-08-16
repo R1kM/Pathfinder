@@ -22,12 +22,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 import gov.nasa.jpf.symbc.numeric.ConstraintExpressionVisitor;
+import gov.nasa.jpf.symbc.numeric.Expression;
 import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
 import gov.nasa.jpf.symbc.numeric.SymbolicReal;
+import gov.nasa.jpf.symbc.string.StringSymbolic;
 
 public class CollectVariableVisitor extends ConstraintExpressionVisitor {
 
-	private Set<Object> variables = new HashSet<Object>();
+	private Set<Expression> variables = new HashSet<Expression>();
 	
 	@Override
 	public void postVisit(SymbolicReal realVariable) {
@@ -38,8 +40,13 @@ public class CollectVariableVisitor extends ConstraintExpressionVisitor {
 	public void postVisit(SymbolicInteger integerVariable) {
 		variables.add(integerVariable);
 	}
+	
+	@Override
+	public void postVisit(StringSymbolic stringVariable) {
+		variables.add(stringVariable);
+	}
 
-	public Set<Object> getVariables() {
+	public Set<Expression> getVariables() {
 		return variables;
 	}
 

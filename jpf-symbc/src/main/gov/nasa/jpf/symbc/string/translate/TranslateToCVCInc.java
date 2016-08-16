@@ -609,8 +609,8 @@ public class TranslateToCVCInc {
 		boolean result = true;
 		if (!e.getSource().isConstant()) {
 			ExprMut source = getExprMut(e.getSource());
-			char c = (char) e.getValue().solution();
-			int index = e.getIndex().solution();
+			char c = (char) e.getValue().solutionInt();
+			int index = e.getIndex().solutionInt();
 			//println ("[handleEdgeCharAt] " + c + " " + index);
 			Expr temp = vc.newBVExtractExpr(source, (e.getSource().getLength() - index) * 8 - 1, (e.getSource().getLength() - index) * 8 - 8);
 			Expr cons = vc.newBVConstExpr(toBits(c));
@@ -619,8 +619,8 @@ public class TranslateToCVCInc {
 		}
 		else {
 			String constant = e.getSource().getSolution();
-			char c = (char) e.getValue().solution();
-			int index = e.getIndex().solution();
+			char c = (char) e.getValue().solutionInt();
+			int index = e.getIndex().solutionInt();
 			if (index > -1) {
 				ExprMut temp1 = vc.newBVConstExpr(toBits(constant.charAt(index)));
 				ExprMut temp2 = vc.newBVConstExpr(toBits(c));
@@ -642,7 +642,7 @@ public class TranslateToCVCInc {
 			//println ("[handleEdgeCharAt] returning false");
 			//LinearOrIntegerConstraints loic = elimanateCurrentLengthsConstraints();
 			//println ("[handleEdgeCharAt] e.getSource().getLength(): " + e.getSource().getLength());
-			//println ("[handleEdgeCharAt] index: " + e.getIndex().solution());
+			//println ("[handleEdgeCharAt] index: " + e.getIndex().solutionInt());
 			LogicalORLinearIntegerConstraints loic = new LogicalORLinearIntegerConstraints();
 			loic.addToList(new LinearIntegerConstraint(e.getIndex(), Comparator.NE, new IntegerConstant(e.getIndex().solution())));
 			loic.addToList(new LinearIntegerConstraint(e.getValue(), Comparator.NE, new IntegerConstant(e.getValue().solution())));
@@ -853,7 +853,7 @@ public class TranslateToCVCInc {
 		if (!e.getSource().isConstant() && !e.getDest().isConstant()) {
 			ExprMut source = getExprMut (e.getSource());
 			ExprMut dest = getExprMut (e.getDest());
-			int index = e.getIndex().solution();
+			int index = e.getIndex().solutionInt();
 			if (index > -1) {
 				Expr lit = null;
 				for (int i = index; i < index + e.getDest().getLength(); i++) {
@@ -873,15 +873,15 @@ public class TranslateToCVCInc {
 					result = post (vc.notExpr(equal(e)));
 				}
 				else {
-					//println ("[handleEdgeIndexOf2] posting: " + vc.notExpr(contains(e, e.getIndex().getMinIndex().solution())));
-					result = post (vc.notExpr(contains(e, e.getIndex().getMinIndex().solution())));
+					//println ("[handleEdgeIndexOf2] posting: " + vc.notExpr(contains(e, e.getIndex().getMinIndex().solutionInt())));
+					result = post (vc.notExpr(contains(e, e.getIndex().getMinIndex().solutionInt())));
 				}
 			}
 		}
 		else if (!e.getSource().isConstant()) {
 			ExprMut source = getExprMut (e.getSource());
 			String destCons = e.getDest().getSolution();
-			int index = e.getIndex().solution();
+			int index = e.getIndex().solutionInt();
 			if (index > -1) {
 				Expr lit = null;
 				for (int i = index; i < index + e.getDest().getLength(); i++) {
@@ -901,8 +901,8 @@ public class TranslateToCVCInc {
 					result = post (vc.notExpr(equal(e)));
 				}
 				else {
-					//println ("[handleEdgeIndexof2] posting: " + vc.notExpr(contains(e, e.getIndex().getMinIndex().solution())));
-					result = post (vc.notExpr(contains(e, e.getIndex().getMinIndex().solution())));
+					//println ("[handleEdgeIndexof2] posting: " + vc.notExpr(contains(e, e.getIndex().getMinIndex().solutionInt())));
+					result = post (vc.notExpr(contains(e, e.getIndex().getMinIndex().solutionInt())));
 				}
 			}
 		}
@@ -910,7 +910,7 @@ public class TranslateToCVCInc {
 			String sourceCons = e.getSource().getSolution();
 			
 			ExprMut dest = getExprMut(e.getDest());
-			int index = e.getIndex().solution();
+			int index = e.getIndex().solutionInt();
 			
 			if (index > -1) {
 				String realSolution = sourceCons.substring(index, index + e.getDest().getLength());
@@ -932,8 +932,8 @@ public class TranslateToCVCInc {
 					result = post (vc.notExpr(equal(e)));
 				}
 				else {
-					//println ("[handleEdgeIndexOf2] posting: " + vc.notExpr(contains(e, e.getIndex().getMinIndex().solution())));
-					result = post (vc.notExpr(contains(e, e.getIndex().getMinIndex().solution())));
+					//println ("[handleEdgeIndexOf2] posting: " + vc.notExpr(contains(e, e.getIndex().getMinIndex().solutionInt())));
+					result = post (vc.notExpr(contains(e, e.getIndex().getMinIndex().solutionInt())));
 				}
 			}
 		}
@@ -952,7 +952,7 @@ public class TranslateToCVCInc {
 			//println ("[handleEdgeIndexOf] branch 1");
 			ExprMut source = getExprMut (e.getSource());
 			ExprMut dest = getExprMut (e.getDest());
-			int index = e.getIndex().solution();
+			int index = e.getIndex().solutionInt();
 			if (index > -1) {
 				Expr lit = null;
 				for (int i = index; i < index + e.getDest().getLength(); i++) {
@@ -982,7 +982,7 @@ public class TranslateToCVCInc {
 			//println ("[handleEdgeIndexOf] branch 2");
 			ExprMut source = getExprMut (e.getSource());
 			String destCons = e.getDest().getSolution();
-			int index = e.getIndex().solution();
+			int index = e.getIndex().solutionInt();
 			if (index > -1) {
 				//println ("[handleEdgeIndexOf] branch 2.1");
 				Expr lit = null;
@@ -1018,7 +1018,7 @@ public class TranslateToCVCInc {
 			String sourceCons = e.getSource().getSolution();
 			
 			ExprMut dest = getExprMut(e.getDest());
-			int index = e.getIndex().solution();
+			int index = e.getIndex().solutionInt();
 			
 			if (index > -1) {
 				String realSolution = sourceCons.substring(index, index + e.getDest().getLength());
@@ -1062,8 +1062,8 @@ public class TranslateToCVCInc {
 		boolean result = true;
 		if (!e.getSource().isConstant()) {
 			ExprMut source = getExprMut(e.getSource());
-			int index = e.getIndex().solution();
-			char character = (char) e.getIndex().getExpression().solution();
+			int index = e.getIndex().solutionInt();
+			char character = (char) e.getIndex().getExpression().solutionInt();
 			if (index > -1) {
 				Expr lit = null;
 				/* no other occurences of the character may come before */
@@ -1094,8 +1094,8 @@ public class TranslateToCVCInc {
 		}
 		else {
 			String source = e.getSource().getSolution();
-			int index = e.getIndex().solution();
-			char character = (char) e.getIndex().getExpression().solution();
+			int index = e.getIndex().solutionInt();
+			char character = (char) e.getIndex().getExpression().solutionInt();
 			int actualAns = source.indexOf(character);
 			result = post (vc.eqExpr(vc.ratExpr(actualAns), vc.ratExpr(index)));
 		}
@@ -1112,15 +1112,15 @@ public class TranslateToCVCInc {
 		boolean result = true;
 		if (!e.getSource().isConstant()) {
 			ExprMut source = getExprMut(e.getSource());
-			int index = e.getIndex().solution();
-			char character = (char) e.getIndex().getExpression().solution();
+			int index = e.getIndex().solutionInt();
+			char character = (char) e.getIndex().getExpression().solutionInt();
 			if (index > -1) {
 				//println ("[handleEdgeIndexOfChar2] branch 1");
 				Expr lit = null;
 				/* no other occurences of the character may come before */
-				//println ("[handleEdgeIndexOfChar2] e.getIndex().getMinDist().solution() = " + e.getIndex().getMinDist().solution());
-				int i = e.getIndex().getMinDist().solution();
-				if (e.getIndex().getMinDist().solution() < 0) {
+				//println ("[handleEdgeIndexOfChar2] e.getIndex().getMinDist().solutionInt() = " + e.getIndex().getMinDist().solutionInt());
+				int i = e.getIndex().getMinDist().solutionInt();
+				if (e.getIndex().getMinDist().solutionInt() < 0) {
 					i = 0;
 				}
 				//println ("[handleEdgeIndexOfChar2] min dist: " + i);
@@ -1137,7 +1137,7 @@ public class TranslateToCVCInc {
 			}
 			else {
 				Expr lit = null;
-				int i = e.getIndex().getMinDist().solution();
+				int i = e.getIndex().getMinDist().solutionInt();
 				if (i < 0) i = 0;
 				for (; i < e.getSource().getLength(); i++) {
 					Expr sourceTemp = vc.newBVExtractExpr(source, (e.getSource().getLength() - i) * 8 - 1, (e.getSource().getLength() - i) * 8 - 8);
@@ -1149,9 +1149,9 @@ public class TranslateToCVCInc {
 		}
 		else {
 			String source = e.getSource().getSolution();
-			int index = e.getIndex().solution();
-			char character = (char) e.getIndex().getExpression().solution();
-			int actualAns = source.indexOf(character, e.getIndex().getMinDist().solution());
+			int index = e.getIndex().solutionInt();
+			char character = (char) e.getIndex().getExpression().solutionInt();
+			int actualAns = source.indexOf(character, e.getIndex().getMinDist().solutionInt());
 			result = post (vc.eqExpr(vc.ratExpr(actualAns), vc.ratExpr(index)));
 		}
 		if (result == false) {
@@ -1213,8 +1213,8 @@ public class TranslateToCVCInc {
 		boolean result = true;
 		if (!e.getSource().isConstant()) {
 			ExprMut source = getExprMut(e.getSource());
-			int index = e.getIndex().solution();
-			char character = (char) e.getIndex().getExpression().solution();
+			int index = e.getIndex().solutionInt();
+			char character = (char) e.getIndex().getExpression().solutionInt();
 			if (index > -1) {
 				Expr lit = null;
 				/* no other occurences of the character may come after */
@@ -1241,8 +1241,8 @@ public class TranslateToCVCInc {
 		}
 		else {
 			String source = e.getSource().getSolution();
-			int index = e.getIndex().solution();
-			char character = (char) e.getIndex().getExpression().solution();
+			int index = e.getIndex().solutionInt();
+			char character = (char) e.getIndex().getExpression().solutionInt();
 			int actualAns = source.indexOf(character);
 			result = post (vc.eqExpr(vc.ratExpr(actualAns), vc.ratExpr(index)));
 		}
@@ -1258,12 +1258,12 @@ public class TranslateToCVCInc {
 		boolean result = true;
 		if (!e.getSource().isConstant()) {
 			ExprMut source = getExprMut(e.getSource());
-			int index = e.getIndex().solution();
-			char character = (char) e.getIndex().getExpression().solution();
+			int index = e.getIndex().solutionInt();
+			char character = (char) e.getIndex().getExpression().solutionInt();
 			if (index > -1) {
 				Expr lit = null;
 				/* no other occurences of the character may come after up till second argument*/
-				for (int i = index+1; i < e.getIndex().getMinDist().solution(); i++) {
+				for (int i = index+1; i < e.getIndex().getMinDist().solutionInt(); i++) {
 					Expr sourceTemp = vc.newBVExtractExpr(source, (e.getSource().getLength() - i) * 8 - 1, (e.getSource().getLength() - i) * 8 - 8);
 					Expr constant = vc.newBVConstExpr(toBits(character));
 					lit = and (lit, vc.notExpr(vc.eqExpr(sourceTemp, constant)));
@@ -1277,7 +1277,7 @@ public class TranslateToCVCInc {
 			else {
 				Expr lit = null;
 				//Can not feature uptil the second argument
-				for (int i = 0; i < e.getIndex().getMinDist().solution(); i++) {
+				for (int i = 0; i < e.getIndex().getMinDist().solutionInt(); i++) {
 					Expr sourceTemp = vc.newBVExtractExpr(source, (e.getSource().getLength() - i) * 8 - 1, (e.getSource().getLength() - i) * 8 - 8);
 					Expr constant = vc.newBVConstExpr(toBits(character));
 					lit = and (lit, vc.notExpr(vc.eqExpr(sourceTemp, constant)));
@@ -1287,15 +1287,15 @@ public class TranslateToCVCInc {
 		}
 		else {
 			String source = e.getSource().getSolution();
-			int index = e.getIndex().solution();
-			char character = (char) e.getIndex().getExpression().solution();
-			int actualAns = source.lastIndexOf(character, e.getIndex().getMinDist().solution());
+			int index = e.getIndex().solutionInt();
+			char character = (char) e.getIndex().getExpression().solutionInt();
+			int actualAns = source.lastIndexOf(character, e.getIndex().getMinDist().solutionInt());
 			result = (index == actualAns);
 		}
 		if (result == false) {
 			LogicalORLinearIntegerConstraints loic = elimanateCurrentLengthsConstraints();
 			loic.addToList(new LinearIntegerConstraint(e.getIndex(), Comparator.NE, new IntegerConstant(e.getIndex().solution())));
-			loic.addToList(new LinearIntegerConstraint(e.getIndex().getMinDist(), Comparator.NE, new IntegerConstant(e.getIndex().getMinDist().solution())));
+			loic.addToList(new LinearIntegerConstraint(e.getIndex().getMinDist(), Comparator.NE, new IntegerConstant(e.getIndex().getMinDist().solutionInt())));
 			global_pc._addDet(loic);
 		}
 		return result;
@@ -1344,7 +1344,7 @@ public class TranslateToCVCInc {
 				ExprMut source = getExprMut(e.getSource());
 				ExprMut dest = getExprMut(e.getDest());
 				int arg1 = e.getArgument1();
-				int arg2 = e.getSymbolicArgument2().solution();
+				int arg2 = e.getSymbolicArgument2().solutionInt();
 				Expr lit = null;
 				for (int i = 0; i < arg2 - arg1; i++) {
 					Expr sourceTemp = vc.newBVExtractExpr(source, (e.getSource().getLength() - (i + arg1)) * 8 - 1, (e.getSource().getLength() - (i + arg1)) * 8 - 8);
@@ -1357,7 +1357,7 @@ public class TranslateToCVCInc {
 				ExprMut source = getExprMut(e.getSource());
 				String destCons = e.getDest().getSolution();
 				int arg1 = e.getArgument1();
-				int arg2 = e.getSymbolicArgument2().solution();
+				int arg2 = e.getSymbolicArgument2().solutionInt();
 				if (arg2 - arg1 != destCons.length()) {
 					//TODO: Can definitly improve here
 					LogicalORLinearIntegerConstraints loic = elimanateCurrentLengthsConstraints();
@@ -1478,9 +1478,6 @@ public class TranslateToCVCInc {
 		return result;
 	}
 	
-	private static void println (String msg) {
-		System.out.println("[TranslateToCVCInc] " + msg);
-	}
 	
 	private static LogicalORLinearIntegerConstraints elimanateCurrentLengthsConstraints() {
 		LogicalORLinearIntegerConstraints loic = new LogicalORLinearIntegerConstraints();

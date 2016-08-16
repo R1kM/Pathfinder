@@ -94,7 +94,7 @@ public class EdgeSubstring1Equal implements Edge{
 			return a1;
 		}
 		else {
-			return ie_a1.solution();
+			return (int) ie_a1.solution();
 		}
 	}
 

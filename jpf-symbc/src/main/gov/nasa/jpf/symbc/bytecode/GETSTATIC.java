@@ -21,6 +21,7 @@ package gov.nasa.jpf.symbc.bytecode;
 import gov.nasa.jpf.Config;
 import gov.nasa.jpf.JPFException;
 import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
+import gov.nasa.jpf.symbc.arrays.ArrayExpression;
 import gov.nasa.jpf.symbc.heap.HeapChoiceGenerator;
 import gov.nasa.jpf.symbc.heap.HeapNode;
 import gov.nasa.jpf.symbc.heap.Helper;
@@ -97,7 +98,7 @@ public class GETSTATIC extends gov.nasa.jpf.jvm.bytecode.GETSTATIC {
 		if (!(fi.isReference() && attr != null))
 			return super.execute(ti);
 
-		if(attr instanceof StringExpression || attr instanceof SymbolicStringBuilder)
+		if(attr instanceof StringExpression || attr instanceof SymbolicStringBuilder || attr instanceof ArrayExpression)
 				return super.execute(ti); // Strings are handled specially
 
 		

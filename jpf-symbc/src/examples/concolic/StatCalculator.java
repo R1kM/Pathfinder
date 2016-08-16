@@ -18,7 +18,7 @@
 
 package concolic;
 
-import gov.nasa.jpf.symbc.Concrete;
+//import gov.nasa.jpf.symbc.Concrete;
 
 import java.io.Serializable;
 import java.util.ArrayList;

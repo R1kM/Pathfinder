@@ -30,7 +30,7 @@ public class EdgeContains implements Edge{
 	public EdgeContains (String name, Vertex source, Vertex end) {
 		this.name = name;
 		this.source = source;
-		this.dest = dest;
+		this.dest = end; //Rody: changed RHS from dest to end, seemed like a bug
 	}
 	
 	@Override

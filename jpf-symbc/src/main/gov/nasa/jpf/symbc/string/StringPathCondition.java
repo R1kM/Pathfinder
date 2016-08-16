@@ -49,18 +49,24 @@ TERMINATION OF THIS AGREEMENT.
 */
 package gov.nasa.jpf.symbc.string;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import gov.nasa.jpf.symbc.numeric.PathCondition;
 
 public class StringPathCondition {
 	  static boolean flagSolved = false;
 
+	  public String smtlib = "";
+	  public Map<String, String> solution = Collections.<String,String>emptyMap();
 	  public StringConstraint header;
 	  int count = 0;
 
-	  PathCondition npc = null;
+	  private PathCondition npc = null;
 
 	  public StringPathCondition(PathCondition npc) {
-	    this.npc = npc;
+	    this.setNpc(npc);
 	    header = null;
 	  }
 
@@ -128,27 +134,49 @@ public class StringPathCondition {
 	  }
 
 	  public boolean solve() {// warning: solve calls simplify
-	  // SymbolicStringConstraintsGeneral solver = new SymbolicStringConstraintsGeneral();
-	  // solver.solve(this);
-	      StringPathCondition.flagSolved = true;
-	      return true;
+		  SymbolicStringConstraintsGeneral solver = new SymbolicStringConstraintsGeneral();
+		  boolean result = solver.isSatisfiable(this);
+		  StringPathCondition.flagSolved = result;
+		  return result;
 	  }
 
 	  public boolean simplify() {
 	    SymbolicStringConstraintsGeneral solver = new SymbolicStringConstraintsGeneral();
 	    boolean result = solver.isSatisfiable(this);
 	    return result;
-
 	  }
 
 	  public String stringPC() {
-	    return "SPC # = " + count + ((header == null) ? "" : "\n" + header.stringPC()) 
-	    		+ " " + npc.stringPC();
+	    return "SPC # = " + count + ((header == null) ? "" : "\n" + header.stringPC()) +"\n"
+	    		+ "NPC "+npc.stringPC();
 	  }
 
 	  public String toString() {
-	    return "SPC # = " + count + ((header == null) ? "" : "\n" + header.toString())
-	    		+ " " + npc.toString();
+	    return "SPC # = " + count + ((header == null) ? "" : "\n" + header.toString()) +"\n"
+	    		+ "NPC "+npc.toString();
 	  }
 
+	public PathCondition getNpc() {
+		return npc;
 	}
+
+	public void setNpc(PathCondition npc) {
+		this.npc = npc;
+	}
+	
+	public Map<String, String> getSolution(){
+		return this.solution;
+	}
+	
+
+	public String printableStringSolution(){
+		StringBuilder b = new StringBuilder();
+		for (Entry<String, String> sol : solution.entrySet()) {
+			b.append(sol.getKey()).append(" : \"").append(sol.getValue()).append("\"");
+	    }
+		return b.toString();
+	}
+	
+	
+
+}

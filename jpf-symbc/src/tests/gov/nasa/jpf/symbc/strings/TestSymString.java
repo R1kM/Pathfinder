@@ -2578,7 +2578,7 @@ public class TestSymString extends TestJPF {
 			//System.out.printf("var1: '%s'\n", var1.solution());
 			assertTrue(solver + " failed", result);
 			assertTrue(var1.solution().startsWith("aa"));
-			assertTrue(var1.solution().charAt(si.solution()) == 'a');
+			assertTrue(var1.solution().charAt(si.solutionInt()) == 'a');
 		}
 	}
 	
@@ -2604,7 +2604,7 @@ public class TestSymString extends TestJPF {
 			//System.out.printf("var1: '%s'\n", var1.solution());
 			assertTrue(solver + " failed", result);
 			assertTrue(!var1.solution().startsWith("aa"));
-			assertTrue(var1.solution().charAt(si.solution()) == 'a');
+			assertTrue(var1.solution().charAt(si.solutionInt()) == 'a');
 		}
 	}
 	
@@ -2632,7 +2632,7 @@ public class TestSymString extends TestJPF {
 			System.out.printf("var1: '%s'\n", var1.solution());
 			assertTrue(solver + " failed", result);
 			assertTrue(var1.solution().startsWith("aa"));
-			assertTrue(var1.solution().charAt(si.solution()) != 'a');
+			assertTrue(var1.solution().charAt(si.solutionInt()) != 'a');
 		}
 	}
 	
@@ -2658,7 +2658,7 @@ public class TestSymString extends TestJPF {
 			//System.out.printf("var1: '%s'\n", var1.solution());
 			assertTrue(solver + " failed", result);
 			assertTrue(!var1.solution().startsWith("aa"));
-			assertTrue(var1.solution().charAt(si.solution()) != 'a');
+			assertTrue(var1.solution().charAt(si.solutionInt()) != 'a');
 		}
 	}
 	
@@ -4245,7 +4245,7 @@ public class TestSymString extends TestJPF {
 			boolean result = stringCurrentPC.simplify();
 			assertTrue(solver + " failed", result);
 			assertTrue(var2.solution().startsWith("bol"));
-			assertTrue(var2.solution().indexOf(var1.solution()) == 2);
+			assertTrue(var2.solution().indexOf(var1.solutionChar()) == 2);
 		}
 	}
 	
@@ -4270,7 +4270,7 @@ public class TestSymString extends TestJPF {
 			System.out.println(String.format("var2.solution(): '%s'", var2.solution()));
 			assertTrue(solver + " failed", result);
 			assertTrue(!var2.solution().startsWith("bol"));
-			assertTrue(var2.solution().indexOf(var1.solution()) == 2);
+			assertTrue(var2.solution().indexOf(var1.solutionInt()) == 2);
 		}
 	}
 	
@@ -4293,7 +4293,7 @@ public class TestSymString extends TestJPF {
 			boolean result = stringCurrentPC.simplify();
 			assertTrue(solver + " failed", result);
 			assertTrue(var2.solution().startsWith("bol"));
-			assertTrue(var2.solution().indexOf(var1.solution()) != 2);
+			assertTrue(var2.solution().indexOf(var1.solutionInt()) != 2);
 		}
 	}
 	
@@ -4316,7 +4316,7 @@ public class TestSymString extends TestJPF {
 			boolean result = stringCurrentPC.simplify();
 			assertTrue(solver + " failed", result);
 			assertTrue(!var2.solution().startsWith("bol"));
-			assertTrue(var2.solution().indexOf(var1.solution()) != 2);
+			assertTrue(var2.solution().indexOf(var1.solutionInt()) != 2);
 		}
 	}
 	
@@ -4339,7 +4339,7 @@ public class TestSymString extends TestJPF {
 			boolean result = stringCurrentPC.simplify();
 			assertTrue(solver + " failed", result);
 			assertTrue(var2.solution().startsWith("bol"));
-			assertTrue(var2.solution().indexOf(var1.solution()) == 2);
+			assertTrue(var2.solution().indexOf(var1.solutionInt()) == 2);
 		}
 	}
 	
@@ -4364,7 +4364,7 @@ public class TestSymString extends TestJPF {
 			System.out.println(String.format("var2.solution(): '%s'", var2.solution()));
 			assertTrue(solver + " failed", result);
 			assertTrue(!var2.solution().startsWith("bol"));
-			assertTrue(var2.solution().indexOf(var1.solution()) == 2);
+			assertTrue(var2.solution().indexOf(var1.solutionChar()) == 2);
 		}
 	}
 	
@@ -4387,7 +4387,7 @@ public class TestSymString extends TestJPF {
 			boolean result = stringCurrentPC.simplify();
 			assertTrue(solver + " failed", result);
 			assertTrue(var2.solution().startsWith("bol"));
-			assertTrue(var2.solution().indexOf(var1.solution()) != 2);
+			assertTrue(var2.solution().indexOf(var1.solutionChar()) != 2);
 		}
 	}
 	
@@ -4410,7 +4410,7 @@ public class TestSymString extends TestJPF {
 			boolean result = stringCurrentPC.simplify();
 			assertTrue(solver + " failed", result);
 			assertTrue(!var2.solution().startsWith("bol"));
-			assertTrue(var2.solution().indexOf(var1.solution()) != 2);
+			assertTrue(var2.solution().indexOf(var1.solutionChar()) != 2);
 		}
 	}
 	
@@ -4435,7 +4435,7 @@ public class TestSymString extends TestJPF {
 			boolean result = stringCurrentPC.simplify();
 			assertTrue(solver + " failed", result);
 			assertTrue(str.solution().lastIndexOf('/') >= 0);
-			assertTrue(str.solution().substring(ie1.solution() + 1).contains("EasyChair"));
+			assertTrue(str.solution().substring(ie1.solutionInt() + 1).contains("EasyChair"));
 			assertTrue(str.solution().startsWith("http://"));
 		}
 	}

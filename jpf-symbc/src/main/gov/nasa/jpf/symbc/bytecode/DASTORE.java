@@ -41,15 +41,126 @@ public class DASTORE extends gov.nasa.jpf.jvm.bytecode.DASTORE {
 
 		 @Override
 	     public Instruction execute (ThreadInfo ti) {
-             // This instruciton is not yet implemented, Z3 does not support floats
 				 if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression))
 					  return super.execute(ti);
+				  StackFrame frame = ti.getModifiableTopFrame();
 				  int arrayref = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
+				  ElementInfo eiArray = ti.getElementInfo(arrayref);
 				      
 				  if (arrayref == MJIEnv.NULL) {
 				        return ti.createAndThrowException("java.lang.NullPointerException");
 				  } 
-				  throw new RuntimeException("Symbolic Float Arrays not handled");
+				  
 					
+				  int len=(eiArray.getArrayFields()).arrayLength(); // assumed concrete
+				  
+				  if(!ti.isFirstStepInsn()){
+					  PCChoiceGenerator arrayCG = new PCChoiceGenerator(0,len+1); // add 2 error cases: <0, >=len  
+					  ti.getVM().getSystemState().setNextChoiceGenerator(arrayCG);
+					  
+			          //ti.reExecuteInstruction();
+					  if (SymbolicInstructionFactory.debugMode)
+						  System.out.println("# array cg registered: " + arrayCG);
+			          return this;
+
+			      } else { //this is what really returns results
+			    	  
+					    
+
+					    //index = frame.peek();
+					    PCChoiceGenerator lastCG=ti.getVM().getSystemState().getLastChoiceGeneratorOfType(PCChoiceGenerator.class); 
+					    assert(lastCG!=null);
+					    PCChoiceGenerator prevCG=lastCG.getPreviousChoiceGeneratorOfType(PCChoiceGenerator.class);
+					    
+					    index=lastCG.getNextChoice();
+					    IntegerExpression sym_index=(IntegerExpression)peekIndexAttr(ti);
+					    //check the constraint
+					    
+					    PathCondition pc;
+						
+						if (prevCG == null)
+							pc = new PathCondition();
+						else
+							pc = ((PCChoiceGenerator)prevCG).getCurrentPC();
+
+						assert pc != null;
+
+						if(index<len) { 
+							pc._addDet(Comparator.EQ,index,sym_index);
+							if(pc.simplify())  { // satisfiable
+								((PCChoiceGenerator) lastCG).setCurrentPC(pc);
+							}
+							else {
+								ti.getVM().getSystemState().setIgnored(true);//backtrack
+								return getNext(ti);
+							}
+						} 
+						// now check for out of bounds exceptions
+						else if(index==len) {
+							pc._addDet(Comparator.LT,sym_index,0);
+							if(pc.simplify())  { // satisfiable
+								((PCChoiceGenerator) lastCG).setCurrentPC(pc);
+								return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException");
+							}
+							else {
+								ti.getVM().getSystemState().setIgnored(true);//backtrack
+								return getNext(ti);
+							}
+						}
+						else if(index==len+1) {
+							pc._addDet(Comparator.GE,sym_index,len);
+							if(pc.simplify())  { // satisfiable
+								((PCChoiceGenerator) lastCG).setCurrentPC(pc);
+								return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException");
+							}
+							else {
+								ti.getVM().getSystemState().setIgnored(true);//backtrack
+								return getNext(ti);
+							}
+						}
+					    
+					   
+					    //original code for concrete execution
+				 
+
+			    //int idx = peekIndex(ti);
+			    int aref = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
+			    
+			    arrayOperandAttr = peekArrayAttr(ti);
+			    indexOperandAttr = peekIndexAttr(ti);
+			    
+			    
+			      //--- shared access CG
+			      /*ignore POR for now TODO
+			      Scheduler scheduler = ti.getScheduler();
+			      if (scheduler.canHaveSharedArrayCG(ti, this, eiArray, idx)){
+			        eiArray = scheduler.updateArraySharedness(ti, eiArray, idx);
+			        if (scheduler.setsSharedArrayCG(ti, this, eiArray, idx)){
+			          return this;
+			        }
+			      }
+			    }
+			    */
+			   // System.out.println("len "+len+" index "+index);
+			    try {
+			      //setArrayElement(ti, frame, eiArray); // this pops operands
+			    	int esize = getElementSize();
+			        Object attr = esize == 1 ? frame.getOperandAttr() : frame.getLongOperandAttr();
+			        
+			        popValue(frame);
+			        frame.pop();
+			        // don't set 'arrayRef' before we do the CG checks (would kill loop optimization)
+			        arrayRef = frame.pop();
+
+			        eiArray = eiArray.getModifiableInstance();
+			        setField(eiArray, index);
+			        eiArray.setElementAttrNoClone(index,attr); // <2do> what if the value is the same but not the attr?
+			     
+			    } catch (ArrayIndexOutOfBoundsExecutiveException ex) { // at this point, the AIOBX is already processed
+			      return ex.getInstruction();
+			    }
+
+			    return getNext(ti);
+			      }
 			 }
 }

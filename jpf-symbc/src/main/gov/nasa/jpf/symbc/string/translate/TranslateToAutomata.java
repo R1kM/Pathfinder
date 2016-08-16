@@ -63,8 +63,12 @@ import gov.nasa.jpf.symbc.string.graph.EdgeSubstring2Equal;
 import gov.nasa.jpf.symbc.string.graph.EdgeTrimEqual;
 import gov.nasa.jpf.symbc.string.graph.StringGraph;
 import gov.nasa.jpf.symbc.string.graph.Vertex;
+import gov.nasa.jpf.util.LogManager;
+import java.util.logging.Logger;
 
 public class TranslateToAutomata {
+  static Logger logger = LogManager.getLogger("TranslateToAutomata");
+
 	private static Map<Vertex, Integer> mapSolved;
 	private static Map<Vertex, Automaton> mapAutomaton;
 	private static Map<Vertex, Integer> mapEdgeCount;
@@ -74,8 +78,6 @@ public class TranslateToAutomata {
 	private static PathCondition global_pc;
 	private static Map<List<gov.nasa.jpf.symbc.numeric.Constraint>, Map<Vertex, Automaton>> memo;
 	private static int concatCount = 128;
-	
-	private static boolean logging = true;
 	
 	static SymbolicConstraintsGeneral scg = new SymbolicConstraintsGeneral();
 	
@@ -256,8 +258,8 @@ public class TranslateToAutomata {
 								//Check if path condition has changed
 								if (PathCondition.flagSolved == false) {
 									loops++;
-									println ("[isSat] solving path condition: ");
-									println(global_pc.header.toString());
+									logger.info ("[isSat] solving path condition: ");
+									logger.info(global_pc.header.toString());
 									long startTime = System.currentTimeMillis();
 									boolean temp_result = scg.isSatisfiable(global_pc);
 									long temp_dur = System.currentTimeMillis() - startTime;
@@ -301,8 +303,8 @@ public class TranslateToAutomata {
 			if (!handleNotResult) {
 				//println ("returned no");
 				if (PathCondition.flagSolved == false) {
-					println ("path condition to be solved");
-					println (global_pc.toString());
+					logger.info ("path condition to be solved");
+					logger.info (global_pc.toString());
 					loops++;
 					long starttime = System.currentTimeMillis();
 					boolean int_result = scg.isSatisfiable(global_pc);
@@ -387,7 +389,7 @@ public class TranslateToAutomata {
 			}
 			else if (e instanceof EdgeIndexOf2) {
 				EdgeIndexOf2 eio = (EdgeIndexOf2) e;
-				if (eio.getIndex().solution() == -1 && eio.getSource().getSolution().indexOf(eio.getDest().getSolution(), eio.getIndex().getMinIndex().solution()) > -1) {
+				if (eio.getIndex().solution() == -1 && eio.getSource().getSolution().indexOf(eio.getDest().getSolution(), eio.getIndex().getMinIndex().solutionInt()) > -1) {
 					//println ("[EdgeIndexOf2] '" + eio.getSource().getSolution() + "' contains '" + eio.getDest().getSolution() + "' and it should not from " + eio.getIndex().getMinIndex().solution());
 					if (!eio.getSource().isConstant() && !eio.getDest().isConstant()) {
 						numberOfNots++;
@@ -414,7 +416,7 @@ public class TranslateToAutomata {
 			}
 			else if (e instanceof EdgeIndexOfChar2) {
 				EdgeIndexOfChar2 eio = (EdgeIndexOfChar2) e;
-				if (eio.getIndex().solution() == -1 && eio.getSource().getSolution().indexOf(eio.getDest().getSolution(), eio.getIndex().getMinDist().solution()) > -1) {
+				if (eio.getIndex().solution() == -1 && eio.getSource().getSolution().indexOf(eio.getDest().getSolution(), eio.getIndex().getMinDist().solutionInt()) > -1) {
 					//println ("[EdgeIndexOfChar2] '" + eio.getSource().getSolution() + "' contains '" + eio.getDest().getSolution() + "' after " + eio.getIndex().getMinDist().solution() + " and it should not");
 					if (!eio.getSource().isConstant() && !eio.getDest().isConstant()) {
 						numberOfNots++;
@@ -627,7 +629,7 @@ public class TranslateToAutomata {
 					}
 					else if (e instanceof EdgeNotStartsWith) {
 						if (e.getSource().getSolution().startsWith(e.getDest().getSolution())) {
-							println (e.getSource().getName() + " (" + e.getSource().getSolution() + ") startswith " + e.getDest().getName() + " (" + e.getDest().getSolution() + ") and it shouldn't");
+							logger.info (e.getSource().getName() + " (" + e.getSource().getSolution() + ") startswith " + e.getDest().getName() + " (" + e.getDest().getSolution() + ") and it shouldn't");
 							if (!e.getSource().isConstant() && !e.getDest().isConstant()) {
 								//println ("Here 2");
 								nonequalityFlipFlop = bitArray[indexBitArray++];
@@ -1046,7 +1048,7 @@ public class TranslateToAutomata {
 					}
 					else if (e instanceof EdgeIndexOf2) {
 						EdgeIndexOf2 eio = (EdgeIndexOf2) e;
-						if (eio.getIndex().solution() == -1 && eio.getSource().getSolution().indexOf(eio.getDest().getSolution(), eio.getIndex().getMinIndex().solution()) > -1) {
+						if (eio.getIndex().solution() == -1 && eio.getSource().getSolution().indexOf(eio.getDest().getSolution(), eio.getIndex().getMinIndex().solutionInt()) > -1) {
 							//println ("[EdgeIndexOf2] '" + eio.getSource().getSolution() + "' contains '" + eio.getDest().getSolution() + "' and it should not from " + eio.getIndex().getMinIndex().solution());
 							if (!eio.getSource().isConstant() && !eio.getDest().isConstant()) {
 								nonequalityFlipFlop = bitArray[indexBitArray++];
@@ -1247,8 +1249,8 @@ public class TranslateToAutomata {
 					}
 					else if (e instanceof EdgeIndexOfChar2) {
 						EdgeIndexOfChar2 eio = (EdgeIndexOfChar2) e;
-						if (eio.getIndex().solution() == -1 && eio.getSource().getSolution().indexOf(eio.getDest().getSolution(), eio.getIndex().getMinDist().solution()) > -1) {
-							println ("[EdgeIndexOfChar2] '" + eio.getSource().getSolution() + "' contains '" + eio.getDest().getSolution() + "' after " + eio.getIndex().getMinDist().solution() + " and it should not");
+						if (eio.getIndex().solution() == -1 && eio.getSource().getSolution().indexOf(eio.getDest().getSolution(), eio.getIndex().getMinDist().solutionInt()) > -1) {
+							logger.info ("[EdgeIndexOfChar2] '" + eio.getSource().getSolution() + "' contains '" + eio.getDest().getSolution() + "' after " + eio.getIndex().getMinDist().solution() + " and it should not");
 							if (!eio.getSource().isConstant() && !eio.getDest().isConstant()) {
 								nonequalityFlipFlop = bitArray[indexBitArray++];
 								if (nonequalityFlipFlop == false) {
@@ -1714,7 +1716,7 @@ public class TranslateToAutomata {
 				}
 				else if (e instanceof EdgeIndexOf2) {
 					EdgeIndexOf2 eio = (EdgeIndexOf2) e;
-					if (eio.getIndex().solution() == -1 && eio.getSource().getSolution().indexOf(eio.getDest().getSolution(), eio.getIndex().getMinIndex().solution()) > -1) {
+					if (eio.getIndex().solution() == -1 && eio.getSource().getSolution().indexOf(eio.getDest().getSolution(), eio.getIndex().getMinIndex().solutionInt()) > -1) {
 						//println ("[EdgeIndexOf2] '" + eio.getSource().getSolution() + "' contains '" + eio.getDest().getSolution() + "' and it should not from " + eio.getIndex().getMinIndex().solution());
 						if (!eio.getSource().isConstant() && !eio.getDest().isConstant()) {
 							if (nonequalityFlipFlop == 0) {
@@ -1912,7 +1914,7 @@ public class TranslateToAutomata {
 				}
 				else if (e instanceof EdgeIndexOfChar2) {
 					EdgeIndexOfChar2 eio = (EdgeIndexOfChar2) e;
-					if (eio.getIndex().solution() == -1 && eio.getSource().getSolution().indexOf(eio.getDest().getSolution(), eio.getIndex().getMinDist().solution()) > -1) {
+					if (eio.getIndex().solution() == -1 && eio.getSource().getSolution().indexOf(eio.getDest().getSolution(), eio.getIndex().getMinDist().solutionInt()) > -1) {
 						//println ("[EdgeIndexOfChar2] '" + eio.getSource().getSolution() + "' contains '" + eio.getDest().getSolution() + "' after " + eio.getIndex().getMinDist().solution() + " and it should not");
 						if (!eio.getSource().isConstant() && !eio.getDest().isConstant()) {
 							if (nonequalityFlipFlop == 0) {
@@ -2258,7 +2260,7 @@ public class TranslateToAutomata {
 			return false;
 		}
 		else {
-			temp = AutomatonExtra.lengthAutomaton(e.getIndex().solution());
+			temp = AutomatonExtra.lengthAutomaton(e.getIndex().solutionInt());
 			temp = temp.concatenate(Automaton.makeChar((char) e.getValue().solution()).concatenate(AutomatonExtra.makeAnyStringFixed()));
 			intersection = AutomatonExtra.intersection(a1, temp);
 			if (intersection.isEmpty()) {
@@ -2422,7 +2424,7 @@ public class TranslateToAutomata {
 		//println (String.format("[handleEdgeIndexOf] a1: '%s'", a1.getShortestExample(true)));
 		Automaton a2 = mapAutomaton.get(e.getDest());
 		//println (String.format("[handleEdgeIndexOf] a2: '%s'", a2.getShortestExample(true)));
-		int index = e.getIndex().solution();
+		int index = e.getIndex().solutionInt();
 		//First check if it is possible
 		if (index > -1) {
 			Automaton temp = AutomatonExtra.makeAnyStringFixed().concatenate(a2).concatenate(AutomatonExtra.makeAnyStringFixed());
@@ -2560,7 +2562,7 @@ public class TranslateToAutomata {
 		//println ("[handleEdgeIndexOf] entered");
 		Automaton a1 = mapAutomaton.get(e.getSource());
 		Automaton a2 = mapAutomaton.get(e.getDest());
-		int index = e.getIndex().solution();
+		int index = e.getIndex().solutionInt();
 		//First check if it is possible
 		if (index > -1) {
 			Automaton temp = AutomatonExtra.makeAnyStringFixed().concatenate(a2).concatenate(AutomatonExtra.makeAnyStringFixed());
@@ -2649,7 +2651,7 @@ public class TranslateToAutomata {
 		//println ("[handleEdgeIndexOf2] entered: " + e.getName());
 		Automaton a1 = mapAutomaton.get(e.getSource());
 		Automaton a2 = mapAutomaton.get(e.getDest());
-		int index = e.getIndex().solution();
+		int index = e.getIndex().solutionInt();
 		//First check if it is possible
 		if (index > -1) {
 			Automaton temp = AutomatonExtra.makeAnyStringFixed().concatenate(a2).concatenate(AutomatonExtra.makeAnyStringFixed());
@@ -2741,7 +2743,7 @@ public class TranslateToAutomata {
 		//println ("[handleEdgeIndexOfChar] entered");
 		Automaton a1 = mapAutomaton.get(e.getSource());
 		//Automaton a2 = mapAutomaton.get(e.getDest());
-		int index = e.getIndex().solution();
+		int index = e.getIndex().solutionInt();
 		String character = String.valueOf((char) e.getIndex().getExpression().solution());
 		//First check if it is possible
 		if (index > -1) {
@@ -2865,7 +2867,7 @@ public class TranslateToAutomata {
 		//println ("[handleEdgeLastIndexOfChar] entered");
 		Automaton a1 = mapAutomaton.get(e.getSource());
 		//Automaton a2 = mapAutomaton.get(e.getDest());
-		int index = e.getIndex().solution();
+		int index = e.getIndex().solutionInt();
 		String character = String.valueOf((char) e.getIndex().getExpression().solution());
 		//First check if it is possible
 		if (index > -1) {
@@ -2934,7 +2936,7 @@ public class TranslateToAutomata {
 		//println ("[handleEdgeLastIndexOfChar2] entered");
 		Automaton a1 = mapAutomaton.get(e.getSource());
 		//Automaton a2 = mapAutomaton.get(e.getDest());
-		int index = e.getIndex().solution();
+		int index = e.getIndex().solutionInt();
 		String character = String.valueOf((char) e.getIndex().getExpression().solution());
 		//First check if it is possible
 		if (index > -1) {
@@ -2954,7 +2956,7 @@ public class TranslateToAutomata {
 			Automaton lastPieceOfString = Automaton.makeCharRange((char) SymbolicStringConstraintsGeneral.MIN_CHAR, (char) SymbolicStringConstraintsGeneral.MAX_CHAR);
 			lastPieceOfString = lastPieceOfString.minus(Automaton.makeChar(character.charAt(0)));
 			lastPieceOfString = AutomatonExtra.star(lastPieceOfString);
-			lastPieceOfString = lastPieceOfString.concatenate(AutomatonExtra.lengthAutomaton(e.getIndex().getMinDist().solution() - e.getIndex().solution() + 1));
+			lastPieceOfString = lastPieceOfString.concatenate(AutomatonExtra.lengthAutomaton(e.getIndex().getMinDist().solutionInt() - e.getIndex().solutionInt() + 1));
 			//Need to concatenate with any string that does not contain this character.
 			temp = temp.concatenate(Automaton.makeString(character)).concatenate(lastPieceOfString).concatenate(AutomatonExtra.makeAnyStringFixed());
 			intersection = AutomatonExtra.intersection(a1, temp);
@@ -3008,7 +3010,7 @@ public class TranslateToAutomata {
 		//println ("[handleEdgeIndexOfChar2] entered");
 		Automaton a1 = mapAutomaton.get(e.getSource());
 		//Automaton a2 = mapAutomaton.get(e.getDest());
-		int index = e.getIndex().solution();
+		int index = e.getIndex().solutionInt();
 		String character = String.valueOf((char) e.getIndex().getExpression().solution());
 		//First check if it is possible
 		if (index > -1) {
@@ -3195,7 +3197,7 @@ public class TranslateToAutomata {
 			return propResult;
 		}
 		else if (e.getSymbolicArgument2() != null && e.getSymbolicArgument1() == null) {
-			int arg2 = e.getSymbolicArgument2().solution();
+			int arg2 = e.getSymbolicArgument2().solutionInt();
 			Automaton temp = AutomatonExtra.substring(source, e.getArgument1(), arg2);
 			//println ("[handleEdgeSubstring2Equal] source.getLength() = " + e.getSource().getLength());
 			//println ("[handleEdgeSubstring2Equal] temp diff = " + (arg2 - e.getArgument1()));
@@ -3313,8 +3315,5 @@ public class TranslateToAutomata {
 		return loic;
 	}
 	
-	private static void println (String msg) {
-		if (logging) System.out.println("[TranslateToAutomata] " + msg);
-	}
 
 }

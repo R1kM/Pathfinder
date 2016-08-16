@@ -21,27 +21,7 @@ package gov.nasa.jpf.symbc.concolic;
 import java.util.ArrayList;
 
 import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
-import gov.nasa.jpf.symbc.numeric.BinaryNonLinearIntegerExpression;
-import gov.nasa.jpf.symbc.numeric.BinaryRealExpression;
-import gov.nasa.jpf.symbc.numeric.Comparator;
-import gov.nasa.jpf.symbc.numeric.Constraint;
-import gov.nasa.jpf.symbc.numeric.Expression;
-import gov.nasa.jpf.symbc.numeric.IntegerConstant;
-import gov.nasa.jpf.symbc.numeric.IntegerExpression;
-import gov.nasa.jpf.symbc.numeric.LinearIntegerConstraint;
-import gov.nasa.jpf.symbc.numeric.LogicalORLinearIntegerConstraints;
-import gov.nasa.jpf.symbc.numeric.MathFunction;
-import gov.nasa.jpf.symbc.numeric.MathRealExpression;
-import gov.nasa.jpf.symbc.numeric.MixedConstraint;
-import gov.nasa.jpf.symbc.numeric.NonLinearIntegerConstraint;
-import gov.nasa.jpf.symbc.numeric.Operator;
-import gov.nasa.jpf.symbc.numeric.PathCondition;
-import gov.nasa.jpf.symbc.numeric.RealConstant;
-import gov.nasa.jpf.symbc.numeric.RealConstraint;
-import gov.nasa.jpf.symbc.numeric.RealExpression;
-import gov.nasa.jpf.symbc.numeric.SymbolicConstraintsGeneral;
-import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
-import gov.nasa.jpf.symbc.numeric.SymbolicReal;
+import gov.nasa.jpf.symbc.numeric.*;
 
 public class PCAnalyzer {
 
@@ -65,7 +45,7 @@ public class PCAnalyzer {
 	// first we split the PC into the easy and concolic parts
 	// concolic refers to the parts that we cannot handle with a DP and instead use concrete values for.
 
-	public boolean mixedIsSatisfiable(final PathCondition working_pc,final SymbolicConstraintsGeneral solver) {
+	public boolean mixedIsSatisfiable(PathCondition working_pc,SymbolicConstraintsGeneral solver) {
 		boolean result = false;
 		splitPathCondition(working_pc);
 		if (simplePC.solve() == false) return false;
@@ -84,12 +64,12 @@ public class PCAnalyzer {
 		return(result);
 	}
 
-	public boolean isSatisfiable(final PathCondition pc, final SymbolicConstraintsGeneral solver) {
+	public boolean isSatisfiable(PathCondition pc, SymbolicConstraintsGeneral solver) {
 		//System.out.println("PC "+pc);
 		if (pc == null || pc.header == null) return true;
 		boolean result = false;
-		final PathCondition working_pc = pc.make_copy();
-		final Constraint working_pc_last = working_pc.last();
+		PathCondition working_pc = pc.make_copy();
+		Constraint working_pc_last = working_pc.last();
 
 		// reset the values of the various helper PCs
 		simplePC = null;
@@ -98,7 +78,7 @@ public class PCAnalyzer {
 		partitionPCs = null;
 
 		int tries = 0;// heuristic to try different solutions up to some counter given by the user
-		final int MAX_TRIES = SymbolicInstructionFactory.MaxTries;
+		int MAX_TRIES = SymbolicInstructionFactory.MaxTries;
 
 		if (SymbolicInstructionFactory.debugMode) {
 			System.out.println("--------original PC------------"+tries);
@@ -132,7 +112,7 @@ public class PCAnalyzer {
 					}
 
 					Constraint cRef = extraPC.header;
-					final int length = extraPC.count();
+					int length = extraPC.count();
 					while (cRef != null) {
 						cRef.setComparator(Comparator.GT); // TODO: should be NE but choco can not handle it
 						cRef=cRef.and;
@@ -180,7 +160,7 @@ public class PCAnalyzer {
 
 				for(int i = 0; i < partitionPCs.size(); i++) {
 
-					final PathCondition partitionPC = partitionPCs.get(i);
+					PathCondition partitionPC = partitionPCs.get(i);
 					System.out.println("partitionPC "+partitionPC);
 					// the idea is that the working pc is different every time.
 					//working_pc.header = old_header;
@@ -219,7 +199,7 @@ public class PCAnalyzer {
 
 	// called only for satisfiable pc: could be simplified
 	// not in synch with the heuristics
-	public boolean solve(final PathCondition pc, final SymbolicConstraintsGeneral solver) {
+	public boolean solve(PathCondition pc, SymbolicConstraintsGeneral solver) {
 		if (pc == null || pc.header == null) return true;
 			splitPathCondition(pc);
 			simplePC.solve();
@@ -231,8 +211,8 @@ public class PCAnalyzer {
 	/*
 	 * Walks the PC and splits it into simplePC and concolicPC
 	 */
-	public void splitPathCondition(final PathCondition pc) {
-		final PathCondition newPC = pc.make_copy();
+	public void splitPathCondition(PathCondition pc) {
+		PathCondition newPC = pc.make_copy();
 		Constraint cRef = newPC.header;
 		simplePC = new PathCondition();
 		concolicPC = new PathCondition();
@@ -266,7 +246,7 @@ public class PCAnalyzer {
 		}
 	}
 
-	boolean isComplex(final RealExpression eRef) {
+	boolean isComplex(RealExpression eRef) {
 		if (eRef instanceof SymbolicReal || eRef instanceof RealConstant)
 			return false;
 
@@ -276,13 +256,13 @@ public class PCAnalyzer {
 		return isComplex(((BinaryRealExpression)eRef).getLeft()) ||  isComplex(((BinaryRealExpression)eRef).getRight());
 	}
 
-    boolean isComplex(final RealConstraint cRef) {
+    boolean isComplex(RealConstraint cRef) {
     	return isComplex(cRef.getLeft()) ||  isComplex(cRef.getRight());
     }
 
 
 	// for now assume only real expressions
-	Constraint eqConcolicConstraint(final Expression eRef) {
+	Constraint eqConcolicConstraint(Expression eRef) {
 		if(eRef instanceof MathRealExpression) {
 			MathFunction funRef;
 			RealExpression	e_arg1Ref;
@@ -293,7 +273,6 @@ public class PCAnalyzer {
 			e_arg2Ref = ((MathRealExpression)eRef).arg2;
 
 			switch(funRef){
-			case ABS: // Added for dReal by Nima
 			case SIN:
 			case COS:
 			case EXP:
@@ -305,8 +284,8 @@ public class PCAnalyzer {
 			case SQRT:return new RealConstraint(e_arg1Ref, Comparator.EQ, new RealConstant(e_arg1Ref.solution()));
 			case POW:
 			case ATAN2: {
-				final RealConstraint c1 = new RealConstraint(e_arg1Ref, Comparator.EQ, new RealConstant(e_arg1Ref.solution()));
-				final RealConstraint c2 = new RealConstraint(e_arg2Ref, Comparator.EQ, new RealConstant(e_arg2Ref.solution()));
+				RealConstraint c1 = new RealConstraint(e_arg1Ref, Comparator.EQ, new RealConstant(e_arg1Ref.solution()));
+				RealConstraint c2 = new RealConstraint(e_arg2Ref, Comparator.EQ, new RealConstant(e_arg2Ref.solution()));
 				c1.and = c2;
 				return c1;
 			}
@@ -315,13 +294,13 @@ public class PCAnalyzer {
 			}
 		}
 		else if (eRef instanceof FunctionExpression) {
-			final Expression [] sym_args = ((FunctionExpression)eRef).sym_args;
+			Expression [] sym_args = ((FunctionExpression)eRef).sym_args;
 			assert(sym_args != null && sym_args.length > 0);
-			final RealExpression e = (RealExpression)sym_args[0];// for now assume only real expressions; TODO the integer expressions
+			RealExpression e = (RealExpression)sym_args[0];// for now assume only real expressions; TODO the integer expressions
 			RealConstraint c = new RealConstraint(e, Comparator.EQ, new RealConstant(e.solution()));
 			for(int i=1; i<sym_args.length; i++) {
-					final RealExpression e2 = (RealExpression)sym_args[i];
-					final RealConstraint c2 = new RealConstraint(e2, Comparator.EQ, new RealConstant(e2.solution()));
+					RealExpression e2 = (RealExpression)sym_args[i];
+					RealConstraint c2 = new RealConstraint(e2, Comparator.EQ, new RealConstant(e2.solution()));
 					c2.and = c;
 					c = c2;
 			}
@@ -334,8 +313,8 @@ public class PCAnalyzer {
 
 			e_arg1Ref = ((BinaryNonLinearIntegerExpression)eRef).left;
 			e_arg2Ref = ((BinaryNonLinearIntegerExpression)eRef).right;
-			final LinearIntegerConstraint c1 = new LinearIntegerConstraint(e_arg1Ref, Comparator.EQ, new IntegerConstant(e_arg1Ref.solution()));
-			final LinearIntegerConstraint c2 = new LinearIntegerConstraint(e_arg2Ref, Comparator.EQ, new IntegerConstant(e_arg2Ref.solution()));
+			LinearIntegerConstraint c1 = new LinearIntegerConstraint(e_arg1Ref, Comparator.EQ, new IntegerConstant(e_arg1Ref.solution()));
+			LinearIntegerConstraint c2 = new LinearIntegerConstraint(e_arg2Ref, Comparator.EQ, new IntegerConstant(e_arg2Ref.solution()));
 			c1.and = c2;
 			return c1;
 		}
@@ -344,7 +323,7 @@ public class PCAnalyzer {
 
 
 
-	Expression getExpression(final Expression eRef) {
+	Expression getExpression(Expression eRef) {
 		assert eRef != null;
 		//assert !(eRef instanceof RealConstant);
 
@@ -356,9 +335,9 @@ public class PCAnalyzer {
 		}
 
 		if(eRef instanceof BinaryRealExpression) {
-			final Operator    opRef = ((BinaryRealExpression)eRef).getOp();
-			final RealExpression	e_leftRef = ((BinaryRealExpression)eRef).getLeft();
-			final RealExpression	e_rightRef = ((BinaryRealExpression)eRef).getRight();
+			Operator    opRef = ((BinaryRealExpression)eRef).getOp();
+			RealExpression	e_leftRef = ((BinaryRealExpression)eRef).getLeft();
+			RealExpression	e_rightRef = ((BinaryRealExpression)eRef).getRight();
 
 			return new BinaryRealExpression((RealExpression)getExpression(e_leftRef),opRef,(RealExpression)getExpression(e_rightRef));
 		}
@@ -392,10 +371,10 @@ public class PCAnalyzer {
 //
 //		return new RealConstraint(getExpression(c_leftRef),c_compRef,getExpression(c_rightRef));
 //	}
-	Constraint traverseConstraint(final Constraint cRef) {
-		final Comparator c_compRef = cRef.getComparator();
-		final Expression c_leftRef = cRef.getLeft();
-		final Expression c_rightRef = cRef.getRight();
+	Constraint traverseConstraint(Constraint cRef) {
+		Comparator c_compRef = cRef.getComparator();
+		Expression c_leftRef = cRef.getLeft();
+		Expression c_rightRef = cRef.getRight();
 
 		//return new Constraint(getExpression(c_leftRef),c_compRef,getExpression(c_rightRef));
 		if(cRef instanceof RealConstraint)

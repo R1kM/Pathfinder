@@ -49,7 +49,8 @@ public enum Operator{
 	XOR(" ^ "),
 	SHIFTL("<<"),
 	SHIFTR(">>"),
-	SHIFTUR(">>>");
+	SHIFTUR(">>>"),
+	REM(" % ");
 	
 	
 	
@@ -61,6 +62,11 @@ public enum Operator{
 	
 	@Override
 	public String toString() {
+		return str;
+	}
+
+	public String prefix_notation() {
+		// TODO Auto-generated method stub
 		return str;
 	}
 }

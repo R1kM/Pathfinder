@@ -10,4 +10,6 @@ type_classpath = ${jpf-symbc}/build/examples/arrays
 
 symbolic.method = arrays.TestAALOADUndefinedLength.run(sym)
 
+symbolic.dp=z3
 search.multiple_errors=true
+symbolic.arrays=true

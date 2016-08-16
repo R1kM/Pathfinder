@@ -32,12 +32,14 @@ import gov.nasa.jpf.symbc.string.StringConstant;
 import gov.nasa.jpf.symbc.string.StringExpression;
 import gov.nasa.jpf.symbc.string.StringUtility;
 import gov.nasa.jpf.symbc.string.SymbolicStringConstraintsGeneral;
+import gov.nasa.jpf.util.LogManager;
+import java.util.logging.Logger;
 
 /**
  * This class does the preprocessing of the StringGraph
  */
 public class PreProcessGraphBackup {
-	private static boolean logging = true;
+  static Logger logger = LogManager.getLogger("stringsolver");
 	public static final int MAXIMUM_LENGTH = 30;
 	private static SymbolicConstraintsGeneral scg;
 	
@@ -219,7 +221,7 @@ public class PreProcessGraphBackup {
 					if (eca.getIndex() instanceof IntegerConstant && eca.getValue() instanceof IntegerConstant 
 							&& eca.getIndex().solution() < e1.getDest().getSolution().length()) {
 							String startsWithString = e1.getDest().getSolution();
-							int charAtIndex = eca.getIndex().solution();
+							int charAtIndex = (int) eca.getIndex().solution();
 							if (startsWithString.charAt(charAtIndex) != charAtIndex) {
 								return false;
 							}
@@ -567,8 +569,8 @@ public class PreProcessGraphBackup {
 					EdgeIndexOfChar eioc = (EdgeIndexOfChar) e1;
 					EdgeIndexOfChar2 eioc2 = (EdgeIndexOfChar2) e2;
 					if (eioc.getIndex().getExpression() instanceof IntegerConstant && eioc2.getIndex().getExpression() instanceof IntegerConstant) {
-						int sol1 = eioc.getIndex().getExpression().solution();
-						int sol2 = eioc2.getIndex().getExpression().solution();
+						int sol1 = (int) eioc.getIndex().getExpression().solution();
+						int sol2 = (int) eioc2.getIndex().getExpression().solution();
 						if (sol1 != sol2) {
 							LogicalORLinearIntegerConstraints loic = new LogicalORLinearIntegerConstraints();
 							loic.addToList(new LinearIntegerConstraint(eioc.getIndex(), Comparator.EQ, new IntegerConstant(-1)));
@@ -1004,8 +1006,4 @@ public class PreProcessGraphBackup {
 		}
 	}
 	
-	private static void println (String msg) {
-		if (logging)
-			System.out.println("[PreProcessGraph] " + msg);
-	}
 }

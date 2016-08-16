@@ -18,6 +18,7 @@
 
 package gov.nasa.jpf.symbc.string;
 
+// updated by Lucas?
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +62,8 @@ import gov.nasa.jpf.symbc.string.translate.TranslateToAutomataSpeedUp;
 import gov.nasa.jpf.symbc.string.translate.TranslateToCVC;
 import gov.nasa.jpf.symbc.string.translate.TranslateToCVCInc;
 import gov.nasa.jpf.symbc.string.translate.TranslateToSAT;
+import gov.nasa.jpf.util.LogManager;
+import java.util.logging.Logger;
 
 /**
  * Main entry point for the symbolic string solver.
@@ -82,7 +85,7 @@ import gov.nasa.jpf.symbc.string.translate.TranslateToSAT;
 public class SymbolicStringConstraintsGeneralToText {
 
 	/* Useless from now on */
-	public static boolean logging = true;
+  static Logger logger = LogManager.getLogger("stringsolver");
 	
 	/* When creating constant strings, this is used as unique id */
 	private static int constantStringCount;
@@ -119,13 +122,13 @@ public class SymbolicStringConstraintsGeneralToText {
 	
 	private Vertex createVertex (StringExpression se) {
 		Vertex v = new Vertex (se.getName(), symbolicIntegerGenerator);
-		global_spc.npc._addDet(Comparator.EQ, v.getSymbolicLength(), se._length());
+		global_spc.getNpc()._addDet(Comparator.EQ, v.getSymbolicLength(), se._length());
 		return v;
 	}
 	
 	private Vertex createVertex (StringExpression se, int length) {
 		Vertex v = new Vertex (se.getName(), length);
-		global_spc.npc._addDet(Comparator.EQ, v.getSymbolicLength(), se._length());
+		global_spc.getNpc()._addDet(Comparator.EQ, v.getSymbolicLength(), se._length());
 		return v;
 	}
 	
@@ -171,10 +174,10 @@ public class SymbolicStringConstraintsGeneralToText {
 				graphBefore = convertToGraph((StringExpression) temp.oprlist[0]);
 				v1 = createVertex (((StringExpression) temp.oprlist[0]));
 				if (temp.oprlist[1] instanceof IntegerConstant && (temp.oprlist.length == 2 || temp.oprlist[2] instanceof IntegerConstant)) {
-					a1 = ((IntegerConstant) temp.oprlist[1]).solution();
+					a1 = ((IntegerConstant) temp.oprlist[1]).solutionInt();
 					a2 = -1;
 					if (temp.oprlist.length == 3) {
-						a2 = ((IntegerConstant) temp.oprlist[2]).solution();
+						a2 = ((IntegerConstant) temp.oprlist[2]).solutionInt();
 						//a1 > a2 ????
 						v2 = createVertex (temp, a1 - a2);
 						//println ("[convertToGraph, SUBSTRING] a1 = " + a1 + ", a2 = " + a2);
@@ -182,7 +185,7 @@ public class SymbolicStringConstraintsGeneralToText {
 					}
 					else {
 						v2 = createVertex (temp);
-						global_spc.npc._addDet(Comparator.EQ, v2.getSymbolicLength(), v1.getSymbolicLength()._minus(a1));
+						global_spc.getNpc()._addDet(Comparator.EQ, v2.getSymbolicLength(), v1.getSymbolicLength()._minus(a1));
 						graphBefore.addEdge(v1, v2, new EdgeSubstring1Equal("EdgeSubstring1Equal_" + v1.getName() + "_" + v2.getName() + "_(" + a1 + ")", a1, v1, v2));
 					}
 				}
@@ -192,7 +195,7 @@ public class SymbolicStringConstraintsGeneralToText {
 					IntegerExpression ie = (IntegerExpression) temp.oprlist[1];
 					//throw new RuntimeException (ie.getClass().toString());
 					processIntegerConstraint(ie);
-					global_spc.npc._addDet(Comparator.EQ, v2.getSymbolicLength(), v1.getSymbolicLength()._minus(ie));
+					global_spc.getNpc()._addDet(Comparator.EQ, v2.getSymbolicLength(), v1.getSymbolicLength()._minus(ie));
 					graphBefore.addEdge(v1, v2, new EdgeSubstring1Equal("EdgeSubstring1Equal_" + v1.getName() + "_" + v2.getName() + "_(" + ie.toString() + ")", ie, v1, v2));
 					
 				}
@@ -201,8 +204,8 @@ public class SymbolicStringConstraintsGeneralToText {
 					if (temp.oprlist[1] instanceof IntegerExpression && temp.oprlist.length == 3 && temp.oprlist[2] instanceof IntegerConstant) {
 						v2 = createVertex (temp);
 						IntegerExpression ie_a2 = (IntegerExpression) temp.oprlist[1];
-						a1 = ((IntegerConstant) temp.oprlist[2]).solution();
-						global_spc.npc._addDet(Comparator.EQ, v2.getSymbolicLength(), ie_a2._minus(a1));
+						a1 = ((IntegerConstant) temp.oprlist[2]).solutionInt();
+						global_spc.getNpc()._addDet(Comparator.EQ, v2.getSymbolicLength(), ie_a2._minus(a1));
 						graphBefore.addEdge(v1, v2, new EdgeSubstring2Equal("EdgeSubstring2Equal_" + v1.getName() + "_" + v2.getName() + "_(" + ie_a2+ "," + a1 +")", a1, ie_a2, v1, v2));
 					}
 					else {
@@ -290,7 +293,7 @@ public class SymbolicStringConstraintsGeneralToText {
 		 * to a subgraph and add it to the global_graph
 		 */
 		
-		Constraint constraint = pc.npc.header;
+		Constraint constraint = pc.getNpc().header;
 		//println ("[isSatisfiable] Int cons given:" + pc.npc.header);
 		while (constraint != null) {
 			//First solve any previous integer constriants
@@ -303,22 +306,22 @@ public class SymbolicStringConstraintsGeneralToText {
 		
 		//First solve any previous integer constriants
 		SymbolicConstraintsGeneral scg = new SymbolicConstraintsGeneral();
-		scg.solve(pc.npc);
+		scg.solve(pc.getNpc());
 		PathCondition.flagSolved = true;
 		
 		
 		//Start solving
 		//println(global_graph.toDot());
 		/* Preprocess the graph */
-		boolean resultOfPp = PreProcessGraph.preprocess(global_graph, pc.npc);
+		boolean resultOfPp = PreProcessGraph.preprocess(global_graph, pc.getNpc());
 		if (!resultOfPp) {
 			//println ("[isSat] Preprocessor gave Unsat");
 			return false;
 		}
-		println(global_graph.toPlainText());
-		if (pc.npc.header != null) {
-			println ("\nvvv vvv vvv vvv\n");
-			System.out.println(pc.npc.header);
+		logger.info(global_graph.toPlainText());
+		if (pc.getNpc().header != null) {
+			logger.info ("\nvvv vvv vvv vvv\n");
+			System.out.println(pc.getNpc().header);
 			System.out.println("\n^^^ ^^^ ^^^ ^^^\n");
 		}
 		return true;
@@ -342,7 +345,7 @@ public class SymbolicStringConstraintsGeneralToText {
 	private void processIntegerConstraint (Expression e) {
 		if (PathCondition.flagSolved == false) {
 			SymbolicConstraintsGeneral scg = new SymbolicConstraintsGeneral();
-			scg.solve(global_spc.npc);
+			scg.solve(global_spc.getNpc());
 			PathCondition.flagSolved = true;
 		}
 		if (e instanceof SymbolicCharAtInteger) {
@@ -483,7 +486,7 @@ public class SymbolicStringConstraintsGeneralToText {
 			StringGraph parent = convertToGraph(sli.parent);
 			global_graph.mergeIn(parent);
 			Vertex v1 = global_graph.findVertex(sli.parent.getName());
-			global_spc.npc._addDet(Comparator.EQ, v1.getSymbolicLength(), sli);
+			global_spc.getNpc()._addDet(Comparator.EQ, v1.getSymbolicLength(), sli);
 		}
 		/*else {
 			if (e != null) {
@@ -593,8 +596,4 @@ public class SymbolicStringConstraintsGeneralToText {
 		return true;
 	}
 	
-	private static void println (String s) {
-		if (logging)
-			System.out.println("[SAT-Sexi-JPF] " + s);
-	}
 }

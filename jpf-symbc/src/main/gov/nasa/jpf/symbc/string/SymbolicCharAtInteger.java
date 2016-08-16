@@ -41,4 +41,13 @@ public class SymbolicCharAtInteger extends SymbolicInteger{
 		return constant;
 	}
 
+	public StringExpression getExpression(){
+		return this.se;
+	}
+	
+	public IntegerExpression getIndex(){
+		return this.index;
+	}
+
+	
 }

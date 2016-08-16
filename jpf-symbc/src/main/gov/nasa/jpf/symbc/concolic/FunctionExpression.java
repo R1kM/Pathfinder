@@ -38,15 +38,12 @@
 package gov.nasa.jpf.symbc.concolic;
 // support for arbitrary external functions
 
-
-import gov.nasa.jpf.symbc.numeric.Constraint;
 import gov.nasa.jpf.symbc.numeric.ConstraintExpressionVisitor;
 import gov.nasa.jpf.symbc.numeric.Expression;
 import gov.nasa.jpf.symbc.numeric.IntegerExpression;
 import gov.nasa.jpf.symbc.numeric.PathCondition;
 import gov.nasa.jpf.symbc.numeric.RealExpression;
 import gov.nasa.jpf.util.FileUtils;
-import gov.nasa.jpf.vm.ClassInfo;
 import gov.nasa.jpf.vm.ClassLoaderInfo;
 
 import java.util.ArrayList;
@@ -114,7 +111,7 @@ public class FunctionExpression extends RealExpression
 			  Object[] args = new Object[sym_args.length];
 		      for (int i=0; i<args.length; i++)
 		    	  if (sym_args[i] instanceof IntegerExpression) {
-			        args[i] = new Integer(((IntegerExpression)sym_args[i]).solution());
+			        args[i] = new Long(((IntegerExpression)sym_args[i]).solution());
 		    	  }
 			      else {// RealExpression
 			    	args[i] = new Double(((RealExpression)sym_args[i]).solution());
@@ -129,15 +126,9 @@ public class FunctionExpression extends RealExpression
 		    		 e.printStackTrace();
 		    		 System.err.println("exception :" + e.getMessage());
 		    	  }
-		        if (result instanceof Double) {
-		        	//System.out.println("result type is double");
-		        	return ((Double) result).doubleValue();
+		        if (result instanceof Number) {
+		        	return ((Number) result).doubleValue();
 		        }
-		        if (result instanceof Integer) {
-		        	//System.out.println("result type is int");
-		        	return ((Integer) result).doubleValue();
-		        }
-		        //System.out.println("result "+result);
 		      }
 		}
 
@@ -211,5 +202,7 @@ public class FunctionExpression extends RealExpression
 			return getClass().getCanonicalName().compareTo(expr.getClass().getCanonicalName());
 		}
 	}
+
+	
 
 }

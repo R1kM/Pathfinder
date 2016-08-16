@@ -77,10 +77,10 @@ public class BinaryLinearIntegerExpression extends LinearIntegerExpression
 		}
 	}
 
-	public int solution()
+	public long solution()
 	{
-		int l = left.solution();
-		int r = right.solution();
+		long l = left.solution();
+		long r = right.solution();
 		switch(op){
  		  case PLUS:       return l + r;
 		  case MINUS:      return l - r;
@@ -111,6 +111,11 @@ public class BinaryLinearIntegerExpression extends LinearIntegerExpression
 		return "(" + left.toString() + op.toString() + right.toString() + ")";
 	}
 
+	public String prefix_notation ()
+	{
+		return "(" + op.prefix_notation() + " "+left.prefix_notation()  + " "+right.prefix_notation() + ")";
+	}
+	
 	public String stringPC ()
 	{
 		return "(" + left.stringPC() + op.toString() + right.stringPC() + ")";

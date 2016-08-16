@@ -51,6 +51,7 @@ public class NEWARRAY extends gov.nasa.jpf.jvm.bytecode.NEWARRAY {
 	
 	@Override
 	public Instruction execute( ThreadInfo ti) {
+		/*
 		StackFrame frame = ti.getModifiableTopFrame();
 
 	    arrayLength = frame.pop();
@@ -83,28 +84,21 @@ public class NEWARRAY extends gov.nasa.jpf.jvm.bytecode.NEWARRAY {
 	    frame.pushRef(arrayRef);
 
 	    return getNext(ti);
-		
+		*/
 		// old code
-	    // Corina: I'll comment it out for the time being
-	    /*
+	    // Corina: incorrect
+	    
 		StackFrame sf = ti.getModifiableTopFrame();
 		Object attr = sf.getOperandAttr();
 		
 		if(attr instanceof SymbolicLengthInteger) {
-			arrayLength = ((SymbolicLengthInteger) attr).solution;
+			long l = ((SymbolicLengthInteger) attr).solution;
+			assert(l>=0 && l<=Integer.MAX_VALUE) : "Array length must be positive integer";
+			arrayLength = (int) l;
 			sf.pop();
 		} else 	if(attr instanceof IntegerExpression) {
-			if (!PathCondition.flagSolved) {
-				// TODO I don't know what to do in this case; I believe this
-				// only happens if the array initialization is
-				// located before a program branch.
-				
-				// Corina: in reality here we should do the equivalent of lazy initialization for arrays
-				throw new RuntimeException(
-						"Path condition is not solved; Check the comments above this line for more details!");
-			}
-			arrayLength = ((IntegerExpression) attr).solution();
-			sf.pop();
+			throw new RuntimeException("NEWARRAY: symbolic array length");
+			
 		} else {
 			arrayLength = sf.pop();
 		}
@@ -120,8 +114,8 @@ public class NEWARRAY extends gov.nasa.jpf.jvm.bytecode.NEWARRAY {
 	    // there is no clinit for array classes, but we still have  to create a class object
 	    // since its a builtin class, we also don't have to bother with NoClassDefFoundErrors
 	    String clsName = "[" + type;
-	    ClassInfo ci = ClassInfo.getResolvedClassInfo(clsName);
-
+	    
+	    ClassInfo ci = ClassLoaderInfo.getCurrentResolvedClassInfo(clsName);
 	    if (!ci.isRegistered()) {
 	      ci.registerClass(ti);
 	      ci.setInitialized();
@@ -134,12 +128,15 @@ public class NEWARRAY extends gov.nasa.jpf.jvm.bytecode.NEWARRAY {
 	                                        "[" + arrayLength + "]");
 	    }
 	    
-	    int arrayRef = heap.newArray(type, arrayLength, ti);
-	    sf.push(arrayRef, true);
+	    ElementInfo eiArray = heap.newArray(type, arrayLength, ti);
+	    int arrayRef = eiArray.getObjectRef();
+	    
+	    sf.pushRef(arrayRef);
+	    
 
 	    ti.getVM().getSystemState().checkGC(); // has to happen after we push the new object ref
 	    
 	    return getNext(ti);
-	    */
+	    
 	}
 }

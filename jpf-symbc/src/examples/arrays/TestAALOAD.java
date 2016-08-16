@@ -21,22 +21,14 @@ package arrays;
 
 public class TestAALOAD {
 	
-	public void run(Node[] nlist) {
-        for (int i = 0; i< 2; i++) {
-            Node n = nlist[i];
-    		if(n != null) {
-                int curr = 100/n.elem;
-		    	
-	    	} else {
-		    	System.out.println("n is null");
-	    	}
-        }
+	public void run(int i, Node[] nlist) {
+       Node n = nlist[i];
 	}
 	
 	
 	public static void main(String[] args) {
 		TestAALOAD taaload = new TestAALOAD();
 		Node[] n = {new Node()}; 
-		taaload.run(n);
+		taaload.run(0, n);
 	}
 }

@@ -40,8 +40,6 @@ public class DALOAD extends gov.nasa.jpf.jvm.bytecode.DALOAD {
 
 	 @Override
 	  public Instruction execute (ThreadInfo ti) {
-
-         // This instruction is not yet implemented, Z3 does not support floats
 		 if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression))
 			  return super.execute(ti);
 		  StackFrame frame = ti.getModifiableTopFrame();
@@ -49,7 +47,109 @@ public class DALOAD extends gov.nasa.jpf.jvm.bytecode.DALOAD {
 		    if (arrayRef == MJIEnv.NULL) {
 		      return ti.createAndThrowException("java.lang.NullPointerException");
 		    }
-		    throw new RuntimeException("Symbolic float Arrays not handled");
+		  
+		  ElementInfo eiArray = ti.getElementInfo(arrayRef);	
+		  int len=(eiArray.getArrayFields()).arrayLength(); // assumed concrete
+		  if(!ti.isFirstStepInsn()){
+			  PCChoiceGenerator arrayCG = new PCChoiceGenerator(0,len+1); // add 2 error cases: <0, >=len  
+			  ti.getVM().getSystemState().setNextChoiceGenerator(arrayCG);
+			  
+			  if (SymbolicInstructionFactory.debugMode)
+				  System.out.println("# array cg registered: " + arrayCG);
+	          return this;
+
+	      } else { //this is what really returns results
+	    	  
+			    //index = frame.peek();
+			    PCChoiceGenerator lastCG=ti.getVM().getSystemState().getLastChoiceGeneratorOfType(PCChoiceGenerator.class); 
+			    assert(lastCG!=null);
+			    PCChoiceGenerator prevCG=lastCG.getPreviousChoiceGeneratorOfType(PCChoiceGenerator.class);
+			    
+			    index=lastCG.getNextChoice();
+			    //System.out.println("array index "+index);
+			    IntegerExpression sym_index=(IntegerExpression)peekIndexAttr(ti);
+			    //check the constraint
+			    
+			    PathCondition pc;
+				
+				if (prevCG == null)
+					pc = new PathCondition();
+				else
+					pc = ((PCChoiceGenerator)prevCG).getCurrentPC();
+
+				assert pc != null;
+
+				if(index<len) { 
+					pc._addDet(Comparator.EQ,index,sym_index);
+					if(pc.simplify())  { // satisfiable
+						((PCChoiceGenerator) lastCG).setCurrentPC(pc);
+					}
+					else {
+						ti.getVM().getSystemState().setIgnored(true);//backtrack
+						return getNext(ti);
+					}
+				} 
+				// now check for out of bounds exceptions
+				else if(index==len) {
+					pc._addDet(Comparator.LT,sym_index,0);
+					if(pc.simplify())  { // satisfiable
+						((PCChoiceGenerator) lastCG).setCurrentPC(pc);
+						return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException");
+					}
+					else {
+						ti.getVM().getSystemState().setIgnored(true);//backtrack
+						return getNext(ti);
+					}
+				}
+				else if(index==len+1) {
+					pc._addDet(Comparator.GE,sym_index,len);
+					if(pc.simplify())  { // satisfiable
+						((PCChoiceGenerator) lastCG).setCurrentPC(pc);
+						return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException");
+					}
+					else {
+						ti.getVM().getSystemState().setIgnored(true);//backtrack
+						return getNext(ti);
+					}
+				}
+			    
+			   
+			    //original code for concrete execution
+			    arrayOperandAttr = peekArrayAttr(ti);
+			    indexOperandAttr = peekIndexAttr(ti);
+			    
+			    // corina: Ignore POR for now
+			    /*
+			    Scheduler scheduler = ti.getScheduler();
+			    if (scheduler.canHaveSharedArrayCG( ti, this, eiArray, index)){ // don't modify the frame before this
+			      eiArray = scheduler.updateArraySharedness(ti, eiArray, index);
+			      if (scheduler.setsSharedArrayCG( ti, this, eiArray, index)){
+			        return this;
+			      }
+			    }
+			    */
+			    
+			    frame.pop(2); // now we can pop index and array reference
+			    // assign to index any value between 0 and array length
+			    
+			    try {
+			      push(frame, eiArray, index);
+			    	
+			      Object elementAttr = eiArray.getElementAttr(index);
+			      if (elementAttr != null) {
+			        if (getElementSize() == 1) {
+			          frame.setOperandAttr(elementAttr);
+			        } else {
+			          frame.setLongOperandAttr(elementAttr);
+			        }
+			      }
+			      
+			      return getNext(ti);
+			      
+			    } catch (ArrayIndexOutOfBoundsExecutiveException ex) {
+			      return ex.getInstruction();
+			    }
+	      }
 	  }
 		  
 }

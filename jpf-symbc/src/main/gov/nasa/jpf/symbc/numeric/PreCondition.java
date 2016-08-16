@@ -92,7 +92,7 @@ public class PreCondition {
 		String rhs = "";
 		Expression lhsExpression = null;
 		Expression rhsExpression = null;
-		int lhsInt, rhsInt;
+		long lhsInt, rhsInt;
 		double lhsDouble, rhsDouble;
 
 		if (expressionString.contains("!=")){
@@ -136,7 +136,7 @@ public class PreCondition {
 		else {
 			// expect a number here
 			try{
-				lhsInt = Integer.parseInt(lhs);
+				lhsInt = Long.parseLong(lhs);
 				lhsExpression = new IntegerConstant(lhsInt);
 			}
 			catch(Exception e1){
@@ -156,7 +156,7 @@ public class PreCondition {
 		else {
 			//expect a number here
 			try{
-				rhsInt = Integer.parseInt(rhs);
+				rhsInt = Long.parseLong(rhs);
 				rhsExpression = new IntegerConstant(rhsInt);
 			}
 			catch(Exception e1){

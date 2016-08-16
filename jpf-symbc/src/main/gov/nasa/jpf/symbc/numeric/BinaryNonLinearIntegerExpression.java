@@ -56,9 +56,9 @@ public class BinaryNonLinearIntegerExpression extends NonLinearIntegerExpression
 		right = r;
 	}
 
-	public int solution() {
-		int l = left.solution();
-		int r = right.solution();
+	public long solution() {
+		long l = left.solution();
+		long r = right.solution();
 		switch(op){
 		  case PLUS:       return l + r;
 		  case MINUS:      return l - r;
@@ -87,6 +87,11 @@ public class BinaryNonLinearIntegerExpression extends NonLinearIntegerExpression
 		return "(" + left.toString() + op.toString() + right.toString() + ")";
 	}
 
+	public String prefix_notation ()
+	{
+		return "(" + op.prefix_notation() + " "+ left.prefix_notation()  + " "+right.prefix_notation() + ")";
+	}
+	
 	// JacoGeldenhuys
 	@Override
 	public void accept(ConstraintExpressionVisitor visitor) {

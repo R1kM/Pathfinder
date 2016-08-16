@@ -37,28 +37,31 @@
 
 package gov.nasa.jpf.symbc.numeric;
 
-//import za.ac.sun.cs.green.Instance;
 import za.ac.sun.cs.green.Instance;
 import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
-import gov.nasa.jpf.symbc.arrays.ArrayExpression;
 import gov.nasa.jpf.symbc.arrays.ArrayConstraint;
 import gov.nasa.jpf.symbc.arrays.RealArrayConstraint;
-import gov.nasa.jpf.symbc.arrays.SelectExpression;
-import gov.nasa.jpf.symbc.arrays.StoreExpression;
 import gov.nasa.jpf.symbc.arrays.RealStoreExpression;
+import gov.nasa.jpf.symbc.arrays.StoreExpression;
+import gov.nasa.jpf.symbc.arrays.SelectExpression;
 import gov.nasa.jpf.symbc.concolic.PCAnalyzer;
 import gov.nasa.jpf.symbc.numeric.solvers.SolverTranslator;
 import gov.nasa.jpf.symbc.numeric.visitors.CollectVariableVisitor;
 import gov.nasa.jpf.symbc.string.StringPathCondition;
 import gov.nasa.jpf.symbc.concolic.*;
+import gov.nasa.jpf.symbc.arrays.ArrayExpression;
 import gov.nasa.jpf.vm.ChoiceGenerator;
 import gov.nasa.jpf.vm.MJIEnv;
 import gov.nasa.jpf.vm.VM;
+
+import java.util.HashMap;
 
 // path condition contains mixed constraints of integers and reals
 
 public class PathCondition implements Comparable<PathCondition> {
     public static boolean flagSolved = false;
+
+    public HashMap<String, ArrayExpression> arrayExpressions;
 
     public Constraint header;
     int count = 0;
@@ -79,6 +82,7 @@ public class PathCondition implements Comparable<PathCondition> {
 
     public PathCondition() {
     	header = null;
+        arrayExpressions = new HashMap<String, ArrayExpression>();
     }
 
     public Instance getInstance() {
@@ -98,44 +102,41 @@ public class PathCondition implements Comparable<PathCondition> {
 	    pc_new.count = this.count;
 	    pc_new.spc = this.spc.make_copy(pc_new); // TODO: to review
 	    pc_new.solverCalls = this.solverCalls;
+        pc_new.arrayExpressions = this.arrayExpressions;
 		return pc_new;
 	}
 
-    // Added for array execution
-    public void _addDet(Comparator c, SelectExpression se, IntegerExpression ae) {
-        // Adding the SelectExpression to the PathCondition
-        Constraint t = new ArrayConstraint(se, c, ae);
-        t.and = header;
-        header = t;
-        count++;
+    //Added by Aymeric
+    public void _addDet(Comparator c, SelectExpression se, IntegerExpression ie) {
+        Constraint t;
+        flagSolved = false;
+        t  = new ArrayConstraint(se, c, ie);
+        prependUnlessRepeated(t);
     }
 
+    //Added by Aymeric
     public void _addDet(Comparator c, StoreExpression se, ArrayExpression ae) {
-        // Forcing the index of the store instruction to be in array range
-        _addDet(Comparator.LT, se.index, se.ae.length);
-        _addDet(Comparator.GE, se.index, new IntegerConstant(0));
-        // Adding the StoreExpression to the PathCondition
-        Constraint t = new ArrayConstraint(se, c, ae);
-        t.and = header;
-        header = t;
-        count++;
+        Constraint t;
+        flagSolved = false;
+        t  = new ArrayConstraint(se, c, ae);
+        prependUnlessRepeated(t);
     }
 
-    public void _addDet(Comparator c, SelectExpression se, RealExpression ae) {
-        Constraint t = new RealArrayConstraint(se, c, ae);
-        t.and = header;
-        header = t;
-        count ++;
+    //Added by Aymeric
+    public void _addDet(Comparator c, SelectExpression se, RealExpression re) {
+        Constraint t;
+        flagSolved = false;
+        t  = new RealArrayConstraint(se, c, re);
+        prependUnlessRepeated(t);
     }
 
+    //Added by Aymeric
     public void _addDet(Comparator c, RealStoreExpression se, ArrayExpression ae) {
-        Constraint t = new RealArrayConstraint(se, c, ae);
-        t.and = header;
-        header = t;
-        count ++;
+        Constraint t;
+        flagSolved = false;
+        t  = new RealArrayConstraint(se, c, ae);
+        prependUnlessRepeated(t);
     }
-
-    // End array
 
 	//Added by Gideon
 	public void _addDet (LogicalORLinearIntegerConstraints loic) {
@@ -160,26 +161,14 @@ public class PathCondition implements Comparable<PathCondition> {
 	}
 
 	// constraints on integers
-	public void _addDet(Comparator c, IntegerExpression l, int r) {
+	public void _addDet(Comparator c, IntegerExpression l, long r) {
 		flagSolved = false; // C
 		_addDet(c, l, new IntegerConstant(r));
 	}
 
-	public void _addDet(Comparator c, int l, IntegerExpression r) {
-		flagSolved = false; // C
-		_addDet(c, new IntegerConstant(l), r);
-	}
-
-	public void _addDet(Comparator c, IntegerExpression l, long r) {
-		flagSolved = false; // C
-		_addDet(c, l, new IntegerConstant((int)r));
-		//_addDet(c, l, (int)r);
-	}
-
 	public void _addDet(Comparator c, long l, IntegerExpression r) {
 		flagSolved = false; // C
-		_addDet(c, new IntegerConstant((int)l), r);
-		//_addDet(c, (int)l, r);
+		_addDet(c, new IntegerConstant(l), r);
 	}
 
 	public void _addDet(Comparator c, IntegerExpression l, IntegerExpression r) {
@@ -422,7 +411,11 @@ public class PathCondition implements Comparable<PathCondition> {
 		//return ((header == null) ? "" : " " + header.toString()); -- for specialization
 					//+ "\n" + spc.toString(); // TODO: to review
 	}
-
+	public String prefix_notation() {
+		return "constraint # = " + count + ((header == null) ? "" : "\n" + header.prefix_notation());
+		//return ((header == null) ? "" : " " + header.toString()); -- for specialization
+					//+ "\n" + spc.toString(); // TODO: to review
+	}
 	public static PathCondition getPC(MJIEnv env) {
 	   VM vm = env.getVM();
 	   return getPC(vm);

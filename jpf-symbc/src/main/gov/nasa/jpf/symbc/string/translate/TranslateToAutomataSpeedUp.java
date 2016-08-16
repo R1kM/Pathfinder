@@ -780,7 +780,7 @@ public class TranslateToAutomataSpeedUp {
 			return false;
 		}
 		else {
-			temp = AutomatonExtra.lengthAutomaton(e.getIndex().solution());
+			temp = AutomatonExtra.lengthAutomaton(e.getIndex().solutionInt());
 			temp = temp.concatenate(Automaton.makeChar((char) e.getValue().solution()).concatenate(AutomatonExtra.makeAnyStringFixed()));
 			intersection = AutomatonExtra.intersection(a1, temp);
 			if (intersection.isEmpty()) {
@@ -896,7 +896,7 @@ public class TranslateToAutomataSpeedUp {
 		//println ("[handleEdgeIndexOf] entered");
 		Automaton a1 = mapAutomaton.get(e.getSource());
 		Automaton a2 = mapAutomaton.get(e.getDest());
-		int index = e.getIndex().solution();
+		int index = e.getIndex().solutionInt();
 		//First check if it is possible
 		if (index > -1) {
 			Automaton temp = AutomatonExtra.makeAnyStringFixed().concatenate(a2).concatenate(AutomatonExtra.makeAnyStringFixed());
@@ -982,7 +982,7 @@ public class TranslateToAutomataSpeedUp {
 		//println ("[handleEdgeIndexOf] entered");
 		Automaton a1 = mapAutomaton.get(e.getSource());
 		Automaton a2 = mapAutomaton.get(e.getDest());
-		int index = e.getIndex().solution();
+		int index = e.getIndex().solutionInt();
 		//First check if it is possible
 		if (index > -1) {
 			Automaton temp = AutomatonExtra.makeAnyStringFixed().concatenate(a2).concatenate(AutomatonExtra.makeAnyStringFixed());
@@ -1068,7 +1068,7 @@ public class TranslateToAutomataSpeedUp {
 		//println ("[handleEdgeIndexOf] entered");
 		Automaton a1 = mapAutomaton.get(e.getSource());
 		//Automaton a2 = mapAutomaton.get(e.getDest());
-		int index = e.getIndex().solution();
+		int index = e.getIndex().solutionInt();
 		String character = String.valueOf((char) e.getIndex().getExpression().solution());
 		//First check if it is possible
 		if (index > -1) {
@@ -1155,7 +1155,7 @@ public class TranslateToAutomataSpeedUp {
 		//println ("[handleEdgeIndexOf] entered");
 		Automaton a1 = mapAutomaton.get(e.getSource());
 		//Automaton a2 = mapAutomaton.get(e.getDest());
-		int index = e.getIndex().solution();
+		int index = e.getIndex().solutionInt();
 		String character = String.valueOf((char) e.getIndex().getExpression().solution());
 		//First check if it is possible
 		if (index > -1) {
@@ -1392,8 +1392,5 @@ public class TranslateToAutomataSpeedUp {
 		return loic;
 	}
 	
-	private static void println (String msg) {
-		if (logging) System.out.println("[TranslateToAutomata] " + msg);
-	}
 
 }

@@ -550,7 +550,7 @@ public class TranslateToAutomata2 {
 		
 		Automaton a1 = mapAutomaton.get(e.getSource());
 		Automaton a2 = mapAutomaton.get(e.getDest());
-		int index = e.getIndex().solution();
+		int index = e.getIndex().solutionInt();
 		
 		boolean a1Changed, a2Changed = false;
 		if (index > -1) {
@@ -627,7 +627,7 @@ public class TranslateToAutomata2 {
 		//println ("[handleEdgeIndexOf2] entered: " + e.getName());
 		Automaton a1 = mapAutomaton.get(e.getSource());
 		Automaton a2 = mapAutomaton.get(e.getDest());
-		int index = e.getIndex().solution();
+		int index = e.getIndex().solutionInt();
 		//First check if it is possible
 		if (index > -1) {
 			Automaton temp = AutomatonExtra.makeAnyStringFixed().concatenate(a2).concatenate(AutomatonExtra.makeAnyStringFixed());
@@ -682,7 +682,7 @@ public class TranslateToAutomata2 {
 		loic.addToList(new LinearIntegerConstraint(e.getIndex().getExpression(), Comparator.NE, new IntegerConstant(e.getIndex().getExpression().solution())));
 		unsatStack1.add(loic);
 		Automaton a1 = mapAutomaton.get(e.getSource());
-		int index = e.getIndex().solution();
+		int index = e.getIndex().solutionInt();
 		String character = String.valueOf((char) e.getIndex().getExpression().solution());
 		if (index > -1) {
 			//println ("[handleEdgeIndexOfChar] index > -1");
@@ -760,7 +760,7 @@ public class TranslateToAutomata2 {
 		unsatStack1.add(loic);
 		
 		Automaton a1 = mapAutomaton.get(e.getSource());
-		int index = e.getIndex().solution();
+		int index = e.getIndex().solutionInt();
 		String character = String.valueOf((char) e.getIndex().getExpression().solution());
 		if (index > -1) {
 			Automaton temp = AutomatonExtra.makeAnyStringFixed().concatenate(Automaton.makeString(character)).concatenate(AutomatonExtra.makeAnyStringFixed());
@@ -822,7 +822,7 @@ public class TranslateToAutomata2 {
 		//println ("[handleEdgeLastIndexOfChar2] entered");
 		Automaton a1 = mapAutomaton.get(e.getSource());
 		//Automaton a2 = mapAutomaton.get(e.getDest());
-		int index = e.getIndex().solution();
+		int index = e.getIndex().solutionInt();
 		String character = String.valueOf((char) e.getIndex().getExpression().solution());
 		//First check if it is possible
 		if (index > -1) {
@@ -837,7 +837,7 @@ public class TranslateToAutomata2 {
 			Automaton lastPieceOfString = Automaton.makeCharRange((char) SymbolicStringConstraintsGeneral.MIN_CHAR, (char) SymbolicStringConstraintsGeneral.MAX_CHAR);
 			lastPieceOfString = lastPieceOfString.minus(Automaton.makeChar(character.charAt(0)));
 			lastPieceOfString = AutomatonExtra.star(lastPieceOfString);
-			lastPieceOfString = lastPieceOfString.concatenate(AutomatonExtra.lengthAutomaton(e.getIndex().getMinDist().solution() - e.getIndex().solution() + 1));
+			lastPieceOfString = lastPieceOfString.concatenate(AutomatonExtra.lengthAutomaton(e.getIndex().getMinDist().solutionInt() - e.getIndex().solutionInt() + 1));
 			//Need to concatenate with any string that does not contain this character.
 			temp = temp.concatenate(Automaton.makeString(character)).concatenate(lastPieceOfString).concatenate(AutomatonExtra.makeAnyStringFixed());
 			intersection = AutomatonExtra.intersection(a1, temp);
@@ -886,7 +886,7 @@ public class TranslateToAutomata2 {
 		loic.addToList(new LinearIntegerConstraint(e.getIndex().getMinDist(), Comparator.NE, new IntegerConstant(e.getIndex().getMinDist().solution())));
 		unsatStack1.add(loic);
 		Automaton a1 = mapAutomaton.get(e.getSource());
-		int index = e.getIndex().solution();
+		int index = e.getIndex().solutionInt();
 		String character = String.valueOf((char) e.getIndex().getExpression().solution());
 		if (index > -1) {
 			Automaton temp = AutomatonExtra.makeAnyStringFixed().concatenate(Automaton.makeString(character)).concatenate(AutomatonExtra.makeAnyStringFixed());
@@ -897,7 +897,7 @@ public class TranslateToAutomata2 {
 			}
 			
 			Automaton exclude = Automaton.makeEmpty();
-			for (int i = e.getIndex().getMinDist().solution(); i <= index - e.getDest().getLength(); i++) {
+			for (int i = e.getIndex().getMinDist().solutionInt(); i <= index - e.getDest().getLength(); i++) {
 				Automaton prefixSpaces = AutomatonExtra.lengthAutomaton(i);
 				Automaton suffixSpaces = AutomatonExtra.lengthAutomaton(index - i - e.getDest().getLength());
 				Automaton aNew = prefixSpaces.concatenate(Automaton.makeChar(character.charAt(0))).concatenate(suffixSpaces);
@@ -965,7 +965,7 @@ public class TranslateToAutomata2 {
 			return false;
 		}
 		else {
-			temp = AutomatonExtra.lengthAutomaton(e.getIndex().solution());
+			temp = AutomatonExtra.lengthAutomaton(e.getIndex().solutionInt());
 			temp = temp.concatenate(Automaton.makeChar((char) e.getValue().solution()).concatenate(AutomatonExtra.makeAnyStringFixed()));
 			intersection = AutomatonExtra.intersection(a1, temp);
 			if (intersection.isEmpty()) {
@@ -992,7 +992,7 @@ public class TranslateToAutomata2 {
 		
 		Automaton a1 = mapAutomaton.get(e.getSource());
 		Automaton a2 = Automaton.makeChar((char) e.getValue().solution());
-		Automaton temp = AutomatonExtra.lengthAutomaton(e.getIndex().solution());
+		Automaton temp = AutomatonExtra.lengthAutomaton(e.getIndex().solutionInt());
 		temp = temp.concatenate(Automaton.makeChar((char) e.getValue().solution()).concatenate(AutomatonExtra.makeAnyStringFixed()));
 		//println ("temp example '" + temp.getShortestExample(true) +"'");
 		Automaton intersection = a1.minus(temp);
@@ -1106,7 +1106,7 @@ public class TranslateToAutomata2 {
 			loic.addToList(new LinearIntegerConstraint(e.getSymbolicArgument2(), Comparator.NE, new IntegerConstant(e.getSymbolicArgument2().solution())));
 			unsatStack1.add(loic);
 			
-			int arg2 = e.getSymbolicArgument2().solution();
+			int arg2 = e.getSymbolicArgument2().solutionInt();
 			Automaton temp = AutomatonExtra.substring(source, e.getArgument1(), arg2);
 			//println ("[handleEdgeSubstring2Equal] source.getLength() = " + e.getSource().getLength());
 			//println ("[handleEdgeSubstring2Equal] temp diff = " + (arg2 - e.getArgument1()));
@@ -1464,7 +1464,7 @@ public class TranslateToAutomata2 {
 				unsatStack2.add(new LinearIntegerConstraint(e.getDest().getSymbolicLength(), Comparator.NE, new IntegerConstant(e.getDest().getLength())));
 				Automaton destination = mapAutomaton.get(e.getDest());
 				String source = e.getSource().getSolution();
-				source = source.substring(0, e.getIndex().solution()); //The part of source before e.getIndex()
+				source = source.substring(0, e.getIndex().solutionInt()); //The part of source before e.getIndex()
 				
 				for (int i = 0; i <= source.length() - e.getDest().getLength(); i++) {
 					String t = source.substring(i, i + e.getDest().getLength());
@@ -1484,7 +1484,7 @@ public class TranslateToAutomata2 {
 				String destination = e.getDest().getSolution();
 				
 				Automaton temp = AutomatonExtra.makeAnyStringFixed().concatenate(Automaton.makeString(destination)).concatenate(AutomatonExtra.makeAnyStringFixed());
-				temp = temp.intersection(AutomatonExtra.lengthAutomaton(e.getIndex().solution()));
+				temp = temp.intersection(AutomatonExtra.lengthAutomaton(e.getIndex().solutionInt()));
 				temp = temp.concatenate(AutomatonExtra.makeAnyStringFixed());
 				
 				source = source.minus(temp);
@@ -1578,7 +1578,7 @@ public class TranslateToAutomata2 {
 				String destination = String.valueOf((char) e.getIndex().getExpression().solution());
 				
 				Automaton temp = AutomatonExtra.makeAnyStringFixed().concatenate(Automaton.makeString(destination)).concatenate(AutomatonExtra.makeAnyStringFixed());
-				temp = temp.intersection(AutomatonExtra.lengthAutomaton(e.getIndex().solution()));
+				temp = temp.intersection(AutomatonExtra.lengthAutomaton(e.getIndex().solutionInt()));
 				temp = temp.concatenate(AutomatonExtra.makeAnyStringFixed());
 				
 				source = source.minus(temp);
@@ -1650,7 +1650,7 @@ public class TranslateToAutomata2 {
 				String source = e.getSource().getSolution();
 				char destination = (char) e.getIndex().getExpression().solution();
 				
-				for (int i = e.getIndex().solution() + 1; i < e.getSource().getLength(); i++) {
+				for (int i = e.getIndex().solutionInt() + 1; i < e.getSource().getLength(); i++) {
 					char c = source.charAt(i);
 					global_pc._addDet(Comparator.NE, new IntegerConstant(destination), new IntegerConstant(c));
 				}
@@ -1671,7 +1671,7 @@ public class TranslateToAutomata2 {
 				String destination = String.valueOf((char) e.getIndex().getExpression().solution());
 				
 				Automaton temp = AutomatonExtra.makeAnyStringFixed().concatenate(Automaton.makeString(destination)).concatenate(AutomatonExtra.makeAnyStringFixed());
-				temp = temp.intersection(AutomatonExtra.lengthAutomaton(e.getSource().getLength() - e.getIndex().solution() -1));
+				temp = temp.intersection(AutomatonExtra.lengthAutomaton(e.getSource().getLength() - e.getIndex().solutionInt() -1));
 				temp = AutomatonExtra.makeAnyStringFixed().concatenate(temp);
 				//println ("[handleNotEdgeLastIndexOfChar] e.getSource().getLength(): " + e.getSource().getLength());
 				//println ("[handleNotEdgeLastIndexOfChar] e.getIndex().solution(): " + e.getIndex().solution());
@@ -1704,7 +1704,7 @@ public class TranslateToAutomata2 {
 			if (e.getSource().isConstant()) {
 				unsatStack2.add(new LinearIntegerConstraint(e.getDest().getSymbolicLength(), Comparator.NE, new IntegerConstant(e.getDest().getLength())));
 				
-				for (int i = e.getIndex().getMinDist().solution(); i < e.getSource().getLength(); i++) {
+				for (int i = e.getIndex().getMinDist().solutionInt(); i < e.getSource().getLength(); i++) {
 					char c = e.getSource().getSolution().charAt(i);
 					global_pc._addDet(Comparator.NE, new IntegerConstant(c), e.getIndex().getExpression());
 				}
@@ -1723,7 +1723,7 @@ public class TranslateToAutomata2 {
 				Automaton source = mapAutomaton.get(e.getSource());
 				String destination = String.valueOf((char) e.getIndex().getExpression().solution());
 				
-				Automaton temp = AutomatonExtra.lengthAutomaton(e.getIndex().getMinDist().solution()).concatenate(AutomatonExtra.makeAnyStringFixed().concatenate(Automaton.makeString(destination)).concatenate(AutomatonExtra.makeAnyStringFixed()));
+				Automaton temp = AutomatonExtra.lengthAutomaton(e.getIndex().getMinDist().solutionInt()).concatenate(AutomatonExtra.makeAnyStringFixed().concatenate(Automaton.makeString(destination)).concatenate(AutomatonExtra.makeAnyStringFixed()));
 				source = source.minus(temp);
 				if (source.isEmpty()) {
 					debug_unsat_reason = "Not handling of edge indexOf == -1, with destination constant, lead to empty source";
@@ -1742,7 +1742,7 @@ public class TranslateToAutomata2 {
 				String source = e.getSource().getSolution();
 				char destination = (char) e.getIndex().getExpression().solution();
 				
-				for (int i = e.getIndex().getMinDist().solution(); i < e.getIndex().solution(); i++) {
+				for (int i = e.getIndex().getMinDist().solutionInt(); i < e.getIndex().solution(); i++) {
 					char c = source.charAt(i);
 					global_pc._addDet(Comparator.NE, new IntegerConstant(destination), new IntegerConstant(c));
 				}
@@ -1761,8 +1761,8 @@ public class TranslateToAutomata2 {
 				Automaton source = mapAutomaton.get(e.getSource());
 				String destination = String.valueOf((char) e.getIndex().getExpression().solution());
 				
-				Automaton temp = AutomatonExtra.lengthAutomaton(e.getIndex().getMinDist().solution()).concatenate(AutomatonExtra.makeAnyStringFixed().concatenate(Automaton.makeString(destination)).concatenate(AutomatonExtra.makeAnyStringFixed()));
-				temp = temp.intersection(AutomatonExtra.lengthAutomaton(e.getIndex().solution()));
+				Automaton temp = AutomatonExtra.lengthAutomaton(e.getIndex().getMinDist().solutionInt()).concatenate(AutomatonExtra.makeAnyStringFixed().concatenate(Automaton.makeString(destination)).concatenate(AutomatonExtra.makeAnyStringFixed()));
+				temp = temp.intersection(AutomatonExtra.lengthAutomaton(e.getIndex().solutionInt()));
 				temp = temp.concatenate(AutomatonExtra.makeAnyStringFixed());
 				
 				source = source.minus(temp);
@@ -1791,7 +1791,7 @@ public class TranslateToAutomata2 {
 			if (e.getSource().isConstant()) {
 				unsatStack2.add(new LinearIntegerConstraint(e.getDest().getSymbolicLength(), Comparator.NE, new IntegerConstant(e.getDest().getLength())));
 				
-				for (int i = e.getIndex().getMinDist().solution(); i < e.getSource().getLength(); i++) {
+				for (int i = e.getIndex().getMinDist().solutionInt(); i < e.getSource().getLength(); i++) {
 					char c = e.getSource().getSolution().charAt(i);
 					global_pc._addDet(Comparator.NE, new IntegerConstant(c), e.getIndex().getExpression());
 				}
@@ -1810,7 +1810,7 @@ public class TranslateToAutomata2 {
 				Automaton source = mapAutomaton.get(e.getSource());
 				String destination = String.valueOf((char) e.getIndex().getExpression().solution());
 				
-				Automaton temp = AutomatonExtra.lengthAutomaton(e.getIndex().getMinDist().solution()).concatenate(AutomatonExtra.makeAnyStringFixed().concatenate(Automaton.makeString(destination)).concatenate(AutomatonExtra.makeAnyStringFixed()));
+				Automaton temp = AutomatonExtra.lengthAutomaton(e.getIndex().getMinDist().solutionInt()).concatenate(AutomatonExtra.makeAnyStringFixed().concatenate(Automaton.makeString(destination)).concatenate(AutomatonExtra.makeAnyStringFixed()));
 				source = source.minus(temp);
 				if (source.isEmpty()) {
 					debug_unsat_reason = "Not handling of edge indexOf == -1, with destination constant, lead to empty source";
@@ -1829,7 +1829,7 @@ public class TranslateToAutomata2 {
 				String source = e.getSource().getSolution();
 				char destination = (char) e.getIndex().getExpression().solution();
 				
-				for (int i = e.getIndex().getMinDist().solution(); i < e.getSource().getLength(); i++) {
+				for (int i = e.getIndex().getMinDist().solutionInt(); i < e.getSource().getLength(); i++) {
 					char c = source.charAt(i);
 					global_pc._addDet(Comparator.NE, new IntegerConstant(destination), new IntegerConstant(c));
 				}
@@ -1848,8 +1848,8 @@ public class TranslateToAutomata2 {
 				Automaton source = mapAutomaton.get(e.getSource());
 				String destination = String.valueOf((char) e.getIndex().getExpression().solution());
 				
-				Automaton temp = AutomatonExtra.lengthAutomaton(e.getIndex().getMinDist().solution()).concatenate(AutomatonExtra.makeAnyStringFixed().concatenate(Automaton.makeString(destination)).concatenate(AutomatonExtra.makeAnyStringFixed()));
-				temp = temp.intersection(AutomatonExtra.lengthAutomaton(e.getSource().getLength() - e.getIndex().solution() - 1));
+				Automaton temp = AutomatonExtra.lengthAutomaton(e.getIndex().getMinDist().solutionInt()).concatenate(AutomatonExtra.makeAnyStringFixed().concatenate(Automaton.makeString(destination)).concatenate(AutomatonExtra.makeAnyStringFixed()));
+				temp = temp.intersection(AutomatonExtra.lengthAutomaton(e.getSource().getLength() - e.getIndex().solutionInt() - 1));
 				temp = AutomatonExtra.makeAnyStringFixed().concatenate(temp);
 				
 				source = source.minus(temp);
@@ -1879,7 +1879,7 @@ public class TranslateToAutomata2 {
 				Automaton destination = mapAutomaton.get(e.getDest());
 				String source = e.getSource().getSolution();
 				
-				for (int i = e.getIndex().getMinIndex().solution(); i <= e.getSource().getLength() - e.getDest().getLength(); i++) {
+				for (int i = e.getIndex().getMinIndex().solutionInt(); i <= e.getSource().getLength() - e.getDest().getLength(); i++) {
 					String t = source.substring(i, i + e.getDest().getLength());
 					destination = destination.minus(Automaton.makeString(t));
 					if (destination.isEmpty()) {
@@ -1896,7 +1896,7 @@ public class TranslateToAutomata2 {
 				Automaton source = mapAutomaton.get(e.getSource());
 				String destination = e.getDest().getSolution();
 				
-				Automaton temp = AutomatonExtra.lengthAutomaton(e.getIndex().getMinIndex().solution()).concatenate(AutomatonExtra.makeAnyStringFixed()).concatenate(Automaton.makeString(destination)).concatenate(AutomatonExtra.makeAnyStringFixed());
+				Automaton temp = AutomatonExtra.lengthAutomaton(e.getIndex().getMinIndex().solutionInt()).concatenate(AutomatonExtra.makeAnyStringFixed()).concatenate(Automaton.makeString(destination)).concatenate(AutomatonExtra.makeAnyStringFixed());
 				source = source.minus(temp);
 				if (source.isEmpty()) {
 					debug_unsat_reason = "Not handling of edge indexOf == -1, with destination constant, lead to empty source";
@@ -1918,9 +1918,9 @@ public class TranslateToAutomata2 {
 				unsatStack2.add(new LinearIntegerConstraint(e.getDest().getSymbolicLength(), Comparator.NE, new IntegerConstant(e.getDest().getLength())));
 				Automaton destination = mapAutomaton.get(e.getDest());
 				String source = e.getSource().getSolution();
-				source = source.substring(e.getIndex().getMinIndex().solution(), e.getIndex().solution()); //The part of source before e.getIndex()
+				source = source.substring(e.getIndex().getMinIndex().solutionInt(), e.getIndex().solutionInt()); //The part of source before e.getIndex()
 				
-				for (int i = e.getIndex().getMinIndex().solution(); i <= source.length() - e.getDest().getLength(); i++) {
+				for (int i = e.getIndex().getMinIndex().solutionInt(); i <= source.length() - e.getDest().getLength(); i++) {
 					String t = source.substring(i, i + e.getDest().getLength());
 					destination = destination.minus(Automaton.makeString(t));
 					if (destination.isEmpty()) {
@@ -1937,8 +1937,8 @@ public class TranslateToAutomata2 {
 				Automaton source = mapAutomaton.get(e.getSource());
 				String destination = e.getDest().getSolution();
 				
-				Automaton temp = AutomatonExtra.lengthAutomaton(e.getIndex().getMinIndex().solution()).concatenate(AutomatonExtra.makeAnyStringFixed().concatenate(Automaton.makeString(destination)).concatenate(AutomatonExtra.makeAnyStringFixed()));
-				temp = temp.intersection(AutomatonExtra.lengthAutomaton(e.getIndex().solution()));
+				Automaton temp = AutomatonExtra.lengthAutomaton(e.getIndex().getMinIndex().solutionInt()).concatenate(AutomatonExtra.makeAnyStringFixed().concatenate(Automaton.makeString(destination)).concatenate(AutomatonExtra.makeAnyStringFixed()));
+				temp = temp.intersection(AutomatonExtra.lengthAutomaton(e.getIndex().solutionInt()));
 				temp = temp.concatenate(AutomatonExtra.makeAnyStringFixed());
 				
 				source = source.minus(temp);
@@ -2183,7 +2183,7 @@ public class TranslateToAutomata2 {
 			Automaton source = mapAutomaton.get(e.getSource());
 			Automaton dest = mapAutomaton.get(e.getDest());
 			
-			int index = e.getIndex().solution();
+			int index = e.getIndex().solutionInt();
 			//println ("index: " + index);
 			String[] sourceSolutions = new String[base];
 			String[] destSolutions = new String[base];
@@ -2251,8 +2251,8 @@ public class TranslateToAutomata2 {
 			Automaton source = mapAutomaton.get(e.getSource());
 			Automaton dest = mapAutomaton.get(e.getDest());
 			
-			int index = e.getIndex().solution();
-			int minIndex = e.getIndex().getMinIndex().solution();
+			int index = e.getIndex().solutionInt();
+			int minIndex = e.getIndex().getMinIndex().solutionInt();
 			//println ("index: " + index);
 			String[] sourceSolutions = new String[base];
 			String[] destSolutions = new String[base];
@@ -2442,7 +2442,7 @@ public class TranslateToAutomata2 {
 			String source = concreteMap.get(e.getSource()).get(iteration.get(sourceNum));
 			String dest = concreteMap.get(e.getDest()).get(iteration.get(destNum));
 			
-			return source.indexOf(dest, e.getIndex().getMinIndex().solution()) == -1;
+			return source.indexOf(dest, e.getIndex().getMinIndex().solutionInt()) == -1;
 		} else if (e.getIndex().solution() >= 0) {
 			int sourceNum = mapVertexInteger.get(e.getSource());
 			int destNum = mapVertexInteger.get(e.getDest());
@@ -2450,7 +2450,7 @@ public class TranslateToAutomata2 {
 			String source = concreteMap.get(e.getSource()).get(iteration.get(sourceNum));
 			String dest = concreteMap.get(e.getDest()).get(iteration.get(destNum));
 			
-			return source.indexOf(dest, e.getIndex().getMinIndex().solution()) == e.getIndex().solution();
+			return source.indexOf(dest, e.getIndex().getMinIndex().solutionInt()) == e.getIndex().solution();
 		}
 		throw new RuntimeException("This should not be reached");
 	}
@@ -2505,7 +2505,7 @@ public class TranslateToAutomata2 {
 			String source = concreteMap.get(e.getSource()).get(iteration.get(sourceNum));
 			String dest = concreteMap.get(e.getDest()).get(iteration.get(destNum));
 			
-			return source.lastIndexOf(dest, e.getIndex().getMinDist().solution()) == -1;
+			return source.lastIndexOf(dest, e.getIndex().getMinDist().solutionInt()) == -1;
 		} else if (e.getIndex().solution() >= 0) {
 			int sourceNum = mapVertexInteger.get(e.getSource());
 			int destNum = mapVertexInteger.get(e.getDest());
@@ -2513,7 +2513,7 @@ public class TranslateToAutomata2 {
 			String source = concreteMap.get(e.getSource()).get(iteration.get(sourceNum));
 			String dest = concreteMap.get(e.getDest()).get(iteration.get(destNum));
 			
-			return source.lastIndexOf(dest, e.getIndex().getMinDist().solution()) == e.getIndex().solution();
+			return source.lastIndexOf(dest, e.getIndex().getMinDist().solutionInt()) == e.getIndex().solution();
 		}
 		throw new RuntimeException("This should not be reached");
 	}
@@ -2526,7 +2526,7 @@ public class TranslateToAutomata2 {
 			String source = concreteMap.get(e.getSource()).get(iteration.get(sourceNum));
 			String dest = concreteMap.get(e.getDest()).get(iteration.get(destNum));
 			
-			return source.indexOf(dest, e.getIndex().getMinDist().solution()) == -1;
+			return source.indexOf(dest, e.getIndex().getMinDist().solutionInt()) == -1;
 		} else if (e.getIndex().solution()  >= 0) {
 			int sourceNum = mapVertexInteger.get(e.getSource());
 			int destNum = mapVertexInteger.get(e.getDest());
@@ -2534,7 +2534,7 @@ public class TranslateToAutomata2 {
 			String source = concreteMap.get(e.getSource()).get(iteration.get(sourceNum));
 			String dest = concreteMap.get(e.getDest()).get(iteration.get(destNum));
 			
-			return source.indexOf(dest, e.getIndex().getMinDist().solution()) == e.getIndex().solution();
+			return source.indexOf(dest, e.getIndex().getMinDist().solutionInt()) == e.getIndex().solution();
 		}
 		throw new RuntimeException("This should not be reached");
 	}
@@ -2574,7 +2574,4 @@ public class TranslateToAutomata2 {
 		}
 	}
 	
-	private static void println (String msg) {
-		System.out.println("[TranslateToAutomata2] " + msg);
-	}
 }

@@ -45,6 +45,9 @@ import choco.integer.var.IntTerm.*;
 import choco.real.*;
 import choco.real.constraint.MixedEqXY;
 
+/* Rody: add typecasts long->int everywhere now. Needs a nice solution where the user
+ * is notified to use another solver with longs.
+ */
 public class ProblemChoco extends ProblemGeneral {
 	RealProblem pb;
 	public static int timeBound;// = 30000;
@@ -53,8 +56,9 @@ public class ProblemChoco extends ProblemGeneral {
 		//pb.setPrecision(1e-8);// need to check this
 	}
 
-	public IntDomainVar makeIntVar(String name, int min, int max) {
-		return pb.makeBoundIntVar(name,min,max);
+	public IntDomainVar makeIntVar(String name, long min, long max) {
+		assert(min>=Integer.MIN_VALUE && max<=Integer.MAX_VALUE);
+		return pb.makeBoundIntVar(name, (int) min, (int) max);
 	}
 
 	public RealVar makeRealVar(String name, double min, double max) {
@@ -70,8 +74,8 @@ public class ProblemChoco extends ProblemGeneral {
 //		return pb.or(arr);
 //	}
 
-	public Object eq(int value, Object exp){return pb.eq(value, (IntExp)exp);}
-	public Object eq(Object exp, int value){return pb.eq((IntExp) exp, value);}
+	public Object eq(long value, Object exp){return pb.eq((int) value, (IntExp)exp);}
+	public Object eq(Object exp, long value){return pb.eq((IntExp) exp, (int) value);}
 	public Object eq(Object exp1, Object exp2){
 		if (exp1 instanceof IntExp && exp2 instanceof IntExp )
 			return pb.eq((IntExp) exp1,(IntExp) exp2);
@@ -82,8 +86,8 @@ public class ProblemChoco extends ProblemGeneral {
 	}
 	public Object eq(double value, Object exp){return pb.eq(value, (RealExp) exp);}
 	public Object eq(Object exp, double value){return pb.eq(value, (RealExp) exp);}
-	public Object neq(int value, Object exp){return pb.neq(value, (IntExp) exp);}
-	public Object neq(Object exp, int value){return pb.neq(value, (IntExp) exp);}
+	public Object neq(long value, Object exp){return pb.neq((int) value, (IntExp) exp);}
+	public Object neq(Object exp, long value){return pb.neq((int) value, (IntExp) exp);}
 	public Object neq(Object exp1, Object exp2){
 		if (exp1 instanceof IntExp && exp2 instanceof IntExp )
 			return pb.neq((IntExp) exp1,(IntExp) exp2);
@@ -94,8 +98,8 @@ public class ProblemChoco extends ProblemGeneral {
 	}
 	public Object neq(double value, Object exp){return pb.neq(value, (RealExp) exp);}
 	public Object neq(Object exp, double value){return pb.neq(value, (RealExp) exp);}
-	public Object leq(int value, Object exp){return pb.leq(value,(IntExp)exp);}
-	public Object leq(Object exp, int value){return pb.leq((IntExp)exp,value);}
+	public Object leq(long value, Object exp){return pb.leq((int) value,(IntExp)exp);}
+	public Object leq(Object exp, long value){return pb.leq((IntExp)exp,(int) value);}
 	public Object leq(Object exp1, Object exp2){
 		if (exp1 instanceof IntExp && exp2 instanceof IntExp )
 			return pb.leq((IntExp) exp1,(IntExp) exp2);
@@ -106,8 +110,8 @@ public class ProblemChoco extends ProblemGeneral {
 	}
 	public Object leq(double value, Object exp){return pb.leq(value,(RealExp)exp);}
 	public Object leq(Object exp, double value){return pb.leq((RealExp)exp, value);}
-	public Object geq(int value, Object exp){return pb.geq(value, (IntExp)exp);}
-	public Object geq(Object exp, int value){return pb.geq((IntExp)exp,value);}
+	public Object geq(long value, Object exp){return pb.geq((int) value, (IntExp)exp);}
+	public Object geq(Object exp, long value){return pb.geq((IntExp)exp,(int) value);}
 	public Object geq(Object exp1, Object exp2){
 		if (exp1 instanceof IntExp && exp2 instanceof IntExp )
 			return pb.geq((IntExp) exp1,(IntExp) exp2);
@@ -122,11 +126,11 @@ public class ProblemChoco extends ProblemGeneral {
 	public Object geq(Object exp, double value){
 		return pb.geq((RealExp) exp, value);
 	}
-	public Object lt(int value, Object exp){
-		return pb.lt(value, (IntExp) exp);
+	public Object lt(long value, Object exp){
+		return pb.lt((int) value, (IntExp) exp);
 	}
-	public Object lt(Object exp, int value){
-		return pb.lt((IntExp) exp,value);
+	public Object lt(Object exp, long value){
+		return pb.lt((IntExp) exp,(int) value);
 	}
 	public Object lt(Object exp1, Object exp2){
 		if (exp1 instanceof IntExp && exp2 instanceof IntExp )
@@ -142,11 +146,11 @@ public class ProblemChoco extends ProblemGeneral {
 	public Object lt(Object exp, double value){
 		return pb.lt((RealExp) exp,value);
 	}
-	public Object gt(int value, Object exp){
-		return pb.gt(value,(IntExp) exp);
+	public Object gt(long value, Object exp){
+		return pb.gt((int) value,(IntExp) exp);
 	}
-	public Object gt(Object exp, int value){
-		return pb.gt((IntExp) exp,value);
+	public Object gt(Object exp, long value){
+		return pb.gt((IntExp) exp,(int) value);
 	}
 	public Object gt(Object exp1, Object exp2){
 		if (exp1 instanceof IntExp && exp2 instanceof IntExp )
@@ -163,11 +167,11 @@ public class ProblemChoco extends ProblemGeneral {
 		return pb.gt((RealExp) exp, value);
 	}
 
-	public Object plus(int value, Object exp) {
-		return pb.plus(value,(IntExp) exp);
+	public Object plus(long value, Object exp) {
+		return pb.plus((int) value,(IntExp) exp);
 	}
-	public Object plus(Object exp, int value) {
-		return pb.plus((IntExp) exp, value);
+	public Object plus(Object exp, long value) {
+		return pb.plus((IntExp) exp, (int) value);
 	}
 	public Object plus(Object exp1, Object exp2) {
 		if (exp1 instanceof IntExp && exp2 instanceof IntExp )
@@ -184,11 +188,11 @@ public class ProblemChoco extends ProblemGeneral {
 		return pb.plus((RealExp) exp, pb.cst(value));
 	}
 
-	public Object minus(int value, Object exp) {
-		return pb.minus(value, (IntExp) exp);
+	public Object minus(long value, Object exp) {
+		return pb.minus((int) value, (IntExp) exp);
 	}
-	public Object minus(Object exp, int value) {
-		return pb.minus((IntExp) exp, value);
+	public Object minus(Object exp, long value) {
+		return pb.minus((IntExp) exp, (int) value);
 	}
 	public Object minus(Object exp1, Object exp2) {
 		if (exp1 instanceof IntExp && exp2 instanceof IntExp )
@@ -204,19 +208,19 @@ public class ProblemChoco extends ProblemGeneral {
 	public Object minus(Object exp, double value) {
 		return pb.minus((RealExp) exp, pb.cst(value));
 	}
-	public Object mult(int value, Object exp) {
+	public Object mult(long value, Object exp) {
 		if (exp instanceof IntVar)
-			return pb.mult(value, (IntExp) exp);
+			return pb.mult((int) value, (IntExp) exp);
 		else if (exp instanceof IntTerm) {
 			// distribute value over exp
 			//return pb.mult(value, (IntExp) exp);
 			IntTerm it= (IntTerm) exp;
         	IntTerm constant= new IntTerm(0);
-        	constant.setConstant(value * it.getConstant());
+        	constant.setConstant((int) value * it.getConstant());
         	IntExp sum = constant;
         	for (int i = 0; i < it.getSize(); i++) {
         		IntTerm newterm= new IntTerm(1);
-        		newterm.setCoefficient(i, it.getCoefficient(i)*value);
+        		newterm.setCoefficient(i, it.getCoefficient(i)*(int) value);
         		newterm.setVariable(i, it.getVariable(i));
         		sum= (IntExp) pb.plus(sum, newterm);
         	}
@@ -225,20 +229,20 @@ public class ProblemChoco extends ProblemGeneral {
 		else
 			throw new RuntimeException("## Error Choco");
 	}
-	public Object mult(Object exp, int value) {
+	public Object mult(Object exp, long value) {
 		if (exp instanceof IntVar)
-			return pb.mult(value, (IntExp) exp);
+			return pb.mult((int) value, (IntExp) exp);
 
 		else if (exp instanceof IntTerm) {
 			// distribute value over exp
 			//return pb.mult(value, (IntExp) exp);
 			IntTerm it= (IntTerm) exp;
     		IntTerm constant= new IntTerm(0);
-    		constant.setConstant(value * it.getConstant());
+    		constant.setConstant((int) value * it.getConstant());
     		IntExp sum = constant;
     		for (int i = 0; i < it.getSize(); i++) {
     			IntTerm newterm= new IntTerm(1);
-    			newterm.setCoefficient(i, it.getCoefficient(i)*value);
+    			newterm.setCoefficient(i, it.getCoefficient(i)*(int) value);
     			newterm.setVariable(i, it.getVariable(i));
     			sum= (IntExp) pb.plus(sum, newterm);
     		}
@@ -261,10 +265,10 @@ public class ProblemChoco extends ProblemGeneral {
 	public Object mult(Object exp, double value) {
 		return pb.mult((RealExp) exp, pb.cst(value));
 	}
-	public Object div(int value, Object exp) {
+	public Object div(long value, Object exp) {
 		throw new RuntimeException("## Error Choco: non-lin int constraint");
 	}
-	public Object div(Object exp, int value) {
+	public Object div(Object exp, long value) {
 		throw new RuntimeException("## Error Choco: non-lin int constraint");
 	}
 	public Object div(Object exp1, Object exp2) {
@@ -308,7 +312,7 @@ public class ProblemChoco extends ProblemGeneral {
 	public double getRealValue(Object dpVar) {
 		throw new RuntimeException("# Error: Choco can not compute real solution!");
 	}
-	public int getIntValue(Object dpVar) {
+	public long getIntValue(Object dpVar) {
 		return ((IntDomainVar) dpVar).getVal();
 	}
 
@@ -329,11 +333,11 @@ public class ProblemChoco extends ProblemGeneral {
 		pb.post((choco.Constraint)constraint);
 	}
 
-	public Object and(int value, Object exp) {
+	public Object and(long value, Object exp) {
 		throw new RuntimeException("## Error Choco does not support bitwise AND");
 	}
 
-	public Object and(Object exp, int value) {
+	public Object and(Object exp, long value) {
 		throw new RuntimeException("## Error Choco does not support bitwise AND");
 	}
 
@@ -342,12 +346,12 @@ public class ProblemChoco extends ProblemGeneral {
 	}
 
 	@Override
-	public Object or(int value, Object exp) {
+	public Object or(long value, Object exp) {
 		throw new RuntimeException("## Error Choco does not support bitwise OR");
 	}
 
 	@Override
-	public Object or(Object exp, int value) {
+	public Object or(Object exp, long value) {
 		throw new RuntimeException("## Error Choco does not support bitwise OR");
 	}
 
@@ -357,27 +361,27 @@ public class ProblemChoco extends ProblemGeneral {
 	}
 
 
-	public Object shiftL(int value, Object exp) {
+	public Object shiftL(long value, Object exp) {
 		throw new RuntimeException("## Error Choco does not support bitwise SHIFT");
 	}
 
-	public Object shiftL(Object exp, int value) {
+	public Object shiftL(Object exp, long value) {
 		throw new RuntimeException("## Error Choco does not support bitwise SHIFT");
 	}
 
-	public Object shiftR(int value, Object exp) {
+	public Object shiftR(long value, Object exp) {
 		throw new RuntimeException("## Error Choco does not support bitwise SHIFT");
 	}
 
-	public Object shiftR(Object exp, int value) {
+	public Object shiftR(Object exp, long value) {
 		throw new RuntimeException("## Error Choco does not support bitwise SHIFT");
 	}
 
-	public Object xor(int value, Object exp) {
+	public Object xor(long value, Object exp) {
 		throw new RuntimeException("## Error Choco does not support bitwise XOR");
 	}
 
-	public Object xor(Object exp, int value) {
+	public Object xor(Object exp, long value) {
 		throw new RuntimeException("## Error Choco does not support bitwise XOR");
 	}
 
@@ -393,12 +397,12 @@ public class ProblemChoco extends ProblemGeneral {
 		throw new RuntimeException("## Error Choco does not support bitwise SHIFT");
 	}
 
-	public Object shiftUR(int value, Object exp) {
+	public Object shiftUR(long value, Object exp) {
 		throw new RuntimeException("## Error Choco does not support bitwise SHIFT");
 
 	}
 
-	public Object shiftUR(Object exp, int value) {
+	public Object shiftUR(Object exp, long value) {
 		throw new RuntimeException("## Error Choco does not support bitwise SHIFT");
 	}
 
@@ -416,6 +420,24 @@ public class ProblemChoco extends ProblemGeneral {
 		choco.Constraint temp = (choco.Constraint) orCon;
 		pb.post(temp);
 
+	}
+
+	@Override
+	public Object rem(Object exp1, Object exp2) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Object rem(long exp1, Object exp2) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Object rem(Object exp1, long exp2) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

@@ -18,9 +18,11 @@
 
 package gov.nasa.jpf.symbc.heap;
 
+
+
+import gov.nasa.jpf.symbc.arrays.ArrayExpression;
 import gov.nasa.jpf.symbc.arrays.ArrayHeapNode;
 import gov.nasa.jpf.symbc.arrays.HelperResult;
-import gov.nasa.jpf.symbc.arrays.ObjectSymbolicArray;
 import gov.nasa.jpf.symbc.numeric.Comparator;
 import gov.nasa.jpf.symbc.numeric.Expression;
 import gov.nasa.jpf.symbc.numeric.IntegerConstant;
@@ -164,14 +166,13 @@ public class Helper {
 		  return daIndex;
 	  }
 
-
 	  public static HelperResult addNewArrayHeapNode(ClassInfo typeClassInfo, ThreadInfo ti, Object attr,
 			  PathCondition pcHeap, SymbolicInputHeap symInputHeap,
 			  int numSymRefs, HeapNode[] prevSymRefs, boolean setShared, IntegerExpression indexAttr, int arrayRef) {
 		  int daIndex = ti.getHeap().newObject(typeClassInfo, ti).getObjectRef();
 		  ti.getHeap().registerPinDown(daIndex);
-		  String refChain = ((ObjectSymbolicArray) attr).getName() + "[" + daIndex + "]"; // do we really need to add daIndex here?
-		  SymbolicInteger newSymRef = new SymbolicInteger( refChain);
+		  String refChain = ((ArrayExpression) attr).getName() + "[" + daIndex + "]"; // do we really need to add daIndex here?
+		  SymbolicInteger newSymRef = new SymbolicInteger(refChain);
 		  ElementInfo eiRef =  ti.getModifiableElementInfo(daIndex);//ti.getElementInfo(daIndex); // TODO to review!
 		  if(setShared) {
 			  eiRef.setShared(ti,true);//??

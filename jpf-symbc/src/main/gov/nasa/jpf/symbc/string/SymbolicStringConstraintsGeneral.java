@@ -20,12 +20,9 @@ package gov.nasa.jpf.symbc.string;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
-import java.util.TimerTask;
-
-import javax.management.RuntimeErrorException;
+import java.util.logging.Logger;
 
 import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
 import gov.nasa.jpf.symbc.numeric.Comparator;
@@ -62,17 +59,16 @@ import gov.nasa.jpf.symbc.string.graph.EdgeSubstring1Equal;
 import gov.nasa.jpf.symbc.string.graph.EdgeSubstring2Equal;
 import gov.nasa.jpf.symbc.string.graph.EdgeTrimEqual;
 import gov.nasa.jpf.symbc.string.graph.PreProcessGraph;
-import gov.nasa.jpf.symbc.string.graph.PreProcessGraphBackup;
 import gov.nasa.jpf.symbc.string.graph.StringGraph;
 import gov.nasa.jpf.symbc.string.graph.Vertex;
 import gov.nasa.jpf.symbc.string.translate.TranslateToAutomata;
 import gov.nasa.jpf.symbc.string.translate.TranslateToAutomata2;
-import gov.nasa.jpf.symbc.string.translate.TranslateToAutomataSpeedUp;
 import gov.nasa.jpf.symbc.string.translate.TranslateToCVC;
 import gov.nasa.jpf.symbc.string.translate.TranslateToCVCInc;
 import gov.nasa.jpf.symbc.string.translate.TranslateToSAT;
 import gov.nasa.jpf.symbc.string.translate.TranslateToZ3;
 import gov.nasa.jpf.symbc.string.translate.TranslateToZ3Inc;
+import gov.nasa.jpf.util.LogManager;
 
 /**
  * Main entry point for the symbolic string solver.
@@ -94,8 +90,8 @@ import gov.nasa.jpf.symbc.string.translate.TranslateToZ3Inc;
 public class SymbolicStringConstraintsGeneral {
 
 	/* Useless from now on */
-	public static boolean logging = true;
-	
+  static Logger logger = LogManager.getLogger("stringsolver");
+	public static int constraintCount = 0;
 	/* When creating constant strings, this is used as unique id */
 	private static int constantStringCount;
 	
@@ -114,6 +110,8 @@ public class SymbolicStringConstraintsGeneral {
 	public static final int DIFF_CHAR = MAX_CHAR - MIN_CHAR;
 	
 	/*Possible sovlers for now */
+	public static final String ABC = "ABC";
+	public static final String Z3STR2 = "Z3str2";
 	public static final String AUTOMATA = "Automata";
 	public static final String SAT = "Sat";
 	public static final String CVC = "CVC";
@@ -160,13 +158,13 @@ public class SymbolicStringConstraintsGeneral {
 		String vertexName = se.getName();
 		PathCondition.flagSolved = oldValue;
 		Vertex v = new Vertex (vertexName, symbolicIntegerGenerator);
-		global_spc.npc._addDet(Comparator.EQ, v.getSymbolicLength(), se._length());
+		global_spc.getNpc()._addDet(Comparator.EQ, v.getSymbolicLength(), se._length());
 		return v;
 	}
 	
 	private Vertex createVertex (StringExpression se, int length) {
 		Vertex v = new Vertex (se.getName(), length);
-		global_spc.npc._addDet(Comparator.EQ, v.getSymbolicLength(), se._length());
+		global_spc.getNpc()._addDet(Comparator.EQ, v.getSymbolicLength(), se._length());
 		return v;
 	}
 	
@@ -197,6 +195,8 @@ public class SymbolicStringConstraintsGeneral {
 			Vertex v1,v2,v3;
 			int a1, a2;
 			Edge e;
+			
+			
 
 			switch (temp.op) {
 			case TRIM:
@@ -208,6 +208,7 @@ public class SymbolicStringConstraintsGeneral {
 				result = graphBefore;
 				break;
 			case SUBSTRING:
+				//println("SUBSTRING CASE\n");
 				// something is symbolic so ...
 				graphBefore = convertToGraph((StringExpression) temp.oprlist[0]);
 				//v1 = createVertex (((StringExpression) temp.oprlist[0]));
@@ -217,10 +218,10 @@ public class SymbolicStringConstraintsGeneral {
 				v1 = graphBefore.findVertex(((StringExpression) temp.oprlist[0]).getName());
 				PathCondition.flagSolved = oldState;
 				if (temp.oprlist[1] instanceof IntegerConstant && (temp.oprlist.length == 2 || temp.oprlist[2] instanceof IntegerConstant)) {
-					a1 = ((IntegerConstant) temp.oprlist[1]).solution();
+					a1 = ((IntegerConstant) temp.oprlist[1]).solutionInt();
 					a2 = -1;
 					if (temp.oprlist.length == 3) {
-						a2 = ((IntegerConstant) temp.oprlist[2]).solution();
+						a2 = ((IntegerConstant) temp.oprlist[2]).solutionInt();
 						//a1 > a2 ????
 						v2 = createVertex (temp, a1 - a2);
 						//println ("[convertToGraph, SUBSTRING] a1 = " + a1 + ", a2 = " + a2);
@@ -228,9 +229,9 @@ public class SymbolicStringConstraintsGeneral {
 					}
 					else {
 						v2 = createVertex (temp);
-						global_spc.npc._addDet(Comparator.EQ, v2.getSymbolicLength(), v1.getSymbolicLength()._minus(a1));
+						global_spc.getNpc()._addDet(Comparator.EQ, v2.getSymbolicLength(), v1.getSymbolicLength()._minus(a1));
 						graphBefore.addEdge(v1, v2, new EdgeSubstring1Equal("EdgeSubstring1Equal_" + v1.getName() + "_" + v2.getName() + "_(" + a1 + ")", a1, v1, v2));
-				}
+					}
 				}
 				else if (temp.oprlist[1] instanceof IntegerExpression && temp.oprlist.length == 2) {
 					//throw new RuntimeException ("Reached");
@@ -238,7 +239,7 @@ public class SymbolicStringConstraintsGeneral {
 					IntegerExpression ie = (IntegerExpression) temp.oprlist[1];
 					//throw new RuntimeException (ie.getClass().toString());
 					processIntegerConstraint(ie, null, null, null);
-					global_spc.npc._addDet(Comparator.EQ, v2.getSymbolicLength(), v1.getSymbolicLength()._minus(ie));
+					global_spc.getNpc()._addDet(Comparator.EQ, v2.getSymbolicLength(), v1.getSymbolicLength()._minus(ie));
 					graphBefore.addEdge(v1, v2, new EdgeSubstring1Equal("EdgeSubstring1Equal_" + v1.getName() + "_" + v2.getName() + "_(" + ie.toString() + ")", ie, v1, v2));
 					
 				}
@@ -247,8 +248,8 @@ public class SymbolicStringConstraintsGeneral {
 					if (temp.oprlist[1] instanceof IntegerExpression && temp.oprlist.length == 3 && temp.oprlist[2] instanceof IntegerConstant) {
 						v2 = createVertex (temp);
 						IntegerExpression ie_a2 = (IntegerExpression) temp.oprlist[1];
-						a1 = ((IntegerConstant) temp.oprlist[2]).solution();
-						global_spc.npc._addDet(Comparator.EQ, v2.getSymbolicLength(), ie_a2._minus(a1));
+						a1 = ((IntegerConstant) temp.oprlist[2]).solutionInt();
+						global_spc.getNpc()._addDet(Comparator.EQ, v2.getSymbolicLength(), ie_a2._minus(a1));
 						graphBefore.addEdge(v1, v2, new EdgeSubstring2Equal("EdgeSubstring2Equal_" + v1.getName() + "_" + v2.getName() + "_(" + ie_a2+ "," + a1 +")", a1, ie_a2, v1, v2));
 					}
 					else {
@@ -308,7 +309,7 @@ public class SymbolicStringConstraintsGeneral {
 				temp2.and = temp3;
 						
 				lolic.addToList((LinearIntegerConstraint)temp1);*/
-				global_spc.npc._addDet(Comparator.LE, v1.getSymbolicLength(), 5);
+				global_spc.getNpc()._addDet(Comparator.LE, v1.getSymbolicLength(), 5);
 				
 				int max = 5;
 				
@@ -321,7 +322,7 @@ public class SymbolicStringConstraintsGeneral {
 						//Don't add anything
 					} else {
 						lolic.addToList(new LinearIntegerConstraint(ie, Comparator.GE, new IntegerConstant ((int) Math.pow(10, i))));
-						global_spc.npc._addDet(lolic);
+						global_spc.getNpc()._addDet(lolic);
 					}
 					
 					
@@ -332,19 +333,19 @@ public class SymbolicStringConstraintsGeneral {
 					} else {
 						lolic.addToList(new LinearIntegerConstraint(ie, Comparator.LE, new IntegerConstant (-1 * ((int) Math.pow(10, i-1)))));
 					}
-					global_spc.npc._addDet(lolic);
+					global_spc.getNpc()._addDet(lolic);
 				}
 				
 				for (int i = 2; i <= max; i++) {
 					lolic = new LogicalORLinearIntegerConstraints();
 					lolic.addToList(new LinearIntegerConstraint(v1.getSymbolicLength(), Comparator.GE, new IntegerConstant (i)));
 					lolic.addToList(new LinearIntegerConstraint(ie, Comparator.LT, new IntegerConstant ((int) Math.pow(10, i-1))));
-					global_spc.npc._addDet(lolic);
+					global_spc.getNpc()._addDet(lolic);
 					
 					lolic = new LogicalORLinearIntegerConstraints();
 					lolic.addToList(new LinearIntegerConstraint(v1.getSymbolicLength(), Comparator.GE, new IntegerConstant (i)));
 					lolic.addToList(new LinearIntegerConstraint(ie, Comparator.GT, new IntegerConstant (-1 * ((int) Math.pow(10, i-1)))));
-					global_spc.npc._addDet(lolic);
+					global_spc.getNpc()._addDet(lolic);
 				}
 				
 				//global_spc.npc._addDet(lolic);
@@ -361,17 +362,15 @@ public class SymbolicStringConstraintsGeneral {
 	}
 
 	public boolean isSatisfiable(StringPathCondition pc) {
+		logger.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+		if (SymbolicInstructionFactory.debugMode)
+			System.out.println("string analysis: " + pc);
+		//println ("Path Constraint # " + entered);
+		//println ("CURRENT PATH CONSTRAINT:\n");
+		//println(pc.toString());
 		boolean result = inner_isSatisfiable(pc);
-		//println ("PC: " + entered);
 		entered++;
-		//if (entered == 66) {
-		
-		//println ("PC:" + pc.header);
-		//println ("result: " + result);
-		//println ("Result: " + entered + " " + result);
-		/*if (entered == 240) {
-			throw new RuntimeException("Should have caught it");
-		}*/
+		logger.info("\n");
 		return result;
 	}
 	
@@ -383,13 +382,16 @@ public class SymbolicStringConstraintsGeneral {
 	 * @return
 	 */
 	private boolean inner_isSatisfiable(StringPathCondition pc) {
-		//println ("[isSatisfiable] entered");
-		
 		String string_dp[] = SymbolicInstructionFactory.string_dp;
-		
 		/* Set up solver */
 		if (string_dp[0].equals("automata")) {
 			solver = AUTOMATA;
+		}
+		else if (string_dp[0].equals("z3str2")) {
+			solver = Z3STR2;
+		}
+		else if (string_dp[0].equals("ABC")) {
+			solver = ABC;
 		}
 		else if (string_dp[0].equals("sat")) {
 			solver = SAT;
@@ -413,6 +415,9 @@ public class SymbolicStringConstraintsGeneral {
 			return true;
 		}
 		
+		logger.info("Using solver: " + solver);
+
+		
 		TIMEOUT = SymbolicInstructionFactory.stringTimeout;
 		SymbolicStringConstraintsGeneral.timedOut = false;
 
@@ -427,12 +432,10 @@ public class SymbolicStringConstraintsGeneral {
 				cancelTimer();
 				return temp.isSatisfiable(pc);
 			}
-			//println ("[isSatisfiable] String PC: " + pc.header);
 			
 			setOfSolution = new HashSet<StringSymbolic>();
 			StringConstraint sc;
 			if (pc == null) {
-				//println ("[isSatisfiable] PC is null");
 				cancelTimer();
 				return true;
 			}
@@ -449,24 +452,25 @@ public class SymbolicStringConstraintsGeneral {
 			 * and add it to the global_graph
 			 */
 			if (sc != null) {
-				//println ("Constraints: " + pc.npc.header + "\nDone");
+				
 				boolean result = process (sc);
 				sc = sc.and;
 				while (result == true && sc != null) {
 					result = process (sc);
 					sc = sc.and;
 				}
-				
 				/* check if there was a timeout */
 				checkTimeOut();
 			}
-			//println ("pc.npc: " + pc.npc.header);
-			
+
+			//println("AFTER PROCESS LOOP:\n");
+			//println (global_graph.toDot());
+
 			/* Walk through integer constraints and convert each constraint
 			 * to a subgraph and add it to the global_graph
 			 */
 			
-			Constraint constraint = pc.npc.header;
+			Constraint constraint = pc.getNpc().header;
 			//println ("[isSatisfiable] Int cons given:" + pc.npc.header);
 			while (constraint != null) {
 				processIntegerConstraint(constraint.getLeft(), constraint.getComparator(), constraint.getRight(), constraint);
@@ -477,25 +481,17 @@ public class SymbolicStringConstraintsGeneral {
 				checkTimeOut();
 			}
 			
+			
 			//First solve any previous integer constriants
 			SymbolicConstraintsGeneral scg = new SymbolicConstraintsGeneral();
-			scg.solve(pc.npc);
+			scg.solve(pc.getNpc());
 			PathCondition.flagSolved = true;
-			//println ("Constraints: " + pc.npc.header + "\nDone");
+
 			
-			//Start solving
-			//println(global_graph.toDot());
-			
-			/* Preprocess the graph */
-			//System.out.println("Number of edges before preprocessing: " + global_graph.getEdges().size());
-			//println (pc.npc.toString());
-			//println ("++++++++++++++++++");
-			boolean resultOfPp = PreProcessGraph.preprocess(global_graph, pc.npc);
+			boolean resultOfPp = PreProcessGraph.preprocess(global_graph, pc.getNpc());
 			if (!resultOfPp) {
 				System.out.println("Preprocessor found unsat");
 			}
-			//println (pc.npc.toString());
-			//println (global_graph.toDot());
 			
 			if (SymbolicInstructionFactory.preprocesOnly) {
 				System.out.println("Preprocessoring only");
@@ -516,8 +512,6 @@ public class SymbolicStringConstraintsGeneral {
 
 				return false;
 			}
-			//println ("After preproccess");
-			//println(global_graph.toDot());
 			/* Call the string solver, it will in turn churn away until all
 			 * options are exhuasted or a satisfiable solution has turned up
 			 */
@@ -525,63 +519,68 @@ public class SymbolicStringConstraintsGeneral {
 			try {
 				if (solver.equals(SAT)) {
 					//println ("[isSatisfiable] Using SAT Solver");
-					decisionProcedure = TranslateToSAT.isSat(global_graph, pc.npc);
+					decisionProcedure = TranslateToSAT.isSat(global_graph, pc.getNpc());
+				}
+				if (solver.equals(ABC)) {
+					logger.info ("[isSatisfiable] Using ABC Solver");
+					//decisionProcedure = TranslateToSAT.isSat(global_graph, pc.npc);
+					decisionProcedure = false;
 				}
 				else if (solver.equals(AUTOMATA)) {
 					//println ("[isSatisfiable] Using Automata's");
 					TranslateToAutomata.duration = 0;
 					TranslateToAutomata.int_duration = 0;
 					TranslateToAutomata.loops = 0;
-					decisionProcedure = TranslateToAutomata2.isSat(global_graph, pc.npc);
+					decisionProcedure = TranslateToAutomata2.isSat(global_graph, pc.getNpc());
 					timeInvoked++;
 				}
 				else if (solver.equals(CVC)) {
 					//println ("[isSatisfiable] Using Bitvector's");
-					decisionProcedure = TranslateToCVC.isSat(global_graph, pc.npc); 
+					decisionProcedure = TranslateToCVC.isSat(global_graph, pc.getNpc()); 
 				}
 				else if (solver.equals(CVC_INC)) {
 					//println ("[isSatisfiable] Using Bitvector's");
-					decisionProcedure = TranslateToCVCInc.isSat(global_graph, pc.npc); 
+					decisionProcedure = TranslateToCVCInc.isSat(global_graph, pc.getNpc()); 
 				}
 				else if (solver.equals(Z3)) {
 					//println ("[isSatisfiable] Using Z3");
-					decisionProcedure = TranslateToZ3.isSat(global_graph, pc.npc); 
+					decisionProcedure = TranslateToZ3.isSat(global_graph, pc.getNpc()); 
 				}
 				else if (solver.equals(Z3_INC)) {
 					TranslateToZ3Inc.duration = 0;
 					TranslateToZ3Inc.int_duration = 0;
 					TranslateToZ3Inc.loops = 0;
-					decisionProcedure = TranslateToZ3Inc.isSat(global_graph, pc.npc);
+					decisionProcedure = TranslateToZ3Inc.isSat(global_graph, pc.getNpc());
 					string_duration += TranslateToZ3Inc.duration;
 					int_duration += TranslateToZ3Inc.int_duration ;
 					//System.out.println("Loops: " + TranslateToZ3Inc.loops);
 					timeInvoked++;
 				} else if (solver.equals(WRAPPER)) {
 					StringGraph cloneGraph = new StringGraph(global_graph);
-					PathCondition cloneNpc = pc.npc.make_copy();
+					PathCondition cloneNpc = pc.getNpc().make_copy();
 					boolean pcSolved = PathCondition.flagSolved;
 					//start with z3, and swap to automata if something goes wrong
 					try {
-						decisionProcedure = TranslateToZ3.isSat(global_graph, pc.npc);
+						decisionProcedure = TranslateToZ3.isSat(global_graph, pc.getNpc());
 					} catch (Exception e) {
-						println("wrapper-z3 throwed exception; " + e.getMessage());
+						logger.info("wrapper-z3 throwed exception; " + e.getMessage());
 					} 
 					try {
 						if (decisionProcedure == false) {
-							println("z3 failed; restoring graph/pc and trying again with automata...");
+							logger.warning("z3 failed; restoring graph/pc and trying again with automata...");
 							global_graph = cloneGraph;
-							pc.npc = cloneNpc;
+							pc.setNpc(cloneNpc);
 							PathCondition.flagSolved = pcSolved;
 							
 							TranslateToAutomata.duration = 0;
 							TranslateToAutomata.int_duration = 0;
 							TranslateToAutomata.loops = 0;
 							decisionProcedure = TranslateToAutomata2.isSat(
-									global_graph, pc.npc);
+									global_graph, pc.getNpc());
 							timeInvoked++;
 						}
 					} catch (Exception e) {
-						println("wrapper-automata throwed exception; " + e.getMessage());
+						logger.severe("wrapper-automata throwed exception; " + e.getMessage());
 					}
 				}
 				else {
@@ -740,7 +739,7 @@ public class SymbolicStringConstraintsGeneral {
 	private void processIntegerConstraint (Expression e, Comparator comp, Expression other, Constraint origConstraint) {
 		if (PathCondition.flagSolved == false) {
 			SymbolicConstraintsGeneral scg = new SymbolicConstraintsGeneral();
-			scg.solve(global_spc.npc);
+			scg.solve(global_spc.getNpc());
 			PathCondition.flagSolved = true;
 		}
 		if (e instanceof SymbolicCharAtInteger) {
@@ -764,7 +763,7 @@ public class SymbolicStringConstraintsGeneral {
 				//Necassery hack
 				//TODO MAB: what is the function of this hack? it makes the preprocessor return UNSAT on some valid constraints!
 				origConstraint.setComparator(Comparator.EQ);
-				global_spc.npc.flagSolved = false;
+				global_spc.getNpc().flagSolved = false;
 			}
 			else {
 				Vertex v1 = new Vertex ("CharAt_" + scai.index.solution() + "_" + scai.solution(), String.valueOf((char) scai.solution()), true);
@@ -894,7 +893,7 @@ public class SymbolicStringConstraintsGeneral {
 			StringGraph parent = convertToGraph(sli.parent);
 			global_graph.mergeIn(parent);
 			Vertex v1 = global_graph.findVertex(sli.parent.getName());
-			global_spc.npc._addDet(Comparator.EQ, v1.getSymbolicLength(), sli);
+			global_spc.getNpc()._addDet(Comparator.EQ, v1.getSymbolicLength(), sli);
 		}
 		/*else {
 			if (e != null) {
@@ -911,6 +910,13 @@ public class SymbolicStringConstraintsGeneral {
 		StringGraph leftGraph, rightGraph;
 		StringExpression se_left = sc.left;
 		StringExpression se_right = sc.right;
+		
+		//println("\nSCL: " + sc.left);
+		//println("\nSCR: " + sc.right);
+		//println("\nSCC: " + sc.comp);
+
+		
+		
 		Vertex v1, v2;
 		switch (sc.comp) {
 		case EQUALS:
@@ -987,7 +993,10 @@ public class SymbolicStringConstraintsGeneral {
 			break;
 		case CONTAINS:
 			leftGraph = convertToGraph (se_left);
+			//println("LEFT GRAPH: \n" + leftGraph.toDot());
 			rightGraph = convertToGraph (se_right);			
+			//println("RIGHT GRAPH: \n" + rightGraph.toDot());
+			
 			global_graph.mergeIn(leftGraph);
 			global_graph.mergeIn(rightGraph);
 			v1 = global_graph.findVertex(se_left.getName());
@@ -1027,9 +1036,10 @@ public class SymbolicStringConstraintsGeneral {
 			}
 		}
 	}
-	
-	private static void println (String s) {
-		if (logging)
-			System.out.println("[SAT-Sexi-JPF] " + s);
+
+	public void solve(StringPathCondition stringPathCondition) {
+		// TODO Auto-generated method stub
+		
 	}
+	
 }

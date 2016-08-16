@@ -21,13 +21,14 @@ package gov.nasa.jpf.symbc.bytecode;
 
 
 import gov.nasa.jpf.Config;
-
 import gov.nasa.jpf.jvm.bytecode.JVMInvokeInstruction;
-import gov.nasa.jpf.symbc.arrays.IntegerSymbolicArray;
-import gov.nasa.jpf.symbc.arrays.ObjectSymbolicArray;
+import gov.nasa.jpf.symbc.arrays.ArrayExpression;
 import gov.nasa.jpf.symbc.heap.Helper;
+import gov.nasa.jpf.symbc.numeric.Comparator;
 import gov.nasa.jpf.symbc.numeric.Expression;
+import gov.nasa.jpf.symbc.numeric.IntegerConstant;
 import gov.nasa.jpf.symbc.numeric.IntegerExpression;
+import gov.nasa.jpf.symbc.numeric.MinMax;
 import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
 import gov.nasa.jpf.symbc.numeric.PathCondition;
 import gov.nasa.jpf.symbc.numeric.PreCondition;
@@ -44,6 +45,7 @@ import gov.nasa.jpf.vm.FieldInfo;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.LocalVarInfo;
 import gov.nasa.jpf.vm.MethodInfo;
+import gov.nasa.jpf.vm.MJIEnv;
 import gov.nasa.jpf.vm.StackFrame;
 import gov.nasa.jpf.vm.SystemState;
 import gov.nasa.jpf.vm.ThreadInfo;
@@ -210,14 +212,19 @@ public class BytecodeUtils {
 
 		Vector<String> args = new Vector<String>();
 		Config conf = th.getVM().getConfig();
-
-		// Start string handling
+		
+		// Start string handling: TODO corina it needs reviewing as it does not seem to be correct
 		/**** This is where we branch off to handle symbolic string variables *******/
-		SymbolicStringHandler a = new SymbolicStringHandler();
-		Instruction handled = a.handleSymbolicStrings(invInst, th);
-		if(handled != null){ // go to next instruction as symbolic string operation was done
-			System.out.println("Symbolic string analysis");	
+		String[] symstrings = conf.getStringArray("symbolic.strings");
+		boolean symstrings_flag = (symstrings != null && symstrings[0].equalsIgnoreCase("true"))? true : false;
+		if(symstrings_flag) {
+		  	
+		  SymbolicStringHandler a = new SymbolicStringHandler();
+		  Instruction handled = a.handleSymbolicStrings(invInst, th);
+		  if(handled != null){ // go to next instruction as symbolic string operation was done
+//			System.out.println("Symbolic string analysis!!!"+invInst);	
 			return new InstructionOrSuper(false, handled);
+		  }
 		}
 		// End string handling
 		
@@ -231,7 +238,6 @@ public class BytecodeUtils {
 
 			// create a choice generator to associate the precondition with it
 			ChoiceGenerator<?> cg = null;
-			if (invInst.getInvokedMethod().getAnnotation("gov.nasa.jpf.symbc.Preconditions") != null) {
 				if (!th.isFirstStepInsn()) { // first time around
 					cg = new PCChoiceGenerator(1);
 					th.getVM().setNextChoiceGenerator(cg);
@@ -241,7 +247,6 @@ public class BytecodeUtils {
 					if (!(cg instanceof PCChoiceGenerator)) // the choice comes from super
 						return new InstructionOrSuper(true, null);
 				}
-			}
 
 
 			String outputString = "\n***Execute symbolic " + bytecodeName + ": " + mname + "  (";
@@ -270,6 +275,11 @@ public class BytecodeUtils {
 
 			// special treatment of "this"
 			String lazy[] = conf.getStringArray("symbolic.lazy");
+            String symarrays[] = conf.getStringArray("symbolic.arrays");
+            boolean symarray = false;
+            if (symarrays != null) {
+                symarray = symarrays[0].equalsIgnoreCase("true");
+            }
 			//TODO: to review
 //			if(lazy != null) {
 //				if(lazy[0].equalsIgnoreCase("true")) {
@@ -286,13 +296,38 @@ public class BytecodeUtils {
 			for (int j = 0; j < argSize; j++) { // j ranges over actual arguments
 				if (symClass || args.get(j).equalsIgnoreCase("SYM")) {
 					String name =  argsInfo[localVarsIdx].getName();
-					if (argTypes[j].equalsIgnoreCase("int") || argTypes[j].equalsIgnoreCase("long")) {
+					if (argTypes[j].equalsIgnoreCase("int")) {
 						IntegerExpression sym_v = new SymbolicInteger(varName(name, VarType.INT));
 						expressionMap.put(name, sym_v);
 						sf.setOperandAttr(stackIdx, sym_v);
 						outputString = outputString.concat(" " + sym_v + ",");
+					} else if (argTypes[j].equalsIgnoreCase("long")) {
+						String varname = varName(name, VarType.INT);
+						IntegerExpression sym_v = new SymbolicInteger(varname, MinMax.getVarMinLong(varname), MinMax.getVarMaxLong(varname));
+						expressionMap.put(name, sym_v);
+						sf.setOperandAttr(stackIdx, sym_v);
+						outputString = outputString.concat(" " + sym_v + ",");
+					} else if (argTypes[j].equalsIgnoreCase("short")) {
+						String varname = varName(name, VarType.INT);
+						IntegerExpression sym_v = new SymbolicInteger(varname, MinMax.getVarMinShort(varname), MinMax.getVarMaxShort(varname));
+						expressionMap.put(name, sym_v);
+						sf.setOperandAttr(stackIdx, sym_v);
+						outputString = outputString.concat(" " + sym_v + ",");
+					} else if (argTypes[j].equalsIgnoreCase("byte")) {
+						String varname = varName(name, VarType.INT);
+						IntegerExpression sym_v = new SymbolicInteger(varname, MinMax.getVarMinByte(varname), MinMax.getVarMaxByte(varname));
+						expressionMap.put(name, sym_v);
+						sf.setOperandAttr(stackIdx, sym_v);
+						outputString = outputString.concat(" " + sym_v + ",");
+					} else if (argTypes[j].equalsIgnoreCase("char")) {
+							String varname = varName(name, VarType.INT);
+							IntegerExpression sym_v = new SymbolicInteger(varname, MinMax.getVarMinChar(varname), MinMax.getVarMaxChar(varname));
+							expressionMap.put(name, sym_v);
+							sf.setOperandAttr(stackIdx, sym_v);
+							outputString = outputString.concat(" " + sym_v + ",");
 					} else if (argTypes[j].equalsIgnoreCase("float") || argTypes[j].equalsIgnoreCase("double")) {
-						RealExpression sym_v = new SymbolicReal(varName(name, VarType.REAL));
+						String varname = varName(name, VarType.REAL);
+						RealExpression sym_v = new SymbolicReal(varname, MinMax.getVarMinDouble(varname), MinMax.getVarMaxDouble(varname));
 						expressionMap.put(name, sym_v);
 						sf.setOperandAttr(stackIdx, sym_v);
 						outputString = outputString.concat(" " + sym_v + ",");
@@ -307,45 +342,117 @@ public class BytecodeUtils {
 						expressionMap.put(name, sym_v);
 						sf.setOperandAttr(stackIdx, sym_v);
 						outputString = outputString.concat(" " + sym_v + ",");
-					} else if(argTypes[j].equalsIgnoreCase("int[]") || argTypes[j].equalsIgnoreCase("long[]")){
-                        Object[] argValues = invInst.getArgumentValues(th);
-                        ElementInfo eiArray = (ElementInfo)argValues[j];
+					} else if(argTypes[j].equalsIgnoreCase("int[]") || argTypes[j].equalsIgnoreCase("long[]") || argTypes[j].equalsIgnoreCase("byte[]")){
+                        if (symarray) {
+                            ArrayExpression sym_v = new ArrayExpression(name);
+                            expressionMap.put(name, sym_v);
+                            sf.setOperandAttr(stackIdx, sym_v);
+                            outputString = outputString.concat(" " + sym_v + ",");
 
-                        IntegerSymbolicArray sym_v = new IntegerSymbolicArray(new SymbolicInteger(name + "!length"), varName(name, VarType.ARRAY));
-                        expressionMap.put(name, sym_v);
-                        sf.setOperandAttr(stackIdx, sym_v);
-                        outputString = outputString.concat(" " + sym_v + ",");
+                           PCChoiceGenerator prev_cg = cg.getPreviousChoiceGeneratorOfType(PCChoiceGenerator.class);
+                            PathCondition pc;
+                            if (prev_cg == null) 
+                                pc = new PathCondition();
+                            else
+                                pc = ((PCChoiceGenerator)prev_cg).getCurrentPC();
 
+                            pc._addDet(Comparator.GE, sym_v.length, new IntegerConstant(0));
+                            ((PCChoiceGenerator) cg).setCurrentPC(pc);
+                        } else {
+						    Object[] argValues = invInst.getArgumentValues(th);
+						    ElementInfo eiArray = (ElementInfo)argValues[j];
 
+						    if(eiArray!=null)
+						    	for(int i =0; i< eiArray.arrayLength(); i++) {
+						    		IntegerExpression sym_v = new SymbolicInteger(varName(name+i, VarType.INT));
+						    		expressionMap.put(name+i, sym_v);
+						    		eiArray.addElementAttr(i, sym_v);
+						    		outputString = outputString.concat(" " + sym_v + ",");
+						    	}
+						    else
+						    	System.out.println("Warning: input array empty! "+name);
+                        }
 					} else if(argTypes[j].equalsIgnoreCase("float[]") || argTypes[j].equalsIgnoreCase("double[]")){
-						Object[] argValues = invInst.getArgumentValues(th);
-						ElementInfo eiArray = (ElementInfo)argValues[j];
+                        if (symarray) {
+                            ArrayExpression sym_v = new ArrayExpression(name);
+                            expressionMap.put(name, sym_v);
+                            sf.setOperandAttr(stackIdx, sym_v);
+                            outputString = outputString.concat(" " + sym_v + ",");
 
-						for(int i =0; i< eiArray.arrayLength(); i++) {
-							RealExpression sym_v = new SymbolicReal(varName(name+i, VarType.REAL));
-							expressionMap.put(name+i, sym_v);
-							eiArray.addElementAttr(i, sym_v);
-							outputString = outputString.concat(" " + sym_v + ",");
-						}
+                          PCChoiceGenerator prev_cg = cg.getPreviousChoiceGeneratorOfType(PCChoiceGenerator.class);
+                            PathCondition pc;
+                            if (prev_cg == null) 
+                                pc = new PathCondition();
+                            else
+                                pc = ((PCChoiceGenerator)prev_cg).getCurrentPC();
+
+                            pc._addDet(Comparator.GE, sym_v.length, new IntegerConstant(0));
+                            ((PCChoiceGenerator) cg).setCurrentPC(pc);
+                        } else {
+						    Object[] argValues = invInst.getArgumentValues(th);
+						    ElementInfo eiArray = (ElementInfo)argValues[j];
+
+						    if(eiArray!=null)
+						    	for(int i =0; i< eiArray.arrayLength(); i++) {
+						    		RealExpression sym_v = new SymbolicReal(varName(name+i, VarType.REAL));
+						    		expressionMap.put(name+i, sym_v);
+						    		eiArray.addElementAttr(i, sym_v);
+						    		outputString = outputString.concat(" " + sym_v + ",");
+						    	}
+						    else
+						    	System.out.println("Warning: input array empty! "+name);
+                        }
 					} else if(argTypes[j].equalsIgnoreCase("boolean[]")){
-						Object[] argValues = invInst.getArgumentValues(th);
-						ElementInfo eiArray = (ElementInfo)argValues[j];
+                        if (symarray) {
+                            ArrayExpression sym_v = new ArrayExpression(name);
+                            expressionMap.put(name, sym_v);
+                            sf.setOperandAttr(stackIdx, sym_v);
+                            outputString = outputString.concat(" " + sym_v + ",");
 
-                        IntegerSymbolicArray sym_v = new IntegerSymbolicArray(new SymbolicInteger(name + "!length"), varName(name, VarType.ARRAY));
-                        expressionMap.put(name, sym_v);
-                        sf.setOperandAttr(stackIdx, sym_v);
-                        outputString = outputString.concat(" " + sym_v + ",");
+                          PCChoiceGenerator prev_cg = cg.getPreviousChoiceGeneratorOfType(PCChoiceGenerator.class);
+                            PathCondition pc;
+                            if (prev_cg == null) 
+                                pc = new PathCondition();
+                            else
+                                pc = ((PCChoiceGenerator)prev_cg).getCurrentPC();
 
+                            pc._addDet(Comparator.GE, sym_v.length, new IntegerConstant(0));
+                            ((PCChoiceGenerator) cg).setCurrentPC(pc);
+                        } else {
+						    Object[] argValues = invInst.getArgumentValues(th);
+						    ElementInfo eiArray = (ElementInfo)argValues[j];
+
+						    if(eiArray!=null)
+						    	for(int i =0; i< eiArray.arrayLength(); i++) {
+						    		IntegerExpression sym_v = new SymbolicInteger(varName(name+i, VarType.INT),0,1);
+						    		expressionMap.put(name+i, sym_v);
+						    		eiArray.addElementAttr(i, sym_v);
+						    		outputString = outputString.concat(" " + sym_v + ",");
+						    	}
+						    else
+						    	System.out.println("Warning: input array empty! "+name);
+                        }
 					} else if (argTypes[j].contains("[]")) {
-                        // If the type name contains [] but wasn't catched previously, then it is an object array
-                        Object[] argValues = invInst.getArgumentValues(th);
-                        ElementInfo eiArray = (ElementInfo)argValues[j];
+                        if (symarray) {
+                            Object[] argValues = invInst.getArgumentValues(th);
+                            ElementInfo eiArray = (ElementInfo)argValues[j];
+                            // If the type name contains [] but wasn't catched previously, it is an object array
+                            ArrayExpression sym_v = new ArrayExpression(name, argTypes[j].substring(0, argTypes[j].length() - 2));
+                            // We remove the [] at the end of the type to keep only the type of the object
+                            expressionMap.put(name, sym_v);
+                            sf.setOperandAttr(stackIdx, sym_v);
+                            outputString = outputString.concat(" " + sym_v + ",");
 
-                        ObjectSymbolicArray sym_v = new ObjectSymbolicArray(new SymbolicInteger(name + "!length"), varName(name, VarType.ARRAY), argTypes[j]);
-                        expressionMap.put(name, sym_v);
-                        sf.setOperandAttr(stackIdx, sym_v);
-                        outputString = outputString.concat(" " + sym_v + ",");
+                          PCChoiceGenerator prev_cg = cg.getPreviousChoiceGeneratorOfType(PCChoiceGenerator.class);
+                            PathCondition pc;
+                            if (prev_cg == null) 
+                                pc = new PathCondition();
+                            else
+                                pc = ((PCChoiceGenerator)prev_cg).getCurrentPC();
 
+                            pc._addDet(Comparator.GE, sym_v.length, new IntegerConstant(0));
+                            ((PCChoiceGenerator) cg).setCurrentPC(pc);
+                        }
 					} else {
                         // the argument is of reference type and it is symbolic
 						if(lazy != null) {
@@ -399,7 +506,7 @@ public class BytecodeUtils {
 				ei = th.getElementInfo(ci.getClassObjectRef());
 			} else {
 				int objRef = th.getCalleeThis(invInst.getArgSize());
-				if (objRef == -1) { // NPE
+				if (objRef == MJIEnv.NULL) { // NPE
 					return new InstructionOrSuper(false,
 							th.createAndThrowException("java.lang.NullPointerException", "calling '" + mname
 							+	 "' on null object"));
@@ -538,7 +645,7 @@ public class BytecodeUtils {
   }
 
 	public enum VarType {
-		INT, REAL, REF, STRING, ARRAY
+		INT, REAL, REF, STRING
 	};
 
 
@@ -557,9 +664,6 @@ public class BytecodeUtils {
 		case STRING:
 			suffix = "_SYMSTRING";
 			break;
-        case ARRAY:
-            suffix = "_SYMARRAY";
-            break;
 		default:
 			throw new RuntimeException("Unhandled SymVarType: " + type);
 		}

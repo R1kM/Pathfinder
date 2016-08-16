@@ -20,6 +20,8 @@ package gov.nasa.jpf.symbc.string.translate;
 
 
 
+import gov.nasa.jpf.util.LogManager;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,10 +30,12 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 
 public class Z3Interface {
-	
+  static Logger logger = LogManager.getLogger("Z3Interface");
+
 	Process process;
 	OutputStream stdin;
 	InputStream stdout;
@@ -99,7 +103,7 @@ public class Z3Interface {
 			if (line.contains("ERROR")) {
 				String oldline = line;
 				line = brCleanUp.readLine();
-				System.out.println(msg);
+				logger.warning(msg);
 				throw new RuntimeException("Z3 encountered an error in its input: " + oldline + "\n" + line);
 			}
 			else if (line.startsWith("((\"model\" \"") && sat) {
@@ -134,7 +138,7 @@ public class Z3Interface {
 			if (line.contains("ERROR")) {
 				String oldline = line;
 				line = brCleanUp.readLine();
-				System.out.println(msg);
+				logger.warning(msg);
 				throw new RuntimeException("Z3 encountered an error in its input: " + oldline + "\n" + line);
 			}
 			else if (line.startsWith("((\"model\" \"") && sat) {
@@ -163,10 +167,7 @@ public class Z3Interface {
 		//println ("Exiting...");
 	}
 	
-	public void println (String msg) {
-		System.out.println("[Z3Interface] " + msg);
-	}
-	
+
 	public void sendIncMessage218 (String msg) throws IOException{
 		sat = false;
 		stdin.write((msg + "\n(check-sat)\n(get-info model)").getBytes());
@@ -188,7 +189,7 @@ public class Z3Interface {
 			if (line.contains("ERROR") || line.contains("error")) {
 				String oldline = line;
 				line = brCleanUp.readLine();
-				System.out.println(msg);
+				logger.severe(msg);
 				throw new RuntimeException("Z3 encuntered an error in its input: " + oldline + "\n" + line);
 			}
 			else if (line.startsWith("((\"model\" \"") && sat) {
@@ -229,7 +230,7 @@ public class Z3Interface {
 			if (line.contains("ERROR") || line.contains("error")) {
 				String oldline = line;
 				line = brCleanUp.readLine();
-				System.out.println(msg);
+				logger.severe(msg);
 				throw new RuntimeException("Z3 encountered an error in its input: " + oldline + "\n" + line);
 			}
 			else if (line.startsWith("((\"model\" \"") && sat) {

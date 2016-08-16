@@ -76,7 +76,9 @@ import coral.util.Config;
  * @author Marcelo d'Amorim (damorim@cin.ufpe.br)
  *
  */
-
+/* Rody: add typecasts long->int everywhere now. Needs a nice solution where the user
+ * is notified to use another solver with longs.
+ */
 public class ProblemCoral extends ProblemGeneral {
 
 //	private static final long timeout = -1; //Config.timeout; // 1s default
@@ -162,7 +164,7 @@ public class ProblemCoral extends ProblemGeneral {
 	 **************************************************/
 
 	@Override
-	public Object makeIntVar(String name, int min, int max) {
+	public Object makeIntVar(String name, long min, long max) {
 		return Util.createSymLiteral(0/*default value*/);
 	}
 
@@ -172,13 +174,13 @@ public class ProblemCoral extends ProblemGeneral {
 	}
 
 	@Override
-	public Object eq(int value, Object exp) {
-		return Util.eq(Util.createConstant(value), (SymInt)exp);
+	public Object eq(long value, Object exp) {
+		return Util.eq(Util.createConstant((int) value), (SymInt)exp);
 	}
 
 	@Override
-	public Object eq(Object exp, int value) {
-		return Util.eq((SymInt)exp, Util.createConstant(value));
+	public Object eq(Object exp, long value) {
+		return Util.eq((SymInt)exp, Util.createConstant((int) value));
 	}
 
 	@Override
@@ -203,13 +205,13 @@ public class ProblemCoral extends ProblemGeneral {
 	}
 
 	@Override
-	public Object neq(int value, Object exp) {
-		return Util.ne(Util.createConstant(value), (SymInt)exp);
+	public Object neq(long value, Object exp) {
+		return Util.ne(Util.createConstant((int) value), (SymInt)exp);
 	}
 
 	@Override
-	public Object neq(Object exp, int value) {
-		return Util.ne((SymInt)exp, Util.createConstant(value));
+	public Object neq(Object exp, long value) {
+		return Util.ne((SymInt)exp, Util.createConstant((int) value));
 	}
 
 	@Override
@@ -234,13 +236,13 @@ public class ProblemCoral extends ProblemGeneral {
 	}
 
 	@Override
-	public Object leq(int value, Object exp) {
-		return Util.le(Util.createConstant(value), (SymInt)exp);
+	public Object leq(long value, Object exp) {
+		return Util.le(Util.createConstant((int) value), (SymInt)exp);
 	}
 
 	@Override
-	public Object leq(Object exp, int value) {
-		return Util.le((SymInt)exp, Util.createConstant(value));
+	public Object leq(Object exp, long value) {
+		return Util.le((SymInt)exp, Util.createConstant((int) value));
 	}
 
 	@Override
@@ -265,13 +267,13 @@ public class ProblemCoral extends ProblemGeneral {
 	}
 
 	@Override
-	public Object geq(int value, Object exp) {
-		return Util.ge(Util.createConstant(value), (SymInt)exp);
+	public Object geq(long value, Object exp) {
+		return Util.ge(Util.createConstant((int) value), (SymInt)exp);
 	}
 
 	@Override
-	public Object geq(Object exp, int value) {
-		return Util.ge((SymInt)exp, Util.createConstant(value));
+	public Object geq(Object exp, long value) {
+		return Util.ge((SymInt)exp, Util.createConstant((int) value));
 	}
 
 	@Override
@@ -296,13 +298,13 @@ public class ProblemCoral extends ProblemGeneral {
 	}
 
 	@Override
-	public Object lt(int value, Object exp) {
-		return Util.lt(Util.createConstant(value), (SymInt)exp);
+	public Object lt(long value, Object exp) {
+		return Util.lt(Util.createConstant((int) value), (SymInt)exp);
 	}
 
 	@Override
-	public Object lt(Object exp, int value) {
-		return Util.lt((SymInt)exp, Util.createConstant(value));
+	public Object lt(Object exp, long value) {
+		return Util.lt((SymInt)exp, Util.createConstant((int) value));
 	}
 
 	@Override
@@ -327,13 +329,13 @@ public class ProblemCoral extends ProblemGeneral {
 	}
 
 	@Override
-	public Object gt(int value, Object exp) {
-		return Util.gt(Util.createConstant(value), (SymInt)exp);
+	public Object gt(long value, Object exp) {
+		return Util.gt(Util.createConstant((int) value), (SymInt)exp);
 	}
 
 	@Override
-	public Object gt(Object exp, int value) {
-		return Util.gt((SymInt)exp, Util.createConstant(value));
+	public Object gt(Object exp, long value) {
+		return Util.gt((SymInt)exp, Util.createConstant((int) value));
 	}
 
 	@Override
@@ -358,13 +360,13 @@ public class ProblemCoral extends ProblemGeneral {
 	}
 
 	@Override
-	public Object plus(int value, Object exp) {
-		return Util.add(Util.createConstant(value), (SymInt)exp);
+	public Object plus(long value, Object exp) {
+		return Util.add(Util.createConstant((int) value), (SymInt)exp);
 	}
 
 	@Override
-	public Object plus(Object exp, int value) {
-		return Util.add((SymInt)exp, Util.createConstant(value));
+	public Object plus(Object exp, long value) {
+		return Util.add((SymInt)exp, Util.createConstant((int) value));
 	}
 
 	@Override
@@ -389,13 +391,13 @@ public class ProblemCoral extends ProblemGeneral {
 	}
 
 	@Override
-	public Object minus(int value, Object exp) {
-		return Util.sub(Util.createConstant(value),(SymInt)exp);
+	public Object minus(long value, Object exp) {
+		return Util.sub(Util.createConstant((int) value),(SymInt)exp);
 	}
 
 	@Override
-	public Object minus(Object exp, int value) {
-		return Util.sub((SymInt)exp,Util.createConstant(value));
+	public Object minus(Object exp, long value) {
+		return Util.sub((SymInt)exp,Util.createConstant((int) value));
 	}
 
 	@Override
@@ -420,13 +422,13 @@ public class ProblemCoral extends ProblemGeneral {
 	}
 
 	@Override
-	public Object mult(int value, Object exp) {
-		return Util.mul(Util.createConstant(value), (SymInt)exp);
+	public Object mult(long value, Object exp) {
+		return Util.mul(Util.createConstant((int) value), (SymInt)exp);
 	}
 
 	@Override
-	public Object mult(Object exp, int value) {
-		return Util.mul((SymInt)exp, Util.createConstant(value));
+	public Object mult(Object exp, long value) {
+		return Util.mul((SymInt)exp, Util.createConstant((int) value));
 	}
 
 	@Override
@@ -451,13 +453,13 @@ public class ProblemCoral extends ProblemGeneral {
 	}
 
 	@Override
-	public Object div(int value, Object exp) {
-		return Util.div(Util.createConstant(value), (SymInt)exp);
+	public Object div(long value, Object exp) {
+		return Util.div(Util.createConstant((int) value), (SymInt)exp);
 	}
 
 	@Override
-	public Object div(Object exp, int value) {
-		return Util.div((SymInt)exp, Util.createConstant(value));
+	public Object div(Object exp, long value) {
+		return Util.div((SymInt)exp, Util.createConstant((int) value));
 	}
 
 	@Override
@@ -482,12 +484,12 @@ public class ProblemCoral extends ProblemGeneral {
 	}
 
 	@Override
-	public Object and(int value, Object exp) {
+	public Object and(long value, Object exp) {
 		return Util.and(value==1?Util.TRUE:Util.FALSE, (SymBool)exp);
 	}
 
 	@Override
-	public Object and(Object exp, int value) {
+	public Object and(Object exp, long value) {
 		return Util.and((SymBool)exp, value==1?Util.TRUE:Util.FALSE);
 	}
 
@@ -497,12 +499,12 @@ public class ProblemCoral extends ProblemGeneral {
 	}
 
 	@Override
-	public Object or(int value, Object exp) {
+	public Object or(long value, Object exp) {
 		return Util.or(value==1?Util.TRUE:Util.FALSE, (SymBool)exp);
 	}
 
 	@Override
-	public Object or(Object exp, int value) {
+	public Object or(Object exp, long value) {
 		return Util.or((SymBool)exp, value==1?Util.TRUE:Util.FALSE);
 	}
 
@@ -512,12 +514,12 @@ public class ProblemCoral extends ProblemGeneral {
 	}
 
 	@Override
-	public Object xor(int value, Object exp) {
+	public Object xor(long value, Object exp) {
 		return Util.xor(value==1?Util.TRUE:Util.FALSE, (SymBool)exp);
 	}
 
 	@Override
-	public Object xor(Object exp, int value) {
+	public Object xor(Object exp, long value) {
 		return Util.xor((SymBool)exp, value==1?Util.TRUE:Util.FALSE);
 	}
 
@@ -527,13 +529,13 @@ public class ProblemCoral extends ProblemGeneral {
 	}
 
 	@Override
-	public Object shiftL(int value, Object exp) {
-		return Util.sl(Util.createConstant(value), (SymInt)exp);
+	public Object shiftL(long value, Object exp) {
+		return Util.sl(Util.createConstant((int) value), (SymInt)exp);
 	}
 
 	@Override
-	public Object shiftL(Object exp, int value) {
-		return Util.sl((SymInt)exp, Util.createConstant(value));
+	public Object shiftL(Object exp, long value) {
+		return Util.sl((SymInt)exp, Util.createConstant((int) value));
 	}
 
 	@Override
@@ -542,13 +544,13 @@ public class ProblemCoral extends ProblemGeneral {
 	}
 
 	@Override
-	public Object shiftR(int value, Object exp) {
-		return Util.sr(Util.createConstant(value), (SymInt)exp);
+	public Object shiftR(long value, Object exp) {
+		return Util.sr(Util.createConstant((int) value), (SymInt)exp);
 	}
 
 	@Override
-	public Object shiftR(Object exp, int value) {
-		return Util.sr((SymInt)exp, Util.createConstant(value));
+	public Object shiftR(Object exp, long value) {
+		return Util.sr((SymInt)exp, Util.createConstant((int) value));
 	}
 
 	@Override
@@ -557,13 +559,13 @@ public class ProblemCoral extends ProblemGeneral {
 	}
 
 	@Override
-	public Object shiftUR(int value, Object exp) {
-		return Util.usr(Util.createConstant(value), (SymInt)exp);
+	public Object shiftUR(long value, Object exp) {
+		return Util.usr(Util.createConstant((int) value), (SymInt)exp);
 	}
 
 	@Override
-	public Object shiftUR(Object exp, int value) {
-		return Util.usr((SymInt)exp, Util.createConstant(value));
+	public Object shiftUR(Object exp, long value) {
+		return Util.usr((SymInt)exp, Util.createConstant((int) value));
 	}
 
 	@Override
@@ -661,7 +663,7 @@ public class ProblemCoral extends ProblemGeneral {
 			if (sol.getResult() == Result.SAT) {
 				result = true;
 			}
-		} catch (Exception _) {
+		} catch (Exception e) {
 		}
 //		finally {
 //			System.out.printf(">>> %s %s %s\n", pc.toString(), sol, result);
@@ -718,12 +720,12 @@ public class ProblemCoral extends ProblemGeneral {
 	}
 
 	@Override
-	public int getIntValue(Object dpVar) {
+	public long getIntValue(Object dpVar) {
 		SymNumber symNumber = sol.getValue((SymLiteral)dpVar);
 		try {
 		return symNumber.evalNumber().intValue();
-		} catch (NullPointerException _) {
-			throw _;
+		} catch (NullPointerException e) {
+			throw e;
 		}
 	}
 
@@ -748,6 +750,24 @@ public class ProblemCoral extends ProblemGeneral {
 
 		post(orResult);
 
+	}
+
+	@Override
+	public Object rem(Object exp1, Object exp2) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Object rem(long exp1, Object exp2) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Object rem(Object exp1, long exp2) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 }
