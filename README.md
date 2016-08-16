@@ -5,16 +5,15 @@
 Symbolic Pathfinder (SPF) is a symbolic execution tool, based on NASA [Java Pathfinder](babelfish.arc.nasa.gov/trac/jpf) (JPF) model checker. It executes Java bytecode using a custom JVM to perform its analysis.
 Our goals are the following :
 *   Add support for symbolic arrays : achieved.
-*   Implement a replay module for the execution of the scenarii with concrete examples
-*   Use [jConstraints](https://github.com/psycopaths/jconstraints) as a solver abstraction layer
+*   Implement a replay module for the execution of the scenarii with concrete examples : In progress
 
 ## Symbolic Execution of arrays
 
-Support for arrays is currently enabled using the Z3 solver.
-For the moment, we support all arrays but float arrays, since 
-our version of Z3 does not have a support for floats.
+Support for arrays is enabled using the Z3 solver.
+All arrays are supported.
+This support is optional : To enable it, specify `symbolic.arrays=true` in the .jpf configuration file
 
-See Arrays examples in the src/examples folder.
+See Arrays examples in the src/examples/arrays folder.
 
 If Z3 can't be found, make sure that LD_LIBRARY_PATH contains the Pathfinder/jpf-symbc/lib directory.
 
