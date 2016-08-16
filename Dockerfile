@@ -17,7 +17,7 @@ RUN apt-get install -y vim && \
 RUN git clone https://github.com/R1kM/Pathfinder 
 WORKDIR /Pathfinder/jpf-core
 ENV JUNIT_HOME /usr/share/java
-RUN ant test 
+RUN ant build 
 RUN java -jar build/RunJPF.jar src/examples/Racer.jpf
 WORKDIR /Pathfinder/jpf-symbc
 RUN ant build
