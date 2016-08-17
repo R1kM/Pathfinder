@@ -36,3 +36,4 @@ RUN ant build
 RUN java -jar ../jpf-core/build/RunJPF.jar src/examples/TestPaths.jpf
 WORKDIR /
 COPY site.properties /root/.jpf/
+ENV LD_LIBRARY_PATH /Pathfinder/jpf-symbc/lib
