@@ -1,8 +1,7 @@
-target = Arrays
+target = arrays.Arrays
 
-symbolic.method=Arrays.obj_array(sym#con)
+symbolic.method=arrays.Arrays.obj_array(sym#con)
 symbolic.lazy=on
 classpath=${jpf-symbc}/build/examples
 search.multiple_errors=true
-listener = gov.nasa.jpf.symbc.SymbolicListener
 symbolic.dp=z3
