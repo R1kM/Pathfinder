@@ -38,9 +38,7 @@
 package gov.nasa.jpf.symbc;
 
 import gov.nasa.jpf.annotation.MJI;
-import gov.nasa.jpf.symbc.numeric.MathFunction;
-import gov.nasa.jpf.symbc.numeric.MathRealExpression;
-import gov.nasa.jpf.symbc.numeric.RealExpression;
+import gov.nasa.jpf.symbc.numeric.*;
 import gov.nasa.jpf.vm.MJIEnv;
 import gov.nasa.jpf.vm.NativePeer;
 
@@ -124,88 +122,70 @@ public class JPF_java_lang_Math extends NativePeer{
 //	  return Math.min(a, b);
 //  }
   @MJI
-  public static double sqrt__D__D (final MJIEnv env, final int clsObjRef, final double a) {
-	  final Object [] attrs = env.getArgAttributes();
+  public static double sqrt__D__D (MJIEnv env, int clsObjRef, double a) {
+	  Object [] attrs = env.getArgAttributes();
 	  if (attrs==null) // concrete? I think
 		  return Math.sqrt(a);
-	  final RealExpression sym_arg = (RealExpression) attrs[0];
+	  RealExpression sym_arg = (RealExpression) attrs[0];
 	  if (sym_arg == null) { // concrete
 		  return Math.sqrt(a);
 	  }
 	  else {
-		  final RealExpression result = new MathRealExpression(MathFunction.SQRT,sym_arg);
+		  RealExpression result = new MathRealExpression(MathFunction.SQRT,sym_arg);
 		  env.setReturnAttribute(result);
 		  // System.out.println("result "+result);
 		  return 0;
 	  }
   }
   @MJI
-  public static double random____D (final MJIEnv env, final int clsObjRef) {
+  public static double random____D (MJIEnv env, int clsObjRef) {
     return Math.random();
   }
 
   
   @MJI
-  public static double exp__D__D (final MJIEnv env, final int clsObjRef, final double a) {
-      final Object [] attrs = env.getArgAttributes();
+  public static double exp__D__D (MJIEnv env, int clsObjRef, double a) {
+      Object [] attrs = env.getArgAttributes();
       if (attrs==null) // concrete? I think
     	  return Math.exp(a);
-	  final RealExpression sym_arg = (RealExpression) attrs[0];
+	  RealExpression sym_arg = (RealExpression) attrs[0];
 	  if (sym_arg == null) { // concrete
 		  return Math.exp(a);
 	  }
 	  else {
-		  final RealExpression result = new MathRealExpression(MathFunction.EXP,sym_arg);
-		  env.setReturnAttribute(result);
-		  // System.out.println("result "+result);
-		  return 0;
-	  }
-  }
-
-  /* Added for dReal by Nima
-   * We would have exponentially less symbolic path if absolute value is supported by the solver.*/
-  @MJI
-  public static double abs__D__D(final MJIEnv env, final int clsObjRef, final double a) {
-    final Object[] attrs = env.getArgAttributes();
-    if (attrs == null) // concrete? I think
-      return Math.abs(a);
-    final RealExpression sym_arg = (RealExpression) attrs[0];
-    if (sym_arg == null) { // concrete
-      return Math.abs(a);
-    } else {
-      final RealExpression result = new MathRealExpression(MathFunction.ABS, sym_arg);
-      env.setReturnAttribute(result);
-      return 0;
-    }
-  }
-  
-  @MJI
-  public static double asin__D__D (final MJIEnv env, final int clsObjRef, final double a) {
-	  final Object [] attrs = env.getArgAttributes();
-	  if (attrs==null) // concrete? I think
-		  return Math.asin(a);
-	  final RealExpression sym_arg = (RealExpression) attrs[0];
-	  if (sym_arg == null) { // concrete
-		  return Math.asin(a);
-	  }
-	  else {
-		  final RealExpression result = new MathRealExpression(MathFunction.ASIN,sym_arg);
+		  RealExpression result = new MathRealExpression(MathFunction.EXP,sym_arg);
 		  env.setReturnAttribute(result);
 		  // System.out.println("result "+result);
 		  return 0;
 	  }
   }
   @MJI
-  public static double acos__D__D (final MJIEnv env, final int clsObjRef, final double a) {
-	  final Object [] attrs = env.getArgAttributes();
+  public static double asin__D__D (MJIEnv env, int clsObjRef, double a) {
+	  Object [] attrs = env.getArgAttributes();
+	  if (attrs==null) // concrete? I think
+		  return Math.asin(a);
+	  RealExpression sym_arg = (RealExpression) attrs[0];
+	  if (sym_arg == null) { // concrete
+		  return Math.asin(a);
+	  }
+	  else {
+		  RealExpression result = new MathRealExpression(MathFunction.ASIN,sym_arg);
+		  env.setReturnAttribute(result);
+		  // System.out.println("result "+result);
+		  return 0;
+	  }
+  }
+  @MJI
+  public static double acos__D__D (MJIEnv env, int clsObjRef, double a) {
+	  Object [] attrs = env.getArgAttributes();
 	  if (attrs==null) // concrete? I think
 		  return Math.acos(a);
-	  final RealExpression sym_arg = (RealExpression) attrs[0];
+	  RealExpression sym_arg = (RealExpression) attrs[0];
 	  if (sym_arg == null) { // concrete
 		  return Math.acos(a);
 	  }
 	  else {
-		  final RealExpression result = new MathRealExpression(MathFunction.ACOS,sym_arg);
+		  RealExpression result = new MathRealExpression(MathFunction.ACOS,sym_arg);
 		  env.setReturnAttribute(result);
 		  // System.out.println("result "+result);
 		  return 0;
@@ -213,28 +193,28 @@ public class JPF_java_lang_Math extends NativePeer{
 
   }
   @MJI
-  public static double atan__D__D (final MJIEnv env, final int clsObjRef, final double a) {
-      final Object [] attrs = env.getArgAttributes();
+  public static double atan__D__D (MJIEnv env, int clsObjRef, double a) {
+      Object [] attrs = env.getArgAttributes();
       if (attrs==null) // concrete? I think
     	  return Math.atan(a);
-	  final RealExpression sym_arg = (RealExpression) attrs[0];
+	  RealExpression sym_arg = (RealExpression) attrs[0];
 	  if (sym_arg == null) { // concrete
 		  return Math.atan(a);
 	  }
 	  else {
-		  final RealExpression result = new MathRealExpression(MathFunction.ATAN,sym_arg);
+		  RealExpression result = new MathRealExpression(MathFunction.ATAN,sym_arg);
 		  env.setReturnAttribute(result);
 		  // System.out.println("result "+result);
 		  return 0;
 	  }
   }
   @MJI
-  public static double atan2__DD__D (final MJIEnv env, final int clsObjRef, final double a, final double b) {
-      final Object [] attrs = env.getArgAttributes();
+  public static double atan2__DD__D (MJIEnv env, int clsObjRef, double a, double b) {
+      Object [] attrs = env.getArgAttributes();
       if (attrs==null) // concrete? I think
     	  return Math.atan2(a,b);
-	  final RealExpression sym_arg1 = (RealExpression)attrs[0];
-	  final RealExpression sym_arg2 = (RealExpression)attrs[1];
+	  RealExpression sym_arg1 = (RealExpression)attrs[0];
+	  RealExpression sym_arg2 = (RealExpression)attrs[1];
 	  RealExpression result;
 
 	  if (sym_arg1 == null && sym_arg2 == null) // concrete
@@ -265,27 +245,27 @@ public class JPF_java_lang_Math extends NativePeer{
 //      return Math.floor(a);
 //  }
   @MJI
-  public static double log__D__D (final MJIEnv env, final int clsObjRef, final double a) {
-      final Object [] attrs = env.getArgAttributes();
+  public static double log__D__D (MJIEnv env, int clsObjRef, double a) {
+      Object [] attrs = env.getArgAttributes();
       if (attrs==null) // concrete? I think
     	  return Math.log(a);
-	  final RealExpression sym_arg = (RealExpression) attrs[0];
+	  RealExpression sym_arg = (RealExpression) attrs[0];
 	  if (sym_arg == null) { // concrete
 		  return Math.log(a);
 	  }
 	  else {
-		  final RealExpression result = new MathRealExpression(MathFunction.LOG,sym_arg);
+		  RealExpression result = new MathRealExpression(MathFunction.LOG,sym_arg);
 		  env.setReturnAttribute(result);
 		  // System.out.println("result "+result);
 		  return 0;
 	  }
   }
   @MJI
-  public static double log10__D__D (final MJIEnv env, final int clsObjRef, final double a) {
-	      final Object [] attrs = env.getArgAttributes();
+  public static double log10__D__D (MJIEnv env, int clsObjRef, double a) {
+	      Object [] attrs = env.getArgAttributes();
 	      if (attrs==null) // concrete? I think
 	    	return Math.log10(a);
-		  final RealExpression sym_arg = (RealExpression) attrs[0];
+		  RealExpression sym_arg = (RealExpression) attrs[0];
 		  if (sym_arg == null) { // concrete
 			  return Math.log10(a);
 		  }
@@ -303,32 +283,32 @@ public class JPF_java_lang_Math extends NativePeer{
 //	  return Math.rint(a);
 //  }
   @MJI
-  public static double tan__D__D (final MJIEnv env, final int clsObjRef, final double a) {
-	  final Object [] attrs = env.getArgAttributes();
+  public static double tan__D__D (MJIEnv env, int clsObjRef, double a) {
+	  Object [] attrs = env.getArgAttributes();
 	  if (attrs==null) // concrete? I think
 		  return Math.tan(a);
-	  final RealExpression sym_arg = (RealExpression) attrs[0];
+	  RealExpression sym_arg = (RealExpression) attrs[0];
 	  if (sym_arg == null) { // concrete
 		  return Math.tan(a);
 	  }
 	  else {
-		  final RealExpression result = new MathRealExpression(MathFunction.TAN,sym_arg);
+		  RealExpression result = new MathRealExpression(MathFunction.TAN,sym_arg);
 		  env.setReturnAttribute(result);
 		  // System.out.println("result "+result);
 		  return 0;
 	  }
   }
   @MJI
-  public static double sin__D__D (final MJIEnv env, final int clsObjRef, final double a) {
-	  final Object [] attrs = env.getArgAttributes();
+  public static double sin__D__D (MJIEnv env, int clsObjRef, double a) {
+	  Object [] attrs = env.getArgAttributes();
 	  if (attrs==null) // concrete? I think
 		  return Math.sin(a);
-	  final RealExpression sym_arg = (RealExpression) attrs[0];
+	  RealExpression sym_arg = (RealExpression) attrs[0];
 	  if (sym_arg == null) { // concrete
 		  return Math.sin(a);
 	  }
 	  else {
-		  final RealExpression result = new MathRealExpression(MathFunction.SIN,sym_arg);
+		  RealExpression result = new MathRealExpression(MathFunction.SIN,sym_arg);
 		  env.setReturnAttribute(result);
 		  // System.out.println("result "+result);
 		  return 0;
@@ -336,28 +316,28 @@ public class JPF_java_lang_Math extends NativePeer{
 
   }
   @MJI
-  public static double cos__D__D (final MJIEnv env, final int clsObjRef, final double a) {
-	  final Object [] attrs = env.getArgAttributes();
+  public static double cos__D__D (MJIEnv env, int clsObjRef, double a) {
+	  Object [] attrs = env.getArgAttributes();
 	  if (attrs==null) // concrete? I think
 		  return Math.cos(a);
-	  final RealExpression sym_arg = (RealExpression) attrs[0];
+	  RealExpression sym_arg = (RealExpression) attrs[0];
 	  if (sym_arg == null) // concrete
 		  return Math.cos(a);
 	  else {
-		  final RealExpression result = new MathRealExpression(MathFunction.COS,sym_arg);
+		  RealExpression result = new MathRealExpression(MathFunction.COS,sym_arg);
 		  env.setReturnAttribute(result);
 		  // System.out.println("result "+result);
 		  return 0;
 	  }
   }
   @MJI
-  public static double pow__DD__D (final MJIEnv env, final int clsObjRef, final double a, final double b) {
-	  System.out.println("here!!!!!");
-	  final Object [] attrs = env.getArgAttributes();
+  public static double pow__DD__D (MJIEnv env, int clsObjRef, double a, double b) {
+//	  System.out.println("here!!!!!");
+	  Object [] attrs = env.getArgAttributes();
 	  if (attrs==null) // concrete? I think
 		  return Math.pow(a,b);
-	  final RealExpression sym_arg1 = (RealExpression)attrs[0];
-	  final RealExpression sym_arg2 = (RealExpression)attrs[1];
+	  RealExpression sym_arg1 = (RealExpression)attrs[0];
+	  RealExpression sym_arg2 = (RealExpression)attrs[1];
 	  RealExpression result;
 
 	  if (sym_arg1 == null && sym_arg2 == null) // concrete
