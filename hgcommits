@@ -1,0 +1,330 @@
+changeset:   824:0452bf626ffa
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Wed Aug 17 14:53:48 2016 -0700
+summary:     Example
+
+changeset:   823:3efcff9cdb41
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Wed Aug 17 14:51:33 2016 -0700
+summary:     Examples
+
+changeset:   822:8818773fde9a
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Mon Aug 15 16:43:51 2016 -0700
+summary:     array instructions
+
+changeset:   821:4f4a8a0227a7
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Mon Aug 15 16:11:18 2016 -0700
+summary:     AALOAD and AASTORE
+
+changeset:   820:a01a6027db8a
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Fri Aug 12 11:38:00 2016 -0700
+summary:     Add array theory with Z3Bitvectors
+
+changeset:   819:96259014a4e5
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Thu Aug 11 19:07:43 2016 -0700
+summary:     symbolic arrays are now really optional
+
+changeset:   818:2092bdc52d03
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Thu Aug 11 18:44:12 2016 -0700
+summary:     Adding symbolic NEWARRAY
+
+changeset:   817:c2cd87972262
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Thu Aug 11 17:26:00 2016 -0700
+summary:     Array examples
+
+changeset:   816:72f6f56a69fb
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Thu Aug 11 17:18:13 2016 -0700
+summary:     Fix MJIEnv.NULL
+
+changeset:   815:b7281ceface7
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Thu Aug 11 17:05:58 2016 -0700
+summary:     Adding Arraylength and creation of arrayexpression in ByteCodeUtils
+
+changeset:   814:ead4339286e2
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Thu Aug 11 16:03:59 2016 -0700
+summary:     Adding Z3 translation for arrays
+
+changeset:   813:2afb14f06e5a
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Thu Aug 11 12:44:30 2016 -0700
+summary:     Modifying PCParser and ProblemGeneral to translate array expressions
+
+changeset:   812:239174cb76f7
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Thu Aug 11 01:01:56 2016 -0700
+summary:     merge
+
+changeset:   811:3c9f3b32713d
+parent:      810:38b27fb471f5
+parent:      795:1e2b9d0c9abe
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Thu Aug 11 00:56:14 2016 -0700
+summary:     merge
+
+changeset:   810:38b27fb471f5
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Thu Aug 11 00:51:50 2016 -0700
+summary:     Adding optional array handling, without solver translation
+
+changeset:   809:3302ae0fcd44
+parent:      803:d75e94709d25
+parent:      808:ad4fb717f71a
+user:        Kasper Luckow <ksluckow@gmail.com>
+date:        Wed Aug 10 12:20:45 2016 -0700
+summary:     Merge z3-fixes branch. This merge introduces incremental solving for z3 and z3-bitvector.
+
+changeset:   808:ad4fb717f71a
+branch:      z3-fixes
+user:        corina
+date:        Wed Aug 10 11:46:28 2016 -0700
+summary:     small corrections
+
+changeset:   807:acfdb9c60cc5
+branch:      z3-fixes
+parent:      804:aa113ade33df
+user:        Kasper Luckow <ksluckow@gmail.com>
+date:        Wed Aug 10 09:57:44 2016 -0700
+summary:     Update license headers
+
+changeset:   806:0d0585ced93d
+branch:      SMT translator fixes
+parent:      665:f231d3a64dc1
+user:        Kasper Luckow <ksluckow@gmail.com>
+date:        Wed Aug 10 09:08:42 2016 -0700
+summary:     close \"SMT translator fixes\" branch. Work in this branch was subsumed
+
+changeset:   805:8e3574a3b8af
+branch:      v6
+parent:      497:4a8a321d8e96
+user:        Kasper Luckow <ksluckow@gmail.com>
+date:        Wed Aug 10 09:07:18 2016 -0700
+summary:     Close v6 branch
+
+changeset:   804:aa113ade33df
+branch:      z3-fixes
+parent:      802:c5cff4a03d05
+parent:      803:d75e94709d25
+user:        Kasper Luckow <ksluckow@gmail.com>
+date:        Mon Aug 08 09:30:56 2016 -0700
+summary:     catching up with default (commits that fixes green)
+
+changeset:   803:d75e94709d25
+parent:      764:e51de0c1bbf4
+user:        Daniel Balasubramanian <daniel@isis.vanderbilt.edu>
+date:        Tue Aug 02 11:45:33 2016 -0500
+summary:     Removing the call to visit the and constraint in Constraint.java. Updating the createInstance method in SolverTranslator.java as suggested by Willem.
+
+changeset:   802:c5cff4a03d05
+branch:      z3-fixes
+user:        Kasper Luckow <ksluckow@gmail.com>
+date:        Mon Aug 08 09:18:37 2016 -0700
+summary:     Some clean up---esp. PCParser
+
+changeset:   801:f694280cf64c
+branch:      z3-fixes
+user:        Kasper Luckow <ksluckow@gmail.com>
+date:        Fri Aug 05 17:38:30 2016 -0700
+summary:     Add missing files for incremental solving with bit vectors
+
+changeset:   800:9da340f27396
+branch:      z3-fixes
+user:        Kasper Luckow <ksluckow@gmail.com>
+date:        Fri Aug 05 17:38:06 2016 -0700
+summary:     Add support for z3bitvector with incremental solving
+
+changeset:   799:d2e6580ab545
+branch:      z3-fixes
+user:        Kasper Luckow <ksluckow@gmail.com>
+date:        Fri Aug 05 16:54:41 2016 -0700
+summary:     Move things a bit for incremental solving
+
+changeset:   798:247465a850fc
+branch:      z3-fixes
+user:        Kasper Luckow <ksluckow@gmail.com>
+date:        Fri Aug 05 16:41:29 2016 -0700
+summary:     add initial take at supporting incremental solving in z3
+
+changeset:   797:6c2e07eeb8a9
+branch:      z3-fixes
+parent:      796:a4c00a886832
+parent:      764:e51de0c1bbf4
+user:        Kasper Luckow <ksluckow@gmail.com>
+date:        Fri Aug 05 16:39:28 2016 -0700
+summary:     merge default
+
+changeset:   796:a4c00a886832
+branch:      z3-fixes
+parent:      631:fab39be8a6c4
+user:        Kasper Luckow <ksluckow@gmail.com>
+date:        Fri Aug 05 16:37:31 2016 -0700
+summary:     catch up with default
+
+changeset:   795:1e2b9d0c9abe
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Wed Aug 10 11:22:47 2016 -0700
+summary:     Adding incremental solving
+
+changeset:   794:5d986a4ae859
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Tue Aug 02 15:49:50 2016 -0700
+summary:     Correct all array instructions
+
+changeset:   793:18994aba6b6c
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Tue Aug 02 15:26:57 2016 -0700
+summary:     Commenting array instructions for tests
+
+changeset:   792:c20fc515b780
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Sat Jul 30 16:18:10 2016 -0700
+summary:     Fix IA* when no array attr is present
+
+changeset:   791:edf33c2c9f98
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Fri Jul 29 17:02:26 2016 -0700
+summary:     add jconstraints-z3
+
+changeset:   790:a6a2d12b7bf1
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Fri Jul 29 16:59:26 2016 -0700
+summary:     clean merge
+
+changeset:   789:0cf8f12a05a3
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Fri Jul 29 16:58:23 2016 -0700
+summary:     clean
+
+changeset:   788:afea40ae7c0c
+parent:      787:112ff69333dd
+parent:      786:e7dc57efa6de
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Fri Jul 29 15:15:58 2016 -0700
+summary:     merge
+
+changeset:   787:112ff69333dd
+parent:      780:bc9bfc12898e
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Fri Jul 29 14:57:38 2016 -0700
+summary:     Fix array theory
+
+changeset:   786:e7dc57efa6de
+user:        corina
+date:        Mon Jul 25 16:03:17 2016 -0700
+summary:     updates
+
+changeset:   785:ff3b478f5112
+user:        corina
+date:        Mon Jul 25 15:55:44 2016 -0700
+summary:     update
+
+changeset:   784:14d59e991e20
+user:        corina
+date:        Mon Jul 25 15:33:42 2016 -0700
+summary:     fixed
+
+changeset:   783:b5ffde2353f9
+parent:      782:c0c3fcd97b85
+parent:      781:805534ebe44b
+user:        Quoc-Sang Phan <dark2bright@gmail.com>
+date:        Mon Jul 25 15:12:13 2016 -0700
+summary:     merge
+
+changeset:   782:c0c3fcd97b85
+parent:      780:bc9bfc12898e
+user:        Quoc-Sang Phan <dark2bright@gmail.com>
+date:        Mon Jul 25 15:11:47 2016 -0700
+summary:     jconstraint z3 lib
+
+changeset:   781:805534ebe44b
+user:        corina
+date:        Mon Jul 25 14:55:13 2016 -0700
+summary:     added coral
+
+changeset:   780:bc9bfc12898e
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Thu Jul 21 15:56:23 2016 -0700
+summary:     JUnit Generation of primitive fields for objects
+
+changeset:   779:2a2194c03902
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Mon Jul 18 19:55:31 2016 -0700
+summary:     Adding creation of objects in JUnit
+
+changeset:   778:d1915d319b72
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Fri Jul 01 16:45:08 2016 -0700
+summary:     Correct last test. Everything passes
+
+changeset:   777:47ed18413eb1
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Fri Jul 01 11:53:03 2016 -0700
+summary:     Correct tests
+
+changeset:   776:d3cc0be4adf3
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Thu Jun 30 19:06:03 2016 -0700
+summary:     Add benchmarks
+
+changeset:   775:49ccf9eb12fe
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Thu Jun 30 19:05:46 2016 -0700
+summary:     Several corrections
+
+changeset:   774:1617c494df17
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Wed Jun 29 17:49:51 2016 -0700
+summary:     Replace default solver by z3 instead of choco
+
+changeset:   773:a133d0c47e70
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Wed Jun 29 16:47:05 2016 -0700
+summary:     Conditions in IF can be booleans
+
+changeset:   772:6b31a096084e
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Tue Jun 21 15:43:03 2016 -0700
+summary:     Generation of integer arrays according to the Pathcondition in SymbolicSequenceListener
+
+changeset:   771:b6e5da3161b9
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Mon Jun 20 16:33:01 2016 -0700
+summary:     SymbolicSequenceListener with jconstraints
+
+changeset:   770:533568aac62f
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Sun Jun 19 16:41:53 2016 -0700
+summary:     Do not use anonymous symbolic variables (z3 segfaults)
+
+changeset:   769:eb7bfe09cbe7
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Sat Jun 18 12:42:39 2016 -0700
+summary:     Correcting ArrayStore
+
+changeset:   768:4480201ae449
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Sat Jun 18 12:03:41 2016 -0700
+summary:     Correct bug in AALOAD
+
+changeset:   767:f5a8cc47668c
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Thu Jun 16 18:20:40 2016 -0700
+summary:     Minor jconstraints changes
+
+changeset:   766:e7722d875467
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Thu Jun 16 16:33:31 2016 -0700
+summary:     Do not remove string handling
+
+changeset:   765:5e47522341d5
+user:        Aymeric Fromherz <aymeric.fromherz@ens.fr>
+date:        Thu Jun 16 16:25:15 2016 -0700
+summary:     Use jconstraints in bytecode module

@@ -7,6 +7,10 @@ Our goals are the following :
 *   Add support for symbolic arrays : achieved.
 *   Implement a replay module for the execution of the scenarii with concrete examples : In progress
 
+This [paper](https://github.com/R1kM/Pathfinder/SymbolicArrays.pdf) submitted to the JPF Workshop sums up the improvements to SPF.
+
+Most of this work was done on a private repository on Bitbucket. The list of commits from the beginning of Google Summer of Code can be found [here](https://github.com/R1kM/Pathfinder/hgcommits)
+
 ## Symbolic Execution of arrays
 
 Support for arrays is enabled using the Z3 solver.
