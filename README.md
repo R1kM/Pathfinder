@@ -22,7 +22,7 @@ docker build -t spf .
 docker run -it spf
 ```
 
-Instructions to install and use SPF locally can be found hereafter.
+It is also possible to install and use Symbolic Pathfinder locally. Instructions can be found hereafter.
 
 If Z3 can't be found, make sure that LD_LIBRARY_PATH contains the Pathfinder/jpf-symbc/lib directory.
 
@@ -131,6 +131,8 @@ we simply add constraints using *select/store* in Z3, and *objRef*.
 
 ### Results and improvements
 Compared to the former implementation, this implementation allows the execution of arrays with a symbolic length, as well as arrays of objects. Examples such as ObjArray.jpf or ArrayLength.jpf, found in the src/examples/arrays folder could not be previously symbolically executed.
+
+For instance, the execution of ObjArray.jpf will detect several inputs leading to erroneous behaviours, such as IndexOutOfBoundsException, NullPointerException or division by 0 as ArithmeticException. This can be used to correct the program and avoid bugs.
 
 With our current implementation, many states that can't be explored are created. We plan on checking beforehand if the constraints in these states are satisfiable to speed up the execution.
 
