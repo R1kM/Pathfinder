@@ -9,7 +9,11 @@ During the Google Summer of Code 2016, our goals were the following :
 
 This [paper](https://github.com/R1kM/Pathfinder/blob/master/SymbolicArrays.pdf) submitted to the JPF Workshop sums up the improvements to SPF.
 
-Most of this work was done on a private repository on Bitbucket. The list of commits from the beginning of Google Summer of Code can be found [here](https://github.com/R1kM/Pathfinder/blob/master/hgcommits)
+Most of this work was done on a private repository on Bitbucket. This work was merged to this 
+repository in this 
+[commit](https://github.com/R1kM/Pathfinder/commit/d143d76fed7bc5584c9cb5d26a8f3c51e041e7f4) 
+The list of commits from the beginning of Google 
+Summer of Code can be found [here](https://github.com/R1kM/Pathfinder/blob/master/hgcommits)
 
 ## Installing and configuring JavaPathFinder
 We provide a Dockerfile to create a complete environment for reproducing results and executing the tool. To use it, just run
