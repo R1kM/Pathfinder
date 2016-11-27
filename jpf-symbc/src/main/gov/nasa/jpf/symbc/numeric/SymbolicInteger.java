@@ -44,7 +44,7 @@ import java.util.Random;
 
 public class SymbolicInteger extends LinearIntegerExpression
 {
-	public static long UNDEFINED = Long.MIN_VALUE;
+	public static long UNDEFINED = 0;
 	public long _min = 0;
 	public long _max = 0;
 	public long solution = UNDEFINED; // C
@@ -113,7 +113,7 @@ public class SymbolicInteger extends LinearIntegerExpression
 			return (name != null) ? name : "INT_" + hashCode();
 
 		} else {
-			return (name != null) ? name + "[" + solution + "]" :
+			return (name != null) ? name /* + "[" + solution + "]" */ :
 				"INT_" + hashCode() + "[" + solution + "]";
 		}
 	}

@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-// author aymeric fromherz aymeric.fromherz@ens.fr 
+// author Aymeric Fromherz aymeric.fromherz@ens.fr 
 
 package gov.nasa.jpf.symbc.bytecode.symarrays;
 
@@ -50,7 +50,14 @@ public class FALOAD extends gov.nasa.jpf.jvm.bytecode.FALOAD {
 	 
 	 @Override
 	  public Instruction execute (ThreadInfo ti) {
-		// Retrieve the array expression if it was previously in the pathcondition
+          StackFrame frame = ti.getModifiableTopFrame();
+		  arrayRef = frame.peek(1); // ..,arrayRef,idx
+
+		  if (arrayRef == MJIEnv.NULL) {
+		    return ti.createAndThrowException("java.lang.NullPointerException");
+		  }
+          
+		  // Retrieve the array expression if it was previously in the pathcondition
           PCChoiceGenerator temp_cg = (PCChoiceGenerator)ti.getVM().getLastChoiceGeneratorOfType(PCChoiceGenerator.class);
           if (temp_cg != null) {
               if (temp_cg.getCurrentPC().arrayExpressions.containsKey(ti.getElementInfo(ti.getModifiableTopFrame().peek(1)).toString())) {
@@ -66,12 +73,8 @@ public class FALOAD extends gov.nasa.jpf.jvm.bytecode.FALOAD {
               }
           }
           
-          
           ArrayExpression arrayAttr = null;
           ChoiceGenerator<?> cg;
-          boolean condition;
-          StackFrame frame = ti.getModifiableTopFrame();
-		  arrayRef = frame.peek(1); // ..,arrayRef,idx
 
           if (!ti.isFirstStepInsn()) { // first time around
               cg = new PCChoiceGenerator(3);
@@ -127,9 +130,6 @@ public class FALOAD extends gov.nasa.jpf.jvm.bytecode.FALOAD {
           assert indexAttr != null;
           assert se != null;
 
-		  if (arrayRef == MJIEnv.NULL) {
-		    return ti.createAndThrowException("java.lang.NullPointerException");
-		  }
 		  
           if ((Integer)cg.getNextChoice() == 1) { // check bounds of the index
               pc._addDet(Comparator.GE, se.indexExpression, se.arrayExpression.length);
@@ -154,11 +154,9 @@ public class FALOAD extends gov.nasa.jpf.jvm.bytecode.FALOAD {
               pc._addDet(Comparator.GE, se.indexExpression, new IntegerConstant(0));
               if (pc.simplify()) { // satisfiable
                   ((PCChoiceGenerator) cg).setCurrentPC(pc);
-
-                  // Set the result
-                  // We had a concrete array, and don't know yet where it is from
                   frame.pop(2); // We pop the array and the index
                   frame.pushFloat(0);
+                  // Set the result
                   frame.setOperandAttr(val);
                   pc._addDet(Comparator.EQ, se, val);
                   pc.arrayExpressions.put(arrayAttr.getRootName(), arrayAttr);

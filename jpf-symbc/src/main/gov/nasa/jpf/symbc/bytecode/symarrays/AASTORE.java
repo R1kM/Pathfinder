@@ -17,7 +17,7 @@
  */
 
 
-// author aymeric fromherz aymeric.fromherz@ens.fr 
+// author Aymeric Fromherz aymeric.fromherz@ens.fr 
 
 package gov.nasa.jpf.symbc.bytecode.symarrays;
 
@@ -53,13 +53,18 @@ public class AASTORE extends gov.nasa.jpf.jvm.bytecode.AASTORE {
           ArrayExpression arrayAttr = null;
           StackFrame frame = ti.getModifiableTopFrame();
           ChoiceGenerator<?> cg;
-          boolean condition;
-		  int arrayRef = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
+		  int arrayRef = peekArrayRef(ti);
         
+          if (arrayRef == MJIEnv.NULL) {
+              return ti.createAndThrowException("java.lang.NullPointerException");
+          }
+
           // Retrieve the array expression if it was previously in the pathcondition, and store it as an array attr
           PCChoiceGenerator temp_cg = (PCChoiceGenerator)ti.getVM().getLastChoiceGeneratorOfType(PCChoiceGenerator.class);
           if (temp_cg != null) {
+              // There was a previous path condition
               if (temp_cg.getCurrentPC().arrayExpressions.containsKey(ti.getElementInfo(ti.getModifiableTopFrame().peek(2)).toString())) {
+                  // There was a previous symbolic object associated to this array. We retrieve it.
                   ti.getModifiableTopFrame().setOperandAttr(2, temp_cg.getCurrentPC().arrayExpressions.get(ti.getElementInfo(ti.getModifiableTopFrame().peek(2)).toString()));
               }
           }
@@ -72,9 +77,6 @@ public class AASTORE extends gov.nasa.jpf.jvm.bytecode.AASTORE {
               } else {
                   // The array is not symbolic, but the index is.
                   // We try to store the object in each possible slot
-                  if (arrayRef == MJIEnv.NULL) {
-                      return ti.createAndThrowException("java.lang.NullPointerException");
-                  }
                   ElementInfo arrayInfo = ti.getElementInfo(arrayRef);
                   if (!ti.isFirstStepInsn()) { // first time around
                      cg = new PCChoiceGenerator(arrayInfo.arrayLength() +2);
@@ -104,6 +106,7 @@ public class AASTORE extends gov.nasa.jpf.jvm.bytecode.AASTORE {
                   int currentChoice = (Integer)cg.getNextChoice();
 
                   if (currentChoice < arrayInfo.arrayLength()) {
+                      // We try to store at all indices of the array.
                       pc._addDet(Comparator.EQ, indexAttr, new IntegerConstant(currentChoice));
                       if (pc.simplify()) { // We can store at this index
                         int value = frame.peek();
@@ -111,35 +114,37 @@ public class AASTORE extends gov.nasa.jpf.jvm.bytecode.AASTORE {
                         ElementInfo eiArray = ti.getModifiableElementInfo(arrayRef);
                         eiArray.setReferenceElement(currentChoice, value);
 
-                        frame.pop(3);
+                        frame.pop(3); // We pop the array, the object and the index
                         return getNext(ti);
                       } else {
                         ti.getVM().getSystemState().setIgnored(true);
                         return getNext(ti);
                      }
                   } else if (currentChoice == arrayInfo.arrayLength()) {
+                      // We check if we can be out of bounds (greater than the array length)
                       pc._addDet(Comparator.GE, indexAttr, new IntegerConstant(arrayInfo.arrayLength()));
                       if (pc.simplify()) { // satisfiable
-                          ((PCChoiceGenerator) cg).setCurrentPC(pc);
-                          return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException", "index greater than array bounds");
+                        ((PCChoiceGenerator) cg).setCurrentPC(pc);
+                        return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException", "index greater than array bounds");
                       } else {
                         ti.getVM().getSystemState().setIgnored(true);
                         return getNext(ti);
                       }
                   } else {
+                      // We check if we can be out of bounds (smaller than 0)
                       pc._addDet(Comparator.LT, indexAttr, new IntegerConstant(0));
                       if (pc.simplify()) {
-                          ((PCChoiceGenerator) cg).setCurrentPC(pc);
-                          return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException", "index smaller than array bounds");
+                        ((PCChoiceGenerator) cg).setCurrentPC(pc);
+                        return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException", "index smaller than array bounds");
                       } else {
-                          ti.getVM().getSystemState().setIgnored(true);
-                          return getNext(ti);
+                        ti.getVM().getSystemState().setIgnored(true);
+                        return getNext(ti);
                       }
                   }
               }
           }
 
-
+          // The array is here symbolic
           if (!ti.isFirstStepInsn()) { // first time around
               cg = new PCChoiceGenerator(3);
               ((PCChoiceGenerator) cg).setOffset(this.position);
@@ -169,24 +174,11 @@ public class AASTORE extends gov.nasa.jpf.jvm.bytecode.AASTORE {
           }
           assert (indexAttr != null) : "indexAttr shouldn't be null in AASTORE instruction";
 
-          if (peekArrayAttr(ti) == null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
-		      if (arrayRef == MJIEnv.NULL) {
-		          return ti.createAndThrowException("java.lang.NullPointerException");
-		      } 
-              // In this case the array isn't symbolic, and we checked earlier that the index was symbolic
-              ElementInfo arrayInfo = ti.getElementInfo(arrayRef);
-              // We need to add information about the type of the elements in the array as well
-              // We should add the constraints about the elements of the array here
-              // We should not end here, case handled previously
-              throw new RuntimeException("constant object array with symbolic index not implemented");
-          } else {
-              arrayAttr = (ArrayExpression)peekArrayAttr(ti);
-              if (pc.arrayExpressions.containsKey(arrayAttr.getRootName())) {
-                  arrayAttr = (ArrayExpression)pc.arrayExpressions.get(arrayAttr.getRootName());
-              }
+          arrayAttr = (ArrayExpression)peekArrayAttr(ti);
+          if (pc.arrayExpressions.containsKey(arrayAttr.getRootName())) {
+              arrayAttr = (ArrayExpression)pc.arrayExpressions.get(arrayAttr.getRootName());
           }
           assert (arrayAttr != null) : "arrayAttr shouldn't be null in AASTORE instruction";
-
 
 	      if ((Integer)cg.getNextChoice() == 1) { // check bounds of the index
               pc._addDet(Comparator.GE, indexAttr, arrayAttr.length);
@@ -207,6 +199,7 @@ public class AASTORE extends gov.nasa.jpf.jvm.bytecode.AASTORE {
                   return getNext(ti);
               }
           } else {
+              // If the index is in bounds, perform the store
               pc._addDet(Comparator.LT, indexAttr, arrayAttr.length);
               pc._addDet(Comparator.GE, indexAttr, new IntegerConstant(0));
               if (pc.simplify()) { // satisfiable

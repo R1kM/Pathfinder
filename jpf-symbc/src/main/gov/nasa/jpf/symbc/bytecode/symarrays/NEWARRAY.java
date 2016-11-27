@@ -179,6 +179,7 @@ public class NEWARRAY extends gov.nasa.jpf.jvm.bytecode.NEWARRAY {
         if (attr instanceof IntegerExpression) {
             arrayAttr = new ArrayExpression(eiArray.toString());
             pc._addDet(Comparator.EQ, arrayAttr.length, (IntegerExpression)attr);
+            pc.arrayExpressions.put(arrayAttr.getRootName(), arrayAttr);
         }
         sf.setOperandAttr(arrayAttr);
 

@@ -344,7 +344,7 @@ public class BytecodeUtils {
 						outputString = outputString.concat(" " + sym_v + ",");
 					} else if(argTypes[j].equalsIgnoreCase("int[]") || argTypes[j].equalsIgnoreCase("long[]") || argTypes[j].equalsIgnoreCase("byte[]")){
                         if (symarray) {
-                            ArrayExpression sym_v = new ArrayExpression(name);
+                            ArrayExpression sym_v = new ArrayExpression(th.getElementInfo(sf.peek()).toString());
                             expressionMap.put(name, sym_v);
                             sf.setOperandAttr(stackIdx, sym_v);
                             outputString = outputString.concat(" " + sym_v + ",");
@@ -374,7 +374,7 @@ public class BytecodeUtils {
                         }
 					} else if(argTypes[j].equalsIgnoreCase("float[]") || argTypes[j].equalsIgnoreCase("double[]")){
                         if (symarray) {
-                            ArrayExpression sym_v = new ArrayExpression(name);
+                            ArrayExpression sym_v = new ArrayExpression(th.getElementInfo(sf.peek()).toString());
                             expressionMap.put(name, sym_v);
                             sf.setOperandAttr(stackIdx, sym_v);
                             outputString = outputString.concat(" " + sym_v + ",");
@@ -404,7 +404,7 @@ public class BytecodeUtils {
                         }
 					} else if(argTypes[j].equalsIgnoreCase("boolean[]")){
                         if (symarray) {
-                            ArrayExpression sym_v = new ArrayExpression(name);
+                            ArrayExpression sym_v = new ArrayExpression(th.getElementInfo(sf.peek()).toString());
                             expressionMap.put(name, sym_v);
                             sf.setOperandAttr(stackIdx, sym_v);
                             outputString = outputString.concat(" " + sym_v + ",");
@@ -437,7 +437,7 @@ public class BytecodeUtils {
                             Object[] argValues = invInst.getArgumentValues(th);
                             ElementInfo eiArray = (ElementInfo)argValues[j];
                             // If the type name contains [] but wasn't catched previously, it is an object array
-                            ArrayExpression sym_v = new ArrayExpression(name, argTypes[j].substring(0, argTypes[j].length() - 2));
+                            ArrayExpression sym_v = new ArrayExpression(th.getElementInfo(sf.peek()).toString(), argTypes[j].substring(0, argTypes[j].length() - 2));
                             // We remove the [] at the end of the type to keep only the type of the object
                             expressionMap.put(name, sym_v);
                             sf.setOperandAttr(stackIdx, sym_v);
@@ -667,7 +667,7 @@ public class BytecodeUtils {
 		default:
 			throw new RuntimeException("Unhandled SymVarType: " + type);
 		}
-		return name + "_" + (symVarCounter++) + suffix;
+		return name /*+ "_" + (symVarCounter++) + suffix*/;
 	}
 
 

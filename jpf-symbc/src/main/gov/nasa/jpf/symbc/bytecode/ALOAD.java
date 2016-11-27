@@ -38,6 +38,7 @@ import gov.nasa.jpf.vm.ClassLoaderInfo;
 import gov.nasa.jpf.vm.ElementInfo;
 import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.KernelState;
+import gov.nasa.jpf.vm.MJIEnv;
 import gov.nasa.jpf.vm.StackFrame;
 import gov.nasa.jpf.vm.SystemState;
 //import gov.nasa.jpf.symbc.uberlazy.TypeHierarchy;
@@ -153,7 +154,7 @@ public class ALOAD extends gov.nasa.jpf.jvm.bytecode.ALOAD {
 		}
 		else if (currentChoice == numSymRefs && !(((IntegerExpression)attr).toString()).contains("this")){ //null object
 			pcHeap._addDet(Comparator.EQ, (SymbolicInteger) attr, new IntegerConstant(-1));
-			daIndex = -1;
+			daIndex = MJIEnv.NULL;
 		}
 		else if ((currentChoice == (numSymRefs + 1) && !abstractClass) | (currentChoice == numSymRefs && (((IntegerExpression)attr).toString()).contains("this"))) {
 			//creates a new object with all fields symbolic

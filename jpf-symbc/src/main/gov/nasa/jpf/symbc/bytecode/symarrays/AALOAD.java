@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-// author aymeric fromherz aymeric.fromherz@ens.fr
+// author Aymeric Fromherz aymeric.fromherz@ens.fr
 
 package gov.nasa.jpf.symbc.bytecode.symarrays;
 
@@ -58,7 +58,6 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
   @Override
   public Instruction execute (ThreadInfo ti) {
 
-      boolean abstractClass = false;
       ArrayExpression arrayAttr = null;
       ArrayHeapNode[] prevSymRefs = null; // previously initialized objects of same type
       int numSymRefs = 0; // number of previously initialized objects
@@ -69,10 +68,16 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
    	  StackFrame frame = ti.getModifiableTopFrame();
 	  arrayRef = frame.peek(1); // ..,arrayRef,idx
 
+      if (arrayRef == MJIEnv.NULL) {
+          return ti.createAndThrowException("java.lang.NullPointerException");
+      }
+
       // Retrieve the array expression if it was previously in the pathcondition
       PCChoiceGenerator temp_cg = (PCChoiceGenerator)ti.getVM().getLastChoiceGeneratorOfType(PCChoiceGenerator.class);
       if (temp_cg != null) {
+          // There was a previous pathcondition
           if (temp_cg.getCurrentPC().arrayExpressions.containsKey(ti.getElementInfo(ti.getModifiableTopFrame().peek(1)).toString())) {
+              // The array was previously in the path condition, we retrieve the symbolic element
               ti.getModifiableTopFrame().setOperandAttr(1, temp_cg.getCurrentPC().arrayExpressions.get(ti.getElementInfo(ti.getModifiableTopFrame().peek(1)).toString()));
           }
       }
@@ -86,9 +91,6 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
           // We have a concrete array, but a symbolic index. We add all the constraints about the elements of the array and perform the select
           // We will need to get information about the type of the elements as well
           // We need to add the information in PC after it is declared.
-          if (arrayRef == MJIEnv.NULL) {
-              return ti.createAndThrowException("java.lang.NullPointerException");
-          }
           ElementInfo arrayInfo = ti.getElementInfo(arrayRef);
           if (!ti.isFirstStepInsn()) { // first time around
               cg = new PCChoiceGenerator(arrayInfo.arrayLength() + 2);
@@ -97,9 +99,9 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
               ti.getVM().setNextChoiceGenerator(cg);
               return this;
           } else { // this is what really returns results
-            cg = ti.getVM().getLastChoiceGeneratorOfType(PCChoiceGenerator.class);
-            assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
-            currentChoice = (Integer)cg.getNextChoice();
+              cg = ti.getVM().getLastChoiceGeneratorOfType(PCChoiceGenerator.class);
+              assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
+              currentChoice = (Integer)cg.getNextChoice();
           }
 
           PathCondition pc;
@@ -132,15 +134,17 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
                 return getNext(ti);
             }
           } else if (currentChoice == arrayInfo.arrayLength()) {
-            pc._addDet(Comparator.GE, indexAttr, new IntegerConstant(arrayInfo.arrayLength()));
-            if (pc.simplify()) { // satisfiable
-                ((PCChoiceGenerator) cg).setCurrentPC(pc);
-                return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException", "index greater than array bounds");
-            } else {
-                ti.getVM().getSystemState().setIgnored(true);
-                return getNext(ti);
-            }
+              // We check if we can be out of bounds (greater than the length)
+              pc._addDet(Comparator.GE, indexAttr, new IntegerConstant(arrayInfo.arrayLength()));
+              if (pc.simplify()) { // satisfiable
+                  ((PCChoiceGenerator) cg).setCurrentPC(pc);
+                  return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException", "index greater than array bounds");
+              } else {
+                  ti.getVM().getSystemState().setIgnored(true);
+                  return getNext(ti);
+              }
           } else if (currentChoice == arrayInfo.arrayLength() +1) {
+              // We check if we can be out of bounds (smaller than 0)
               pc._addDet(Comparator.LT, indexAttr, new IntegerConstant(0));
               if (pc.simplify()) { // satisfiable
                   ((PCChoiceGenerator) cg).setCurrentPC(pc);
@@ -181,7 +185,6 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
 
           int increment = 2;
           if (typeClassInfo.isAbstract()) {
-               abstractClass =true;
                increment = 1;
           }
           thisHeapCG = new HeapChoiceGenerator(numSymRefs + increment);
@@ -241,7 +244,6 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
               return getNext(ti);
           }
       } else {
-          // TODO deal with actual load
           pc._addDet(Comparator.LT, indexAttr, arrayAttr.length);
           pc._addDet(Comparator.GE, indexAttr, new IntegerConstant(0));
           PathCondition pcHeap;
@@ -272,10 +274,6 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
           assert arrayAttr != null;
           assert indexAttr != null;
 
-          if (arrayRef == MJIEnv.NULL) {
-              return ti.createAndThrowException("java.lang.NullPointerException");
-          }
-
           int daIndex = 0; // index into JPF's dynamic area
           currentChoice = ((HeapChoiceGenerator) thisHeapCG).getNextChoice();
 
@@ -283,31 +281,33 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
             // We load a previously initialized object
             ArrayHeapNode candidateNode = prevSymRefs[currentChoice];
             pc._addDet(Comparator.EQ, indexAttr, candidateNode.arrayIndex);
+            // The index is the same than the previous one
+            se = new SelectExpression(arrayAttr, indexAttr);
+            pc._addDet(Comparator.EQ, se, candidateNode.getSymbolic());
             if (pc.simplify()) {
-                // The index is the same than the previous one
-                se = new SelectExpression(arrayAttr, indexAttr);
-                pc._addDet(Comparator.EQ, se, candidateNode.getSymbolic());
                 pc.arrayExpressions.put(arrayAttr.getRootName(), arrayAttr);
                 daIndex = candidateNode.getIndex();
                 frame.pop(2); // We pop the array and the index
                 frame.push(daIndex, true); // We have instantiated an object, and added the constraints in the PC
 
+                ((PCChoiceGenerator) cg).setCurrentPC(pc);
                 ((HeapChoiceGenerator)thisHeapCG).setCurrentPCheap(pcHeap);
                 ((HeapChoiceGenerator)thisHeapCG).setCurrentSymInputHeap(symInputHeap);
                 return getNext(ti);
             } else {
-                  ti.getVM().getSystemState().setIgnored(true);
+                ti.getVM().getSystemState().setIgnored(true);
                 return getNext(ti);
             }
           } else if (currentChoice == (numSymRefs)) { // null object
+            se = new SelectExpression(arrayAttr, indexAttr);
+            pc._addDet(Comparator.EQ, se, new IntegerConstant(-1));
             if (pc.simplify()) { // satisfiable
-                se = new SelectExpression(arrayAttr, indexAttr);
-                pc._addDet(Comparator.EQ, se, new IntegerConstant(-1));
                 pc.arrayExpressions.put(arrayAttr.getRootName(), arrayAttr);
                 daIndex = MJIEnv.NULL;
                 frame.pop(2); // We pop the index and the array;
                 frame.push(daIndex, true);
 
+                ((PCChoiceGenerator) cg).setCurrentPC(pc);
                 ((HeapChoiceGenerator)thisHeapCG).setCurrentPCheap(pcHeap);
                 ((HeapChoiceGenerator)thisHeapCG).setCurrentSymInputHeap(symInputHeap);
                 return getNext(ti);
@@ -316,7 +316,6 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
                 return getNext(ti);
             }
           } else {
-              if (pc.simplify()) { // satisfiable
                 HelperResult hpResult = Helper.addNewArrayHeapNode(typeClassInfo, ti, arrayAttr, pcHeap, symInputHeap, numSymRefs, prevSymRefs, false, indexAttr, arrayRef);
                 daIndex = hpResult.idx;
                 HeapNode candidateNode = hpResult.n;
@@ -324,11 +323,13 @@ public class AALOAD extends gov.nasa.jpf.jvm.bytecode.AALOAD {
                 // on the index, it will be inferred from Z3 array theory
                 se = new SelectExpression(arrayAttr, indexAttr);
                 pc._addDet(Comparator.EQ, se, candidateNode.getSymbolic());
+              if (pc.simplify()) { // satisfiable
                 pc.arrayExpressions.put(arrayAttr.getRootName(), arrayAttr);
 
                 frame.pop(2); // We pop the array and the index
                 frame.push(daIndex, true);
 
+                ((PCChoiceGenerator) cg).setCurrentPC(pc);
                 ((HeapChoiceGenerator) thisHeapCG).setCurrentPCheap(pcHeap);
                 ((HeapChoiceGenerator) thisHeapCG).setCurrentSymInputHeap(symInputHeap);
                 return getNext(ti);

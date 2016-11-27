@@ -54,6 +54,11 @@ public abstract class Constraint implements Comparable<Constraint> {
     right = r;
   }
 
+  /** Returns the same constraint head constraint without the and field
+  * Used to append pathconditions without side effects during testcase generation 
+  */ 
+  public abstract Constraint copy(); 
+
   /** Returns the left expression. Subclasses may override to give tighter type bounds.*/
   public Expression getLeft() {
       return left;

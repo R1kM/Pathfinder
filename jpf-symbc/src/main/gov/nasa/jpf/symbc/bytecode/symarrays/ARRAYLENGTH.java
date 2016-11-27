@@ -15,6 +15,9 @@
  * See the License for the specific language governing permissions and 
  * limitations under the License.
  */
+
+// author Aymeric Fromherz aymeric.fromherz@ens.fr
+
 package gov.nasa.jpf.symbc.bytecode.symarrays;
 
 import gov.nasa.jpf.vm.ChoiceGenerator;
@@ -35,18 +38,20 @@ public class ARRAYLENGTH extends gov.nasa.jpf.jvm.bytecode.ARRAYLENGTH {
     @Override
     public Instruction execute (ThreadInfo th) {
         StackFrame frame = th.getModifiableTopFrame();
-        
+
+        // Retrieve the symbolic array if it was previously stored in the path condition
+        PCChoiceGenerator temp_cg = (PCChoiceGenerator)th.getVM().getLastChoiceGeneratorOfType(PCChoiceGenerator.class);
+        if (temp_cg != null) {
+            // There was a previous pathcondition
+            if (temp_cg.getCurrentPC().arrayExpressions.containsKey(th.getElementInfo(th.getModifiableTopFrame().peek(0)).toString())) {
+                // The array was previously in the path condition, we retrieve the symbolic object.
+              th.getModifiableTopFrame().setOperandAttr(0, temp_cg.getCurrentPC().arrayExpressions.get(th.getElementInfo(th.getModifiableTopFrame().peek(0)).toString())); 
+            }
+        }
+
         if (peekArrayAttr(th) == null || !(peekArrayAttr(th) instanceof ArrayExpression)) {
-           PCChoiceGenerator temp_cg = (PCChoiceGenerator)th.getVM().getLastChoiceGeneratorOfType(PCChoiceGenerator.class);
-           if (temp_cg == null) {
-               return super.execute(th);
-           } else {
-               if (!temp_cg.getCurrentPC().arrayExpressions.containsKey(th.getElementInfo(th.getModifiableTopFrame().peek(0)).toString())) {
-           // In this case, the index isn't symbolic either
-                return super.execute(th);
-               }
-               th.getModifiableTopFrame().setOperandAttr(0, temp_cg.getCurrentPC().arrayExpressions.get(th.getElementInfo(th.getModifiableTopFrame().peek(0)).toString())); 
-           }
+            // The array is not symbolic
+            return super.execute(th);
         }
 
        ArrayExpression arrayAttr = (ArrayExpression)peekArrayAttr(th);

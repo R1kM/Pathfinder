@@ -35,6 +35,10 @@ public class LogicalORLinearIntegerConstraints extends Constraint{
 		super (null, null, null);
 		list = l;
 	}
+
+    public Constraint copy() {
+        return new LogicalORLinearIntegerConstraints(list);
+    }
 	
 	
 	public void addToList (LinearIntegerConstraint lic) {

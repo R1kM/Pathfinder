@@ -16,8 +16,7 @@
  * limitations under the License.
  */
 
-// author aymeric fromherz aymeric.fromherz@ens.fr 
-
+// author Aymeric Fromherz aymeric.fromherz@ens.fr 
 
 package gov.nasa.jpf.symbc.bytecode.symarrays;
 
@@ -39,7 +38,6 @@ import gov.nasa.jpf.vm.MJIEnv;
 import gov.nasa.jpf.vm.StackFrame;
 import gov.nasa.jpf.vm.ThreadInfo;
 
-
 /**
  * Load char from array
  * ..., arrayref, index => ..., value
@@ -48,6 +46,13 @@ public class CALOAD extends gov.nasa.jpf.jvm.bytecode.CALOAD {
 	 
 	 @Override
 	  public Instruction execute (ThreadInfo ti) {
+          StackFrame frame = ti.getModifiableTopFrame();
+		  arrayRef = frame.peek(1); // ..,arrayRef,idx
+
+		  if (arrayRef == MJIEnv.NULL) {
+		    return ti.createAndThrowException("java.lang.NullPointerException");
+		  }
+
           // Retrieve the array expression if it was previously in the pathcondition
           PCChoiceGenerator temp_cg = (PCChoiceGenerator)ti.getVM().getLastChoiceGeneratorOfType(PCChoiceGenerator.class);
           if (temp_cg != null) {
@@ -66,9 +71,6 @@ public class CALOAD extends gov.nasa.jpf.jvm.bytecode.CALOAD {
           
           ArrayExpression arrayAttr = null;
           ChoiceGenerator<?> cg;
-          boolean condition;
-          StackFrame frame = ti.getModifiableTopFrame();
-		  arrayRef = frame.peek(1); // ..,arrayRef,idx
 
           if (!ti.isFirstStepInsn()) { // first time around
               cg = new PCChoiceGenerator(3);
@@ -77,8 +79,8 @@ public class CALOAD extends gov.nasa.jpf.jvm.bytecode.CALOAD {
               ti.getVM().setNextChoiceGenerator(cg);
               return this;
           } else { // this is what really returns results
-            cg = ti.getVM().getChoiceGenerator();
-            assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
+              cg = ti.getVM().getChoiceGenerator();
+              assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
           }
 
           PathCondition pc;
@@ -122,10 +124,6 @@ public class CALOAD extends gov.nasa.jpf.jvm.bytecode.CALOAD {
           se = new SelectExpression(arrayAttr, indexAttr);
           assert arrayAttr != null;
           assert indexAttr != null;
-
-		  if (arrayRef == MJIEnv.NULL) {
-		    return ti.createAndThrowException("java.lang.NullPointerException");
-		  }
 		  
           if ((Integer)cg.getNextChoice() == 1) { // check bounds of the index
               pc._addDet(Comparator.GE, se.indexExpression, se.arrayExpression.length);
@@ -151,10 +149,9 @@ public class CALOAD extends gov.nasa.jpf.jvm.bytecode.CALOAD {
               if (pc.simplify()) { // satisfiable
                   ((PCChoiceGenerator) cg).setCurrentPC(pc);
 
-                  // Set the result
-                  // We had a concrete array, and don't know yet where it is from
                   frame.pop(2); // We pop the array and the index
                   frame.push(0, false);
+                  // Set the result
                   frame.setOperandAttr(val);
                   pc._addDet(Comparator.EQ, se, val);
                   pc.arrayExpressions.put(arrayAttr.getRootName(), arrayAttr);

@@ -16,8 +16,7 @@
  * limitations under the License.
  */
 
-// author aymeric fromherz aymeric.fromherz@ens.fr 
-
+// author Aymeric Fromherz aymeric.fromherz@ens.fr 
 
 package gov.nasa.jpf.symbc.bytecode.symarrays;
 
@@ -54,6 +53,11 @@ public class CASTORE extends gov.nasa.jpf.jvm.bytecode.CASTORE {
           IntegerExpression indexAttr = null;
           ArrayExpression arrayAttr = null;
 		  StackFrame frame = ti.getModifiableTopFrame();
+          int arrayRef = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
+
+		  if (arrayRef == MJIEnv.NULL) {
+		      return ti.createAndThrowException("java.lang.NullPointerException");
+		  } 
 
           // Retrieve the array expression if it was previously in the pathcondition, and store it as an array attr
           PCChoiceGenerator temp_cg = (PCChoiceGenerator)ti.getVM().getLastChoiceGeneratorOfType(PCChoiceGenerator.class);
@@ -71,14 +75,7 @@ public class CASTORE extends gov.nasa.jpf.jvm.bytecode.CASTORE {
              }
           }
 
-
           ChoiceGenerator<?> cg;
-          boolean condition;
-          int arrayRef = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
-
-		  if (arrayRef == MJIEnv.NULL) {
-		        return ti.createAndThrowException("java.lang.NullPointerException");
-		  } 
 
           if (!ti.isFirstStepInsn()) { // first time around
               cg = new PCChoiceGenerator(3);
@@ -87,8 +84,8 @@ public class CASTORE extends gov.nasa.jpf.jvm.bytecode.CASTORE {
               ti.getVM().setNextChoiceGenerator(cg);
               return this;
           } else { // this is what really returns results
-            cg = ti.getVM().getChoiceGenerator();
-            assert (cg instanceof PCChoiceGenerator) : "expected JPCChoiceGenerator, got: " + cg;
+              cg = ti.getVM().getChoiceGenerator();
+              assert (cg instanceof PCChoiceGenerator) : "expected JPCChoiceGenerator, got: " + cg;
           }
           
           PathCondition pc;
@@ -114,7 +111,7 @@ public class CASTORE extends gov.nasa.jpf.jvm.bytecode.CASTORE {
              if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
                 return super.execute(ti); 
              } else {
-              // We create a symbolic array out of the concrete array
+               // We create a symbolic array out of the concrete array
                ElementInfo arrayInfo = ti.getElementInfo(arrayRef);   
                arrayAttr = ArrayExpression.create(arrayInfo.toString(), arrayInfo.arrayLength());
                // We add the constraints about all the elements of the array
@@ -127,10 +124,6 @@ public class CASTORE extends gov.nasa.jpf.jvm.bytecode.CASTORE {
             arrayAttr = (ArrayExpression)peekArrayAttr(ti);
           }
           assert (arrayAttr != null) : "arrayAttr shouldn't be null in CASTORE instruction";
-
-		  if (arrayRef == MJIEnv.NULL) {
-		        return ti.createAndThrowException("java.lang.NullPointerException");
-		  } 
 
           if ((Integer)cg.getNextChoice() == 1) { // check bounds of the index
               pc._addDet(Comparator.GE, indexAttr, arrayAttr.length);
@@ -159,14 +152,9 @@ public class CASTORE extends gov.nasa.jpf.jvm.bytecode.CASTORE {
               pc._addDet(Comparator.GE, indexAttr, new IntegerConstant(0));
               if (pc.simplify()) { // satisfiable
                   ((PCChoiceGenerator) cg).setCurrentPC(pc);
-                  
-                  // set the result                 
-
-                  // We have to check if the value is symbolic or not, create a symbolicIntegerValueatIndex out of it, and 
-                  // call the setVal function, before storing the attr 
                   IntegerExpression sym_value = null;
 		          if (frame.getOperandAttr(0) == null || !(frame.getOperandAttr(0) instanceof IntegerExpression)) {
-                      // The value isn't symbolic. We store a new IntegerConstant in the valAt map, at index indexAttr
+                      // The value isn't symbolic.
                       char value = (char)frame.pop();
                       sym_value = new IntegerConstant(value);
                   }

@@ -56,6 +56,7 @@ public class SequenceChoiceGenerator extends gov.nasa.jpf.vm.choice.IntIntervalG
   private String methodShortName;
   private Object [] argValues;
   private Object [] attributes;
+  private String[] argTypes;
   
   @Override
   public ChoiceGenerator randomize() {
@@ -75,8 +76,16 @@ public SequenceChoiceGenerator(String _methodShortName) {
       return argValues;
   }
 
+  public String [] getArgTypes() {
+      return argTypes;
+  }
+
   public void setArgValues(Object [] _argValues) {
       argValues = _argValues;;
+  }
+
+  public void setArgTypes(String [] _argTypes) {
+      argTypes = _argTypes;;
   }
 
   public Object [] getArgAttributes() {

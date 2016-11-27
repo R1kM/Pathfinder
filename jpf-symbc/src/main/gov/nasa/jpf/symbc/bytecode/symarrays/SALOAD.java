@@ -15,7 +15,8 @@
  * See the License for the specific language governing permissions and 
  * limitations under the License.
  */
-// author aymeric fromherz aymeric.fromherz@ens.fr 
+
+// author Aymeric Fromherz aymeric.fromherz@ens.fr 
 
 package gov.nasa.jpf.symbc.bytecode.symarrays;
 
@@ -45,6 +46,13 @@ public class SALOAD extends gov.nasa.jpf.jvm.bytecode.SALOAD {
 
 	 @Override
 	  public Instruction execute (ThreadInfo ti) {
+          StackFrame frame = ti.getModifiableTopFrame();
+		  arrayRef = frame.peek(1); // ..,arrayRef,idx
+
+		  if (arrayRef == MJIEnv.NULL) {
+		    return ti.createAndThrowException("java.lang.NullPointerException");
+		  }
+
           // Retrieve the array expression if it was previously in the pathcondition
           PCChoiceGenerator temp_cg = (PCChoiceGenerator)ti.getVM().getLastChoiceGeneratorOfType(PCChoiceGenerator.class);
           if (temp_cg != null) {
@@ -61,12 +69,8 @@ public class SALOAD extends gov.nasa.jpf.jvm.bytecode.SALOAD {
               }
           }
 
-		
           ArrayExpression arrayAttr = null;
           ChoiceGenerator<?> cg;
-          boolean condition;
-          StackFrame frame = ti.getModifiableTopFrame();
-		  arrayRef = frame.peek(1); // ..,arrayRef,idx
 
           if (!ti.isFirstStepInsn()) { // first time around
               cg = new PCChoiceGenerator(3);
@@ -75,8 +79,8 @@ public class SALOAD extends gov.nasa.jpf.jvm.bytecode.SALOAD {
               ti.getVM().setNextChoiceGenerator(cg);
               return this;
           } else { // this is what really returns results
-            cg = ti.getVM().getChoiceGenerator();
-            assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
+              cg = ti.getVM().getChoiceGenerator();
+              assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
           }
 
           PathCondition pc;
@@ -121,9 +125,6 @@ public class SALOAD extends gov.nasa.jpf.jvm.bytecode.SALOAD {
           assert arrayAttr != null;
           assert indexAttr != null;
 
-		  if (arrayRef == MJIEnv.NULL) {
-		    return ti.createAndThrowException("java.lang.NullPointerException");
-		  }
 		  
           if ((Integer)cg.getNextChoice() == 1) { // check bounds of the index
               pc._addDet(Comparator.GE, se.indexExpression, se.arrayExpression.length);
@@ -149,9 +150,9 @@ public class SALOAD extends gov.nasa.jpf.jvm.bytecode.SALOAD {
               if (pc.simplify()) { // satisfiable
                   ((PCChoiceGenerator) cg).setCurrentPC(pc);
 
-                  // Set the result
                   frame.pop(2); // We pop the array and the index
                   frame.push(0, false); // For symbolic expressions, the concrete value does not matter
+                  // Set the result
                   frame.setOperandAttr(val);
                   // We add the select instruction in the PathCondition
                   pc._addDet(Comparator.EQ, se, val);

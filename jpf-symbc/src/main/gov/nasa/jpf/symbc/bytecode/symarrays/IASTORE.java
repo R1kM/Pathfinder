@@ -56,6 +56,12 @@ public class IASTORE extends gov.nasa.jpf.jvm.bytecode.IASTORE {
           ArrayExpression arrayAttr = null;
 		  StackFrame frame = ti.getModifiableTopFrame();
 
+          int arrayRef = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
+
+		  if (arrayRef == MJIEnv.NULL) {
+		        return ti.createAndThrowException("java.lang.NullPointerException");
+		  } 
+
           // Retrieve the array expression if it was previously in the pathcondition, and store it as an array attr
           PCChoiceGenerator temp_cg = (PCChoiceGenerator)ti.getVM().getLastChoiceGeneratorOfType(PCChoiceGenerator.class);
           if (temp_cg != null) {
@@ -72,14 +78,7 @@ public class IASTORE extends gov.nasa.jpf.jvm.bytecode.IASTORE {
              }
           }
 
-
           ChoiceGenerator<?> cg;
-          boolean condition;
-          int arrayRef = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
-
-		  if (arrayRef == MJIEnv.NULL) {
-		        return ti.createAndThrowException("java.lang.NullPointerException");
-		  } 
 
           if (!ti.isFirstStepInsn()) { // first time around
               cg = new PCChoiceGenerator(3);
@@ -88,8 +87,8 @@ public class IASTORE extends gov.nasa.jpf.jvm.bytecode.IASTORE {
               ti.getVM().setNextChoiceGenerator(cg);
               return this;
           } else { // this is what really returns results
-            cg = ti.getVM().getChoiceGenerator();
-            assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
+              cg = ti.getVM().getChoiceGenerator();
+              assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
           }
           
           PathCondition pc;
@@ -125,12 +124,10 @@ public class IASTORE extends gov.nasa.jpf.jvm.bytecode.IASTORE {
                 }
               }
           } else {
-            arrayAttr = (ArrayExpression)peekArrayAttr(ti);
+              arrayAttr = (ArrayExpression)peekArrayAttr(ti);
           }
           assert (arrayAttr != null) : "arrayAttr shouldn't be null in IASTORE instruction";
 
-
-          
           if ((Integer)cg.getNextChoice() == 1) { // check bounds of the index
               pc._addDet(Comparator.GE, indexAttr, arrayAttr.length);
               if (pc.simplify()) { // satisfiable
@@ -158,14 +155,9 @@ public class IASTORE extends gov.nasa.jpf.jvm.bytecode.IASTORE {
               pc._addDet(Comparator.GE, indexAttr, new IntegerConstant(0));
               if (pc.simplify()) { // satisfiable
                   ((PCChoiceGenerator) cg).setCurrentPC(pc);
-                  
-                  // set the result                 
-
-                  // We have to check if the value is symbolic or not, create a symbolicIntegerValueatIndex out of it, and 
-                  // call the setVal function, before storing the attr 
                   IntegerExpression sym_value = null;
 		          if (frame.getOperandAttr(0) == null || !(frame.getOperandAttr(0) instanceof IntegerExpression)) {
-                      // The value isn't symbolic. We store a new IntegerConstant in the valAt map, at index indexAttr
+                      // The value isn't symbolic.
                       int value = frame.pop();
                       sym_value = new IntegerConstant(value);
                   }
@@ -190,5 +182,4 @@ public class IASTORE extends gov.nasa.jpf.jvm.bytecode.IASTORE {
              }
           }
       }
-	 
 }

@@ -55,6 +55,7 @@ import gov.nasa.jpf.vm.MJIEnv;
 import gov.nasa.jpf.vm.VM;
 
 import java.util.HashMap;
+import java.util.Map;
 
 // path condition contains mixed constraints of integers and reals
 
@@ -264,6 +265,14 @@ public class PathCondition implements Comparable<PathCondition> {
         count= length(header);
      }
 
+     public void appendPathcondition(PathCondition pc) {
+        while (pc.header != null) {
+            // Since we are only using it to append heapPC to pc, it may not be required to use prependUnlessRepeated
+            prependUnlessRepeated(pc.header.copy());
+            pc.header = pc.header.and;
+        }
+     }
+
     private static int length(Constraint c) {
         int x= 0;
         while (c != null) {
@@ -322,6 +331,15 @@ public class PathCondition implements Comparable<PathCondition> {
 			return simplifyGreen();
 	}
 	
+	public Map<String, Object> solveWithValuation() {
+		SymbolicConstraintsGeneral solver = new SymbolicConstraintsGeneral();
+
+		Map<String,Object> result1 = solver.solveWithSolution(this);
+		solver.cleanup();
+		PathCondition.flagSolved = true;
+		return result1;
+	}
+
 	private boolean solveWithSolution() {
 		if (instance == null) {
 			instance = SolverTranslator.createInstance(header);

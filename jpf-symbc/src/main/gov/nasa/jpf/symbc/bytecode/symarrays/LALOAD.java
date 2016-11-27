@@ -15,7 +15,8 @@
  * See the License for the specific language governing permissions and 
  * limitations under the License.
  */
-//author aymeric fromherz aymeric.fromherz@ens.fr 
+
+//author Aymeric Fromherz aymeric.fromherz@ens.fr 
 
 package gov.nasa.jpf.symbc.bytecode.symarrays;
 
@@ -45,6 +46,11 @@ public class LALOAD extends gov.nasa.jpf.jvm.bytecode.LALOAD {
 
 	 @Override
 	  public Instruction execute (ThreadInfo ti) {
+          StackFrame frame = ti.getModifiableTopFrame();
+          arrayRef = frame.peek(1); // ..., arrayRef, idx
+		  if (arrayRef == MJIEnv.NULL) {
+		    return ti.createAndThrowException("java.lang.NullPointerException");
+		  }
           // Retrieve the array expression if it was previously in the pathcondition
           PCChoiceGenerator temp_cg = (PCChoiceGenerator)ti.getVM().getLastChoiceGeneratorOfType(PCChoiceGenerator.class);
           if (temp_cg != null) {
@@ -53,20 +59,16 @@ public class LALOAD extends gov.nasa.jpf.jvm.bytecode.LALOAD {
               }
           }
 
-		if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
+		  if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
               // In this case, the array isn't symbolic
               if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) { 
                  // In this case, the index isn't symbolic either
                  return super.execute(ti);
               }
-        }
-        
+          }
 
           ArrayExpression arrayAttr = null;
           ChoiceGenerator<?> cg;
-          boolean condition;
-          StackFrame frame = ti.getModifiableTopFrame();
-          arrayRef = frame.peek(1); // ..., arrayRef, idx
 
           if (!ti.isFirstStepInsn()) { // first time around
               cg = new PCChoiceGenerator(3);
@@ -75,8 +77,8 @@ public class LALOAD extends gov.nasa.jpf.jvm.bytecode.LALOAD {
               ti.getVM().setNextChoiceGenerator(cg);
               return this;
           } else { // this is what really returns results
-            cg = ti.getVM().getChoiceGenerator();
-            assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
+              cg = ti.getVM().getChoiceGenerator();
+              assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
           }
 
           PathCondition pc;
@@ -123,16 +125,12 @@ public class LALOAD extends gov.nasa.jpf.jvm.bytecode.LALOAD {
           assert indexAttr != null;
           assert se != null;
 
-		  if (arrayRef == MJIEnv.NULL) {
-		    return ti.createAndThrowException("java.lang.NullPointerException");
-		  }
 
 
           if ((Integer)cg.getNextChoice()==1) { // check bounds of the index
               pc._addDet(Comparator.GE, se.indexExpression, se.arrayExpression.length);
               if (pc.simplify()) { // satisfiable
                   ((PCChoiceGenerator) cg).setCurrentPC(pc);
-
                   return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException", "index greater than array bounds");
               }
               else {
@@ -155,10 +153,9 @@ public class LALOAD extends gov.nasa.jpf.jvm.bytecode.LALOAD {
               pc._addDet(Comparator.GE, se.indexExpression, new IntegerConstant(0));
               if (pc.simplify()) { //satisfiable
                   ((PCChoiceGenerator) cg).setCurrentPC(pc);
-
-                  // set the result
                   frame.pop(2); // We pop the array and the index
                   frame.pushLong(0);         // For symbolic expressions, the concrete value does not matter
+                  // set the result
                   frame.setLongOperandAttr(val);
                   // We add the select instruction in the PathCondition
                   pc._addDet(Comparator.EQ, se, val);

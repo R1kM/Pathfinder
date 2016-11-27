@@ -56,6 +56,11 @@ public class FASTORE extends gov.nasa.jpf.jvm.bytecode.FASTORE {
           IntegerExpression indexAttr = null;
           ArrayExpression arrayAttr = null;
 		  StackFrame frame = ti.getModifiableTopFrame();
+          int arrayRef = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
+
+		  if (arrayRef == MJIEnv.NULL) {
+		        return ti.createAndThrowException("java.lang.NullPointerException");
+		  } 
 
           // Retrieve the array expression if it was previously in the pathcondition, and store it as an array attr
           PCChoiceGenerator temp_cg = (PCChoiceGenerator)ti.getVM().getLastChoiceGeneratorOfType(PCChoiceGenerator.class);
@@ -73,14 +78,7 @@ public class FASTORE extends gov.nasa.jpf.jvm.bytecode.FASTORE {
              }
           }
 
-
           ChoiceGenerator<?> cg;
-          boolean condition;
-          int arrayRef = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
-
-		  if (arrayRef == MJIEnv.NULL) {
-		        return ti.createAndThrowException("java.lang.NullPointerException");
-		  } 
 
           if (!ti.isFirstStepInsn()) { // first time around
               cg = new PCChoiceGenerator(3);
@@ -89,8 +87,8 @@ public class FASTORE extends gov.nasa.jpf.jvm.bytecode.FASTORE {
               ti.getVM().setNextChoiceGenerator(cg);
               return this;
           } else { // this is what really returns results
-            cg = ti.getVM().getChoiceGenerator();
-            assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
+              cg = ti.getVM().getChoiceGenerator();
+              assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
           }
           
           PathCondition pc;
@@ -103,30 +101,31 @@ public class FASTORE extends gov.nasa.jpf.jvm.bytecode.FASTORE {
           
           assert pc != null;
 
-		 if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
+		  if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
               int index = ti.getTopFrame().peek(1);
               indexAttr = new IntegerConstant(index); 
 		  } else {
               indexAttr = (IntegerExpression)peekIndexAttr(ti);
           }
+
           assert (indexAttr != null) : "indexAttr shouldn't be null in FASTORE instruction";
   
           if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
-             //In this case, the array isn't symbolic
-             if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
-                 return super.execute(ti);
-             } else {
-              // We create a symbolic array out of the concrete array
-               ElementInfo arrayInfo = ti.getElementInfo(arrayRef);   
-               arrayAttr = ArrayExpression.create(arrayInfo.toString(), arrayInfo.arrayLength());
-               // We add the constraints about all the elements of the array
-               for (int i = 0; i < arrayInfo.arrayLength(); i++) {
-                   float arrValue = arrayInfo.getFloatElement(i);
-                   pc._addDet(Comparator.EQ, new SelectExpression(arrayAttr, new IntegerConstant(i)), new RealConstant(arrValue));
-               }
-             }
+              //In this case, the array isn't symbolic
+              if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
+                  return super.execute(ti);
+              } else {
+                  // We create a symbolic array out of the concrete array
+                  ElementInfo arrayInfo = ti.getElementInfo(arrayRef);   
+                  arrayAttr = ArrayExpression.create(arrayInfo.toString(), arrayInfo.arrayLength());
+                  // We add the constraints about all the elements of the array
+                  for (int i = 0; i < arrayInfo.arrayLength(); i++) {
+                      float arrValue = arrayInfo.getFloatElement(i);
+                      pc._addDet(Comparator.EQ, new SelectExpression(arrayAttr, new IntegerConstant(i)), new RealConstant(arrValue));
+                  }
+              }
           } else {
-            arrayAttr = (ArrayExpression)peekArrayAttr(ti);
+              arrayAttr = (ArrayExpression)peekArrayAttr(ti);
           }
           assert (arrayAttr != null) : "arrayAttr shouldn't be null in FASTORE instruction";
 
@@ -157,14 +156,8 @@ public class FASTORE extends gov.nasa.jpf.jvm.bytecode.FASTORE {
               pc._addDet(Comparator.GE, indexAttr, new IntegerConstant(0));
               if (pc.simplify()) { // satisfiable
                   ((PCChoiceGenerator) cg).setCurrentPC(pc);
-                  
-                  // set the result                 
-
-                  // We have to check if the value is symbolic or not, create a symbolicIntegerValueatIndex out of it, and 
-                  // call the setVal function, before storing the attr 
                   RealExpression sym_value = null;
 		          if (frame.getOperandAttr(0) == null || !(frame.getOperandAttr(0) instanceof RealExpression)) {
-                      // The value isn't symbolic. We store a new IntegerConstant in the valAt map, at index indexAttr
                       float value = frame.popFloat();
                       sym_value = new RealConstant(value);
                   }

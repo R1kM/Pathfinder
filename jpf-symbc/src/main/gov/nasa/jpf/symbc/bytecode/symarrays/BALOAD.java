@@ -16,8 +16,7 @@
  * limitations under the License.
  */
 
-
-// author aymeric fromherz aymeric.fromherz@ens.fr 
+// author Aymeric Fromherz aymeric.fromherz@ens.fr 
 
 package gov.nasa.jpf.symbc.bytecode.symarrays;
 
@@ -48,10 +47,18 @@ public class BALOAD extends gov.nasa.jpf.jvm.bytecode.BALOAD {
 
 	 @Override
 	  public Instruction execute (ThreadInfo ti) {
+          StackFrame frame = ti.getModifiableTopFrame();
+          arrayRef = frame.peek(1); // ..., arrayRef, idx
+
+		  if (arrayRef == MJIEnv.NULL) {
+		    return ti.createAndThrowException("java.lang.NullPointerException");
+		  }
+
           // Retrieve the array expression if it was previously in the pathcondition
           PCChoiceGenerator temp_cg = (PCChoiceGenerator)ti.getVM().getLastChoiceGeneratorOfType(PCChoiceGenerator.class);
           if (temp_cg != null) {
               if (temp_cg.getCurrentPC().arrayExpressions.containsKey(ti.getElementInfo(ti.getModifiableTopFrame().peek(1)).toString())) {
+                  // There was a previous symbolic array, we retrieve it
                   ti.getModifiableTopFrame().setOperandAttr(1, temp_cg.getCurrentPC().arrayExpressions.get(ti.getElementInfo(ti.getModifiableTopFrame().peek(1)).toString()));
               }
           }
@@ -66,9 +73,6 @@ public class BALOAD extends gov.nasa.jpf.jvm.bytecode.BALOAD {
 
           ArrayExpression arrayAttr = null;
           ChoiceGenerator<?> cg;
-          boolean condition;
-          StackFrame frame = ti.getModifiableTopFrame();
-          arrayRef = frame.peek(1); // ..., arrayRef, idx
 
           if (!ti.isFirstStepInsn()) { // first time around
               cg = new PCChoiceGenerator(3);
@@ -77,8 +81,8 @@ public class BALOAD extends gov.nasa.jpf.jvm.bytecode.BALOAD {
               ti.getVM().setNextChoiceGenerator(cg);
               return this;
           } else { // this is what really returns results
-            cg = ti.getVM().getChoiceGenerator();
-            assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
+              cg = ti.getVM().getChoiceGenerator();
+              assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
           }
 
           PathCondition pc;
@@ -104,9 +108,7 @@ public class BALOAD extends gov.nasa.jpf.jvm.bytecode.BALOAD {
                 byte arrValue = arrayInfo.getByteElement(i);
                 pc._addDet(Comparator.EQ, new SelectExpression(arrayAttr, new IntegerConstant(i)), new IntegerConstant(arrValue));
               }
-          }
-
-          else {
+          } else {
               arrayAttr = (ArrayExpression)peekArrayAttr(ti); 
           }
           IntegerExpression indexAttr = null;
@@ -116,7 +118,6 @@ public class BALOAD extends gov.nasa.jpf.jvm.bytecode.BALOAD {
               // In this case, the index isn't symbolic.
               index = frame.peek();
               indexAttr = new IntegerConstant(index);
-
           } else {          
               indexAttr = (IntegerExpression)peekIndexAttr(ti);
           }
@@ -127,19 +128,12 @@ public class BALOAD extends gov.nasa.jpf.jvm.bytecode.BALOAD {
           assert indexAttr != null;
           assert se != null;
 
-		  if (arrayRef == MJIEnv.NULL) {
-		    return ti.createAndThrowException("java.lang.NullPointerException");
-		  }
-
-
           if ((Integer)cg.getNextChoice()==1) { // check bounds of the index
               pc._addDet(Comparator.GE, se.indexExpression, se.arrayExpression.length);
               if (pc.simplify()) { // satisfiable
                   ((PCChoiceGenerator) cg).setCurrentPC(pc);
-
                   return ti.createAndThrowException("java.lang.ArrayIndexOutOfBoundsException", "index greater than array bounds");
-              }
-              else {
+              } else {
                   ti.getVM().getSystemState().setIgnored(true);
                   return getNext(ti);
               }

@@ -27,6 +27,7 @@ import gov.nasa.jpf.symbc.numeric.Comparator;
 import gov.nasa.jpf.symbc.numeric.Expression;
 import gov.nasa.jpf.symbc.numeric.IntegerConstant;
 import gov.nasa.jpf.symbc.numeric.IntegerExpression;
+import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
 import gov.nasa.jpf.symbc.numeric.PathCondition;
 import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
 import gov.nasa.jpf.symbc.numeric.SymbolicReal;
@@ -126,7 +127,7 @@ public class Helper {
 			  int numSymRefs, HeapNode[] prevSymRefs, boolean setShared) {
 		  int daIndex = ti.getHeap().newObject(typeClassInfo, ti).getObjectRef();
 		  ti.getHeap().registerPinDown(daIndex);
-		  String refChain = ((SymbolicInteger) attr).getName() + "[" + daIndex + "]"; // do we really need to add daIndex here?
+		  String refChain = ((SymbolicInteger) attr).getName(); // + "[" + daIndex + "]"; // do we really need to add daIndex here?
 		  SymbolicInteger newSymRef = new SymbolicInteger( refChain);
 		  ElementInfo eiRef =  ti.getModifiableElementInfo(daIndex);//ti.getElementInfo(daIndex); // TODO to review!
 		  if(setShared) {
@@ -155,12 +156,24 @@ public class Helper {
 			  superClass = superClass.getSuperClass();
 		  }
 
+          // Put symbolic array in PC if we create a new array.
+          if (typeClassInfo.isArray()) {
+              String typeClass = typeClassInfo.getType();
+              ArrayExpression arrayAttr = null;
+              if (typeClass.charAt(1) != 'L') {
+                  arrayAttr = new ArrayExpression(eiRef.toString());
+              } else {
+                  arrayAttr = new ArrayExpression(eiRef.toString(), typeClass.substring(2, typeClass.length() -1));
+              }
+              ti.getVM().getLastChoiceGeneratorOfType(PCChoiceGenerator.class).getCurrentPC().arrayExpressions.put(eiRef.toString(), arrayAttr);
+          }
+
 		  // create new HeapNode based on above info
 		  // update associated symbolic input heap
 		  HeapNode n= new HeapNode(daIndex,typeClassInfo,newSymRef);
 		  symInputHeap._add(n);
 		  pcHeap._addDet(Comparator.NE, newSymRef, new IntegerConstant(-1));
-		  //pcHeap._addDet(Comparator.EQ, newSymRef, (SymbolicInteger) attr);
+		  pcHeap._addDet(Comparator.EQ, newSymRef, new IntegerConstant(numSymRefs));
 		  for (int i=0; i< numSymRefs; i++)
 			  pcHeap._addDet(Comparator.NE, n.getSymbolic(), prevSymRefs[i].getSymbolic());
 		  return daIndex;
@@ -171,7 +184,7 @@ public class Helper {
 			  int numSymRefs, HeapNode[] prevSymRefs, boolean setShared, IntegerExpression indexAttr, int arrayRef) {
 		  int daIndex = ti.getHeap().newObject(typeClassInfo, ti).getObjectRef();
 		  ti.getHeap().registerPinDown(daIndex);
-		  String refChain = ((ArrayExpression) attr).getName() + "[" + daIndex + "]"; // do we really need to add daIndex here?
+		  String refChain = ((ArrayExpression) attr).getName(); // + "[" + daIndex + "]"; // do we really need to add daIndex here?
 		  SymbolicInteger newSymRef = new SymbolicInteger(refChain);
 		  ElementInfo eiRef =  ti.getModifiableElementInfo(daIndex);//ti.getElementInfo(daIndex); // TODO to review!
 		  if(setShared) {
@@ -200,12 +213,24 @@ public class Helper {
 			  superClass = superClass.getSuperClass();
 		  }
 
+          // Put symbolic array in PC if we create a new array.
+          if (typeClassInfo.isArray()) {
+              String typeClass = typeClassInfo.getType();
+              ArrayExpression arrayAttr = null;
+              if (typeClass.charAt(1) != 'L') {
+                  arrayAttr = new ArrayExpression(eiRef.toString());
+              } else {
+                  arrayAttr = new ArrayExpression(eiRef.toString(), typeClass.substring(2, typeClass.length() -1));
+              }
+              ti.getVM().getLastChoiceGeneratorOfType(PCChoiceGenerator.class).getCurrentPC().arrayExpressions.put(eiRef.toString(), arrayAttr);
+          }
+
 		  // create new HeapNode based on above info
 		  // update associated symbolic input heap
 		  ArrayHeapNode n= new ArrayHeapNode(daIndex,typeClassInfo,newSymRef, indexAttr, arrayRef);
 		  symInputHeap._add(n);
 		  pcHeap._addDet(Comparator.NE, newSymRef, new IntegerConstant(-1));
-		  //pcHeap._addDet(Comparator.EQ, newSymRef, (SymbolicInteger) attr);
+		  pcHeap._addDet(Comparator.EQ, newSymRef, new IntegerConstant(numSymRefs));
 		  for (int i=0; i< numSymRefs; i++)
 			  pcHeap._addDet(Comparator.NE, n.getSymbolic(), prevSymRefs[i].getSymbolic());
 		  HelperResult result = new HelperResult(n, daIndex);

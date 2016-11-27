@@ -269,6 +269,90 @@ public class SymbolicConstraintsGeneral {
 			return false;
 		}
 
+    public Map<String, Object> solveWithSolution(PathCondition pc) {
+		//if (SymbolicInstructionFactory.debugMode)
+			//System.out.println("solving: PC " + pc);
+        Map<String, Object> result = new HashMap<String, Object>();
+
+
+		if (pc == null || pc.count == 0) return result;
+
+		String[] dp = SymbolicInstructionFactory.dp;
+		if (dp[0].equalsIgnoreCase("no_solver"))
+			return result;
+
+		if(isSatisfiable(pc)) {
+
+			// compute solutions for real variables:
+			Set<Entry<SymbolicReal,Object>> sym_realvar_mappings = PCParser.symRealVar.entrySet();
+			Iterator<Entry<SymbolicReal,Object>> i_real = sym_realvar_mappings.iterator();
+			// first set inf / sup values
+//			while(i_real.hasNext()) {
+//				Entry<SymbolicReal,Object> e = i_real.next();
+//				SymbolicReal pcVar = e.getKey();
+//				Object dpVar = e.getValue();
+//				pcVar.solution_inf=pb.getRealValueInf(dpVar);
+//				pcVar.solution_sup=pb.getRealValueSup(dpVar);
+//			}
+
+			try{
+				sym_realvar_mappings = PCParser.symRealVar.entrySet();
+				i_real = sym_realvar_mappings.iterator();
+				while(i_real.hasNext()) {
+					Entry<SymbolicReal,Object> e = i_real.next();
+					SymbolicReal pcVar = e.getKey();
+					Object dpVar = e.getValue();
+                    double e_value = pb.getRealValue(dpVar);
+					pcVar.solution=e_value; // may be undefined: throws an exception
+                    result.put(pcVar.getName(), e_value);
+				}
+			} catch (Exception exp) {
+				this.catchBody(PCParser.symRealVar, pb, pc);
+			} // end catch
+
+
+			// compute solutions for integer variables
+			Set<Entry<SymbolicInteger,Object>> sym_intvar_mappings = PCParser.symIntegerVar.entrySet();
+			Iterator<Entry<SymbolicInteger,Object>> i_int = sym_intvar_mappings.iterator();
+			//try {
+				while(i_int.hasNext()) {
+					Entry<SymbolicInteger,Object> e =  i_int.next();
+                    long e_value = pb.getIntValue(e.getValue());
+					e.getKey().solution=e_value;
+                    result.put(e.getKey().getName(), e_value);
+
+				}
+			//}
+				/*
+			catch (Exception exp) {
+				Boolean isSolvable = true;
+				sym_intvar_mappings = symIntegerVar.entrySet();
+				i_int = sym_intvar_mappings.iterator();
+
+				while(i_int.hasNext() && isSolvable) {
+					Entry<SymbolicInteger,Object> e = i_int.next();
+					SymbolicInteger pcVar = e.getKey();
+					Object dpVar = e.getValue();
+					// cast
+					pcVar.solution=(int)(pb.getRealValueInf(dpVar) + pb.getRealValueSup(dpVar)) / 2;
+					//(int)pcVar.solution_inf;
+
+					pb.post(pb.eq(dpVar, pcVar.solution));
+					isSolvable = pb.solve();
+					if (isSolvable == null)
+						isSolvable = Boolean.FALSE;
+				}
+				if(!isSolvable)
+					System.err.println("# Warning: PC "+pc.stringPC()+" is solvable but could not find the solution!");
+			} // end catch
+*/
+			cleanup();
+			return result;
+		}
+		else
+			return result;
+    }
+
 	/**
 	 * The "ProblemCompare" solver calls this to
 	 * deal with yices and choco refinements of

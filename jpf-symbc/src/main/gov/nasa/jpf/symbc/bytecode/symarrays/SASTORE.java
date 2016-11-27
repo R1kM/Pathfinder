@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and 
  * limitations under the License.
  */
-// author aymeric fromherz aymeric.fromherz@ens.fr 
+// author Aymeric Fromherz aymeric.fromherz@ens.fr 
 
 package gov.nasa.jpf.symbc.bytecode.symarrays;
 
@@ -50,6 +50,10 @@ public class SASTORE extends gov.nasa.jpf.jvm.bytecode.SASTORE {
           IntegerExpression indexAttr = null;
           ArrayExpression arrayAttr = null;
 		  StackFrame frame = ti.getModifiableTopFrame();
+          int arrayRef = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
+		  if (arrayRef == MJIEnv.NULL) {
+		        return ti.createAndThrowException("java.lang.NullPointerException");
+		  } 
 
           // Retrieve the array expression if it was previously in the pathcondition, and store it as an array attr
           PCChoiceGenerator temp_cg = (PCChoiceGenerator)ti.getVM().getLastChoiceGeneratorOfType(PCChoiceGenerator.class);
@@ -67,10 +71,7 @@ public class SASTORE extends gov.nasa.jpf.jvm.bytecode.SASTORE {
              }
           }
 
-
           ChoiceGenerator<?> cg;
-          boolean condition;
-          int arrayRef = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
 
           if (!ti.isFirstStepInsn()) { // first time around
               cg = new PCChoiceGenerator(3);
@@ -120,9 +121,6 @@ public class SASTORE extends gov.nasa.jpf.jvm.bytecode.SASTORE {
           }
           assert (arrayAttr != null) : "arrayAttr shouldn't be null in SASTORE instruction";
 
-		  if (arrayRef == MJIEnv.NULL) {
-		        return ti.createAndThrowException("java.lang.NullPointerException");
-		  } 
 
           
           if ((Integer)cg.getNextChoice() == 1) { // check bounds of the index
@@ -152,14 +150,9 @@ public class SASTORE extends gov.nasa.jpf.jvm.bytecode.SASTORE {
               pc._addDet(Comparator.GE, indexAttr, new IntegerConstant(0));
               if (pc.simplify()) { // satisfiable
                   ((PCChoiceGenerator) cg).setCurrentPC(pc);
-                  
-                  // set the result                 
-
-                  // We have to check if the value is symbolic or not, create a symbolicIntegerValueatIndex out of it, and 
-                  // call the setVal function, before storing the attr 
                   IntegerExpression sym_value = null;
 		          if (frame.getOperandAttr(0) == null || !(frame.getOperandAttr(0) instanceof IntegerExpression)) {
-                      // The value isn't symbolic. We store a new IntegerConstant in the valAt map, at index indexAttr
+                      // The value isn't symbolic.
                       short value = (short)frame.pop();
                       sym_value = new IntegerConstant(value);
                   }

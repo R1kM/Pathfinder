@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-// author aymeric fromherz aymeric.fromherz@ens.fr 
+// author Aymeric Fromherz aymeric.fromherz@ens.fr 
 
 package gov.nasa.jpf.symbc.bytecode.symarrays;
 
@@ -46,12 +46,16 @@ public class BASTORE extends gov.nasa.jpf.jvm.bytecode.BASTORE {
 
 	 @Override
 	  public Instruction execute (ThreadInfo ti) {
-         // We may need to add the case where we have a symbolic index and a concrete array
 
           IntegerExpression indexAttr = null;
           ArrayExpression arrayAttr = null;
 		  StackFrame frame = ti.getModifiableTopFrame();
+          int arrayRef = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
 
+          if (arrayRef == MJIEnv.NULL) {
+              return ti.createAndThrowException("java.lang.NullPointerException");
+          }
+          
           // Retrieve the array expression if it was previously in the pathcondition, and store it as an array attr
           PCChoiceGenerator temp_cg = (PCChoiceGenerator)ti.getVM().getLastChoiceGeneratorOfType(PCChoiceGenerator.class);
           if (temp_cg != null) {
@@ -68,14 +72,7 @@ public class BASTORE extends gov.nasa.jpf.jvm.bytecode.BASTORE {
              }
           }
 
-
           ChoiceGenerator<?> cg;
-          boolean condition;
-          int arrayRef = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
-
-          if (arrayRef == MJIEnv.NULL) {
-              return ti.createAndThrowException("java.lang.NullPointerException");
-          }
 
           if (!ti.isFirstStepInsn()) { // first time around
               cg = new PCChoiceGenerator(3);
@@ -112,8 +109,8 @@ public class BASTORE extends gov.nasa.jpf.jvm.bytecode.BASTORE {
                 // nothing is symbolic here
                 return super.execute(ti);
              } else {
-               ElementInfo arrayInfo = ti.getElementInfo(arrayRef);   
-               // We create a symbolic array out of the concrete array
+                ElementInfo arrayInfo = ti.getElementInfo(arrayRef);   
+                // We create a symbolic array out of the concrete array
                 arrayAttr = ArrayExpression.create(arrayInfo.toString(), arrayInfo.arrayLength());
                 // We add the constraints about all the elements of the array
                 for (int i = 0; i < arrayInfo.arrayLength(); i++) {
@@ -122,15 +119,10 @@ public class BASTORE extends gov.nasa.jpf.jvm.bytecode.BASTORE {
                 }
              }
           } else {
-            arrayAttr = (ArrayExpression)peekArrayAttr(ti);
+              arrayAttr = (ArrayExpression)peekArrayAttr(ti);
           }
           assert (arrayAttr != null) : "arrayAttr shouldn't be null in BASTORE instruction";
 
-		  if (arrayRef == MJIEnv.NULL) {
-		        return ti.createAndThrowException("java.lang.NullPointerException");
-		  } 
-
-          
           if ((Integer)cg.getNextChoice() == 1) { // check bounds of the index
               pc._addDet(Comparator.GE, indexAttr, arrayAttr.length);
               if (pc.simplify()) { // satisfiable
@@ -160,12 +152,8 @@ public class BASTORE extends gov.nasa.jpf.jvm.bytecode.BASTORE {
                   ((PCChoiceGenerator) cg).setCurrentPC(pc);
                   
                   // set the result                 
-
-                  // We have to check if the value is symbolic or not, create a symbolicIntegerValueatIndex out of it, and 
-                  // call the setVal function, before storing the attr 
                   IntegerExpression sym_value = null;
 		          if (frame.getOperandAttr(0) == null || !(frame.getOperandAttr(0) instanceof IntegerExpression)) {
-                      // The value isn't symbolic. We store a new IntegerConstant in the valAt map, at index indexAttr
                       byte value = (byte)frame.pop();
                       sym_value = new IntegerConstant(value);
                   }

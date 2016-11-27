@@ -146,7 +146,7 @@ public class SymbolicInputHeap {
                     }
                 }
             }
-            n.getNext();
+            n = n.getNext();
         }
         n = header;
         ArrayHeapNode[] nodes = new ArrayHeapNode[numSymRefs]; 

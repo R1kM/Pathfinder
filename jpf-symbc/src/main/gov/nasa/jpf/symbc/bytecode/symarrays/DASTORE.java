@@ -49,11 +49,16 @@ import gov.nasa.jpf.vm.ThreadInfo;
  */
 public class DASTORE extends gov.nasa.jpf.jvm.bytecode.DASTORE {
 
-	 @Override
+	  @Override
 	  public Instruction execute (ThreadInfo ti) {
           IntegerExpression indexAttr = null;
           ArrayExpression arrayAttr = null;
 		  StackFrame frame = ti.getModifiableTopFrame();
+          int arrayRef = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
+
+		  if (arrayRef == MJIEnv.NULL) {
+		        return ti.createAndThrowException("java.lang.NullPointerException");
+		  } 
 
           // Retrieve the array expression if it was previously in the pathcondition, and store it as an array attr
           PCChoiceGenerator temp_cg = (PCChoiceGenerator)ti.getVM().getLastChoiceGeneratorOfType(PCChoiceGenerator.class);
@@ -70,15 +75,8 @@ public class DASTORE extends gov.nasa.jpf.jvm.bytecode.DASTORE {
                  return super.execute(ti);
              }
           }
-          
 
           ChoiceGenerator<?> cg;
-          boolean condition;
-          int arrayRef = peekArrayRef(ti); // need to be polymorphic, could be LongArrayStore
-
-		  if (arrayRef == MJIEnv.NULL) {
-		        return ti.createAndThrowException("java.lang.NullPointerException");
-		  } 
 
           if (!ti.isFirstStepInsn()) { // first time around
               cg = new PCChoiceGenerator(3);
@@ -101,7 +99,7 @@ public class DASTORE extends gov.nasa.jpf.jvm.bytecode.DASTORE {
           
           assert pc != null;
 
-		 if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
+          if (peekIndexAttr(ti)==null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
               int index = ti.getTopFrame().peek(1);
               indexAttr =  new IntegerConstant(index); 
 		  } else {
@@ -114,14 +112,14 @@ public class DASTORE extends gov.nasa.jpf.jvm.bytecode.DASTORE {
              if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) {
                  return super.execute(ti);
              } else {
-              // We create a symbolic array out of the concrete array
-               ElementInfo arrayInfo = ti.getElementInfo(arrayRef);   
-               arrayAttr = ArrayExpression.create(arrayInfo.toString(), arrayInfo.arrayLength());
-               // We add the constraints about all the elements of the array
-               for (int i = 0; i < arrayInfo.arrayLength(); i++) {
-                   double arrValue = arrayInfo.getDoubleElement(i);
-                   pc._addDet(Comparator.EQ, new SelectExpression(arrayAttr,new IntegerConstant(i)), new RealConstant(arrValue));
-               }
+                 // We create a symbolic array out of the concrete array
+                 ElementInfo arrayInfo = ti.getElementInfo(arrayRef);   
+                 arrayAttr = ArrayExpression.create(arrayInfo.toString(), arrayInfo.arrayLength());
+                 // We add the constraints about all the elements of the array
+                 for (int i = 0; i < arrayInfo.arrayLength(); i++) {
+                     double arrValue = arrayInfo.getDoubleElement(i);
+                     pc._addDet(Comparator.EQ, new SelectExpression(arrayAttr,new IntegerConstant(i)), new RealConstant(arrValue));
+                 }
              }
           } else {
             arrayAttr = (ArrayExpression)peekArrayAttr(ti);
@@ -155,14 +153,9 @@ public class DASTORE extends gov.nasa.jpf.jvm.bytecode.DASTORE {
               pc._addDet(Comparator.GE, indexAttr, new IntegerConstant(0));
               if (pc.simplify()) { // satisfiable
                   ((PCChoiceGenerator) cg).setCurrentPC(pc);
-                  
-                  // set the result                 
-
-                  // We have to check if the value is symbolic or not, create a symbolicIntegerValueatIndex out of it, and 
-                  // call the setVal function, before storing the attr 
                   RealExpression sym_value = null;
 		          if (frame.getOperandAttr(0) == null || !(frame.getOperandAttr(0) instanceof RealExpression)) {
-                      // The value isn't symbolic. We store a new IntegerConstant in the valAt map, at index indexAttr
+                      // The value isn't symbolic. 
                       double value = frame.popDouble();
                       sym_value = new RealConstant(value);
                   }
@@ -187,5 +180,4 @@ public class DASTORE extends gov.nasa.jpf.jvm.bytecode.DASTORE {
              }
           }
       }
-	 
 }

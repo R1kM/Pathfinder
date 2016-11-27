@@ -15,7 +15,8 @@
  * See the License for the specific language governing permissions and 
  * limitations under the License.
  */
-// author aymeric fromherz aymeric.fromherz@ens.fr 
+
+// author Aymeric Fromherz aymeric.fromherz@ens.fr 
 
 package gov.nasa.jpf.symbc.bytecode.symarrays;
 
@@ -30,8 +31,6 @@ import gov.nasa.jpf.symbc.numeric.PCChoiceGenerator;
 import gov.nasa.jpf.symbc.numeric.RealConstant;
 import gov.nasa.jpf.symbc.numeric.RealExpression;
 import gov.nasa.jpf.symbc.numeric.SymbolicReal;
-
-
 import gov.nasa.jpf.vm.ArrayIndexOutOfBoundsExecutiveException;
 import gov.nasa.jpf.vm.ChoiceGenerator;
 import gov.nasa.jpf.vm.ElementInfo;
@@ -39,7 +38,6 @@ import gov.nasa.jpf.vm.Instruction;
 import gov.nasa.jpf.vm.MJIEnv;
 import gov.nasa.jpf.vm.StackFrame;
 import gov.nasa.jpf.vm.ThreadInfo;
-
 
 /**
  * Load double from array
@@ -49,6 +47,12 @@ public class DALOAD extends gov.nasa.jpf.jvm.bytecode.DALOAD {
 	 
 	 @Override
 	  public Instruction execute (ThreadInfo ti) {
+          StackFrame frame = ti.getModifiableTopFrame();
+		  arrayRef = frame.peek(1); // ..,arrayRef,idx
+
+		  if (arrayRef == MJIEnv.NULL) {
+		    return ti.createAndThrowException("java.lang.NullPointerException");
+		  }
           // Retrieve the array expression if it was previously in the pathcondition
           PCChoiceGenerator temp_cg = (PCChoiceGenerator)ti.getVM().getLastChoiceGeneratorOfType(PCChoiceGenerator.class);
           if (temp_cg != null) {
@@ -57,20 +61,16 @@ public class DALOAD extends gov.nasa.jpf.jvm.bytecode.DALOAD {
               }
           }
 
-		if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
+		  if (peekArrayAttr(ti)==null || !(peekArrayAttr(ti) instanceof ArrayExpression)) {
               // In this case, the array isn't symbolic
               if (peekIndexAttr(ti) == null || !(peekIndexAttr(ti) instanceof IntegerExpression)) { 
                  // In this case, the index isn't symbolic either
                  return super.execute(ti);
               }
-        }
+          }
           
-
           ArrayExpression arrayAttr = null;
           ChoiceGenerator<?> cg;
-          boolean condition;
-          StackFrame frame = ti.getModifiableTopFrame();
-		  arrayRef = frame.peek(1); // ..,arrayRef,idx
 
           if (!ti.isFirstStepInsn()) { // first time around
               cg = new PCChoiceGenerator(3);
@@ -79,8 +79,8 @@ public class DALOAD extends gov.nasa.jpf.jvm.bytecode.DALOAD {
               ti.getVM().setNextChoiceGenerator(cg);
               return this;
           } else { // this is what really returns results
-            cg = ti.getVM().getChoiceGenerator();
-            assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
+              cg = ti.getVM().getChoiceGenerator();
+              assert (cg instanceof PCChoiceGenerator) : "expected PCChoiceGenerator, got: " + cg;
           }
 
           PathCondition pc;
@@ -109,6 +109,7 @@ public class DALOAD extends gov.nasa.jpf.jvm.bytecode.DALOAD {
           } else {
               arrayAttr = (ArrayExpression)peekArrayAttr(ti);
           }
+
           IntegerExpression indexAttr = null;
           SelectExpression se = null;
 
@@ -125,10 +126,6 @@ public class DALOAD extends gov.nasa.jpf.jvm.bytecode.DALOAD {
           assert arrayAttr != null;
           assert indexAttr != null;
           assert se != null;
-
-		  if (arrayRef == MJIEnv.NULL) {
-		    return ti.createAndThrowException("java.lang.NullPointerException");
-		  }
 		  
           if ((Integer)cg.getNextChoice() == 1) { // check bounds of the index
               pc._addDet(Comparator.GE, se.indexExpression, se.arrayExpression.length);
@@ -153,11 +150,9 @@ public class DALOAD extends gov.nasa.jpf.jvm.bytecode.DALOAD {
               pc._addDet(Comparator.GE, se.indexExpression, new IntegerConstant(0));
               if (pc.simplify()) { // satisfiable
                   ((PCChoiceGenerator) cg).setCurrentPC(pc);
-
-                  // Set the result
-                  // We had a concrete array, and don't know yet where it is from
                   frame.pop(2); // We pop the array and the index
                   frame.pushDouble(0);
+                  // Set the result
                   frame.setLongOperandAttr(val);
                   pc._addDet(Comparator.EQ, se, val);
                   pc.arrayExpressions.put(arrayAttr.getRootName(), arrayAttr);
